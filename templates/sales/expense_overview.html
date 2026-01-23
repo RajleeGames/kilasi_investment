@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Expenses Overview{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <div>
+    <h4 class="mb-0"><i class="fa-solid fa-receipt me-2"></i>Expenses Overview</h4>
+    <small class="text-muted">
+      {% if selected_branch_obj %}Branch: <b>{{ selected_branch_obj.name }}</b>{% else %}All Branches{% endif %}
+    </small>
+  </div>
+
+  {% if is_admin %}
+  <form method="get" class="d-flex align-items-center gap-2">
+    <div class="input-group input-group-sm" style="min-width:240px;">
+      <span class="input-group-text"><i class="fa-solid fa-building"></i></span>
+      <select name="branch" class="form-select">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+          <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+            {{ b.name }}
+          </option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-outline-primary" type="submit">Filter</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Sales Today</div>
+            <div class="fs-3 fw-bold">Tsh {{ sales_today|floatformat:0|intcomma }}</div>
+          </div>
+          <div class="rounded-4 p-3 bg-success bg-opacity-10 text-success">
+            <i class="fa-solid fa-chart-line fa-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Expenses Today</div>
+            <div class="fs-3 fw-bold">Tsh {{ expenses_today|floatformat:0|intcomma }}</div>
+          </div>
+          <div class="rounded-4 p-3 bg-danger bg-opacity-10 text-danger">
+            <i class="fa-solid fa-money-bill-wave fa-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Net Profit Today</div>
+            <div class="fs-3 fw-bold">Tsh {{ net_profit|floatformat:0|intcomma }}</div>
+          </div>
+          <div class="rounded-4 p-3 bg-info bg-opacity-10 text-info">
+            <i class="fa-solid fa-scale-balanced fa-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a href="{% url 'sales:kilasi_add_expense' %}" class="btn btn-primary">
+    <i class="fa-solid fa-plus me-1"></i> Add Expense
+  </a>
+
+  {# keep branch when moving to history #}
+  <a href="{% url 'sales:expense_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+     class="btn btn-outline-secondary">
+    <i class="fa-solid fa-clock-rotate-left me-1"></i> View History
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white">
+    <h6 class="mb-0"><i class="fa-solid fa-list me-2"></i>Today Expenses</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th class="text-end">Amount</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in today_expenses_list %}
+          <tr>
+            <td>{{ e.date }}</td>
+            <td>{{ e.category }}</td>
+            <td class="text-end">Tsh {{ e.amount|floatformat:0|intcomma }}</td>
+            <td class="text-muted">{{ e.description|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">No expenses recorded today.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Payments — Chui Hardware{% endblock %}
+
+{% block extra_css %}
+<style>
+  .wrap{max-width:1100px;margin:1.5rem auto;padding:0 1rem;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
+  .title{display:flex;align-items:center;gap:.75rem;margin:0;}
+  .title .icon{
+    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+    background:rgba(13,110,253,.12);color:#0d6efd;
+  }
+  .sub{color:#6c757d;margin:.35rem 0 0 0;}
+  .pill{
+    display:inline-flex;align-items:center;gap:.4rem;
+    padding:.35rem .65rem;border-radius:999px;
+    background:#f8f9fa;border:1px solid #e9ecef;
+    color:#495057;font-size:.85rem;
+  }
+  .cardx{
+    border:1px solid #e9ecef;border-radius:18px;background:#fff;
+    box-shadow:0 6px 24px rgba(0,0,0,.04);
+  }
+  .cardx .card-body{padding:1rem 1rem;}
+  .table thead th{white-space:nowrap;}
+  .table td{vertical-align:middle;}
+  .btn-soft{border-radius:999px;padding:.45rem .85rem;}
+  .searchbox{max-width:420px;}
+  .searchbox input{border-radius:999px;}
+  .searchbox button{border-radius:999px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+
+  <div class="topbar mb-3">
+    <div>
+      <h2 class="title">
+        <span class="icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
+        Payments
+      </h2>
+      <p class="sub">
+        {% if is_seller %}
+          <span class="pill"><i class="fa-solid fa-user-tag me-1"></i>Seller</span>
+        {% else %}
+          <span class="pill"><i class="fa-solid fa-shield-halved me-1"></i>Admin</span>
+        {% endif %}
+        {% if branch %}
+          <span class="pill ms-2"><i class="fa-solid fa-shop me-1"></i>{{ branch.name }}</span>
+        {% endif %}
+        <span class="pill ms-2"><i class="fa-solid fa-list me-1"></i>{{ payments_count }} record(s)</span>
+      </p>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <form method="get" class="d-flex gap-2 searchbox">
+        <input
+          type="text"
+          name="q"
+          value="{{ query }}"
+          class="form-control"
+          placeholder="Search invoice # / customer / seller…"
+          autocomplete="off"
+        >
+        <button class="btn btn-primary btn-soft">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+        <a href="{% url 'sales:all_payments' %}" class="btn btn-outline-secondary btn-soft" title="Reset">
+          <i class="fa-solid fa-rotate"></i>
+        </a>
+      </form>
+
+      {% if is_seller %}
+        <a href="{% url 'sales:seller_dashboard' %}" class="btn btn-outline-primary btn-soft">
+          <i class="fa-solid fa-cash-register me-1"></i>POS
+        </a>
+      {% else %}
+        <a href="{% url 'sales:admin_dashboard' %}" class="btn btn-outline-primary btn-soft">
+          <i class="fa-solid fa-chart-line me-1"></i>Dashboard
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cardx">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Invoice</th>
+              <th>Customer</th>
+              <th class="text-end">Paid</th>
+              <th>Recorded By</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+              <tr>
+                <td class="fw-semibold">{{ forloop.counter }}</td>
+                <td>{{ p.timestamp|date:"Y-m-d H:i" }}</td>
+                <td class="fw-semibold">#{{ p.invoice.id }}</td>
+                <td>
+                  {{ p.invoice.customer.name|default:"Walk-in" }}
+                  <div class="text-muted" style="font-size:.85rem;">
+                    {{ p.invoice.customer.phone|default:"—" }}
+                  </div>
+                </td>
+                <td class="text-end fw-bold">Tsh {{ p.amount|intcomma }}</td>
+                <td>
+                  {{ p.invoice.seller.username|default:"—" }}
+                  {% if p.invoice.branch %}
+                    <div class="text-muted" style="font-size:.85rem;">
+                      {{ p.invoice.branch.name }}
+                    </div>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{% url 'sales:invoice_detail' p.invoice.id %}">
+                    <i class="fa-solid fa-receipt me-1"></i>Invoice
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  <i class="fa-regular fa-face-smile me-2"></i>No payments found.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if is_paginated %}
+      <div class="p-3">
+        <nav>
+          <ul class="pagination justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">‹ Prev</span></li>
+            {% endif %}
+
+            {% for num in paginator.page_range %}
+              {% if num == page_obj.number %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% else %}
+                <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Next ›</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

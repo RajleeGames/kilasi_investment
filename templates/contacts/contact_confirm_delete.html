@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Delete Contact{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm" style="border-radius:14px; max-width:700px;">
+  <div class="card-body">
+    <h4 class="mb-2">Delete Contact</h4>
+    <p class="text-muted mb-3">Are you sure you want to delete <b>{{ obj.full_name }}</b>?</p>
+
+    <form method="post" class="d-flex gap-2">
+      {% csrf_token %}
+      <button class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i> Yes, Delete</button>
+      <a href="{% url 'contacts:contact_list' %}" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

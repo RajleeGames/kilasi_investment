@@ -1,0 +1,394 @@
+{# templates/product_detail.html (or sales/product_detail.html) #}
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ product.name }} — Details{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:rgba(15,23,42,.10);
+  --border2:rgba(15,23,42,.06);
+  --shadow:0 12px 30px rgba(2,6,23,.08);
+  --shadow2:0 8px 22px rgba(2,6,23,.06);
+  --radius:14px;
+  --accent:#0ea5e9;
+  --focus:rgba(14,165,233,.25);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.pwrap{
+  max-width: 1120px;
+  margin: 18px auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+/* Top bar */
+.topbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap:wrap;
+  padding: 4px 4px 10px 4px;
+}
+.backbtn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:#fff;
+  color: var(--text);
+  text-decoration:none;
+  font-weight: 900;
+  box-shadow: 0 6px 16px rgba(2,6,23,.04);
+}
+.backbtn:hover{ border-color: rgba(14,165,233,.25); }
+.pchips{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg,#fff,#fbfdff);
+  color: var(--muted);
+  font-size: .86rem;
+  user-select:none;
+}
+.chip strong{ color: var(--text); font-weight: 900; font-family: var(--mono); }
+.badge-branch{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 900;
+  background: rgba(14,165,233,.10);
+  border: 1px solid rgba(14,165,233,.20);
+  color: #075985;
+  white-space: nowrap;
+}
+
+/* Title */
+.ptitle{
+  margin: 6px 4px 10px 4px;
+  font-size: 1.2rem;
+  font-weight: 1000;
+  letter-spacing: .2px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.psub{ margin: -4px 4px 12px 4px; color: var(--muted); font-size: .92rem; }
+
+/* Stat cards */
+.stats{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 10px 0 14px 0;
+}
+@media (max-width: 991.98px){ .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 576px){ .stats{ grid-template-columns: 1fr; } }
+
+.scard{
+  background: linear-gradient(180deg,#fff,#fbfdff);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  box-shadow: var(--shadow2);
+  padding: 12px;
+}
+.slabel{
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.sval{
+  margin-top: 6px;
+  font-weight: 1000;
+  font-size: 1.05rem;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.mono{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.dot{
+  width:10px;height:10px;border-radius:999px;
+  background: rgba(14,165,233,.35);
+  border: 1px solid rgba(14,165,233,.55);
+}
+
+/* Restock */
+.section{
+  margin-top: 14px;
+  background:#fff;
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  box-shadow: var(--shadow2);
+  padding: 12px;
+}
+.section h4{
+  margin: 0 0 10px 0;
+  font-weight: 1000;
+  font-size: 1rem;
+}
+.formrow{
+  display:flex;
+  gap: 10px;
+  align-items:flex-end;
+  flex-wrap: wrap;
+}
+.fg{ min-width: 180px; flex: 1 1 220px; }
+.fg label{
+  display:block;
+  margin-bottom: 6px;
+  font-weight: 900;
+  color: var(--text);
+  font-size: .9rem;
+}
+.fg input, .fg select{
+  width:100%;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.12);
+  padding: 10px 10px;
+  outline:none;
+}
+.fg input:focus, .fg select:focus{
+  border-color: rgba(14,165,233,.45);
+  box-shadow: 0 8px 18px rgba(14,165,233,.06);
+}
+.btnsave{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(14,165,233,.22);
+  background: rgba(14,165,233,.12);
+  color: #075985;
+  font-weight: 1000;
+  text-decoration:none;
+  cursor:pointer;
+}
+.btnsave:hover{ border-color: rgba(14,165,233,.32); }
+
+/* Table */
+.twrap{
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow: var(--shadow2);
+}
+.ptable{ width:100%; border-collapse: collapse; }
+.ptable thead th{
+  background: linear-gradient(180deg,#0b1220,#0f172a);
+  color: #e2e8f0;
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .75rem .9rem;
+  white-space: nowrap;
+}
+.ptable tbody td{
+  padding: .75rem .9rem;
+  border-top: 1px solid rgba(15,23,42,.06);
+  font-size: .94rem;
+}
+.ptable tbody tr:hover{ background:#f8fafc; }
+
+.pempty{
+  padding: 14px;
+  text-align:center;
+  color: var(--muted);
+  background: linear-gradient(180deg,#fbfdff,#fff);
+  border-radius: 12px;
+  border: 1px dashed rgba(15,23,42,.14);
+}
+
+.me-1{ margin-right:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pwrap">
+
+  <div class="topbar">
+    <a class="backbtn" href="{% url 'sales:product_list' %}">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+
+    <div class="pchips">
+      {% if use_branch_stock and branch %}
+        <span class="badge-branch" title="You are viewing branch stock">
+          <i class="fa-solid fa-location-dot"></i> {{ branch.name }}
+        </span>
+      {% endif %}
+      <span class="chip" title="Product ID">ID <strong>{{ product.id }}</strong></span>
+      {% if product.barcode %}
+        <span class="chip" title="Barcode"><i class="fa-solid fa-barcode"></i> <strong class="mono">{{ product.barcode }}</strong></span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ptitle">
+    <i class="fa-solid fa-box"></i>
+    {{ product.name }}
+  </div>
+
+  <div class="psub">
+    Category: <strong>{{ product.category.name|default:"—" }}</strong>
+    {% if use_branch_stock %}
+      • Stock shown is for your branch only
+    {% else %}
+      • Stock shown is total (all branches)
+    {% endif %}
+  </div>
+
+  <div class="stats">
+    <div class="scard">
+      <div class="slabel">Price</div>
+      <div class="sval"><i class="fa-solid fa-tag"></i> <span class="mono">{{ product.price|floatformat:2|intcomma }}</span></div>
+    </div>
+
+    <div class="scard">
+      <div class="slabel">{% if use_branch_stock %}Branch Stock{% else %}Total Stock{% endif %}</div>
+      <div class="sval">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="mono">{{ current_stock|default:0 }}</span>
+      </div>
+    </div>
+
+    <div class="scard">
+      <div class="slabel">Reorder Level</div>
+      <div class="sval"><i class="fa-solid fa-bell"></i> <span class="mono">{{ product.reorder_level|default:0 }}</span></div>
+    </div>
+
+    <div class="scard">
+      <div class="slabel">Status</div>
+      <div class="sval">
+        {% if current_stock|default:0 <= product.reorder_level %}
+          <i class="fa-solid fa-triangle-exclamation"></i> Low stock
+        {% else %}
+          <i class="fa-solid fa-circle-check"></i> OK
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if is_admin %}
+  <div class="section">
+    <h4><i class="fa-solid fa-plus me-1"></i> Restock</h4>
+    <form method="post">
+      {% csrf_token %}
+      <div class="formrow">
+        <div class="fg">
+          <label>Add Qty</label>
+          <input type="number" name="add_qty" min="1" placeholder="Qty…">
+        </div>
+
+        <div class="fg">
+          <label>Branch (where stock is added)</label>
+          <select name="branch_id">
+            <option value="">— Select branch —</option>
+            {% for b in branches %}
+              <option value="{{ b.id }}">{{ b.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="fg">
+          <label>Note (optional)</label>
+          <input type="text" name="note" placeholder="e.g. Supplier delivery">
+        </div>
+
+        <button type="submit" class="btnsave">
+          <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+      </div>
+      <div style="margin-top:8px;color:var(--muted);font-size:.9rem;">
+        Tip: choose branch so stock goes to correct location.
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if is_admin and branch_stocks %}
+  <div class="section">
+    <h4><i class="fa-solid fa-warehouse me-1"></i> Stock by Branch</h4>
+    <div class="twrap">
+      <table class="ptable">
+        <thead>
+          <tr>
+            <th>Branch</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in branch_stocks %}
+          <tr>
+            <td>{{ s.branch.name }}</td>
+            <td class="mono">{{ s.quantity }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <h4><i class="fa-solid fa-clock-rotate-left me-1"></i> Stock History{% if use_branch_stock and branch %} ({{ branch.name }}){% endif %}</h4>
+
+    {% if entries %}
+      <div class="twrap">
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Change</th>
+              <th>Branch</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in entries %}
+            <tr>
+              <td class="mono">{{ e.timestamp|date:"Y-m-d H:i" }}</td>
+              <td class="mono">
+                {% if e.change > 0 %}+{% endif %}{{ e.change }}
+              </td>
+              <td>{{ e.branch.name|default:"—" }}</td>
+              <td>{{ e.note|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="pempty">No stock history available.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

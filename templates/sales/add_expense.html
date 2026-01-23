@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Add Expense{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <div>
+    <h4 class="mb-0"><i class="fa-solid fa-receipt me-2"></i>Add Expense</h4>
+    <small class="text-muted">
+      Record daily costs (branch-based).
+      {% if request.user.profile.branch %}
+        <span class="ms-2 badge bg-primary-subtle text-primary border border-primary-subtle">
+          <i class="fa-solid fa-building me-1"></i>{{ request.user.profile.branch.name }}
+        </span>
+      {% endif %}
+    </small>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{% url 'sales:expense_overview' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-arrow-left me-1"></i>Back
+    </a>
+    <a href="{% url 'sales:expense_history' %}" class="btn btn-outline-primary btn-sm">
+      <i class="fa-solid fa-clock-rotate-left me-1"></i>History
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:16px;">
+  <div class="card-body p-4">
+
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Date</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa-regular fa-calendar"></i></span>
+          <input type="date" name="date" class="form-control" required>
+        </div>
+        <div class="form-text">Pick the expense date.</div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Category</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa-solid fa-tags"></i></span>
+          <input type="text" name="category" class="form-control" placeholder="Labor, Supplies, Fuel..." required>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Amount (TSH)</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa-solid fa-money-bill-wave"></i></span>
+          <input type="number" name="amount" class="form-control" min="0" step="0.01" required placeholder="0">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-semibold">Description (optional)</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Example: Paid loader wages..."></textarea>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary px-4" style="border-radius:12px;">
+          <i class="fa-solid fa-floppy-disk me-2"></i>Save Expense
+        </button>
+        <a href="{% url 'sales:expense_overview' %}" class="btn btn-outline-secondary px-4" style="border-radius:12px;">
+          Cancel
+        </a>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

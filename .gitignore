@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+*.pyo
+*.pyd
+*.pdb
+*.log
+.Python
+
+# Virtual Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.env
+*.venv
+
+# Django stuff
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+static_root/
+local_settings.py
+instance/
+secrets.json
+
+# VSCode and IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Git
+*.orig
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache
+.pytest_cache/
+
+# Migrations - Optional
+# Uncomment to ignore migrations (if regenerating often)
+# */migrations/
+# */migrations/*.py
+# */migrations/*.pyc

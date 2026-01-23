@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Profile Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width: 900px;">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h4 class="mb-0">Profile Settings</h4>
+      <small class="text-muted">Update your details and branch (admin only)</small>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-12 col-md-4 text-center">
+            <div class="p-3 border rounded-3">
+              {% if profile.picture %}
+                <img src="{{ profile.picture.url }}" class="rounded-circle mb-2" style="width:120px;height:120px;object-fit:cover;">
+              {% else %}
+                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-2"
+                     style="width:120px;height:120px;">
+                  <i class="fa-solid fa-user fa-2x text-muted"></i>
+                </div>
+              {% endif %}
+
+              <div class="small text-muted mb-2">Profile photo</div>
+              <input type="file" name="picture" class="form-control form-control-sm">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-8">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label mb-1">Full name</label>
+                <input type="text" name="full_name" class="form-control"
+                       value="{{ profile.full_name|default:'' }}" placeholder="Your name">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label mb-1">Phone</label>
+                <input type="text" name="phone_number" class="form-control"
+                       value="{{ profile.phone_number|default:'' }}" placeholder="+255...">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label mb-1">Role</label>
+                <input type="text" class="form-control" value="{{ profile.role }}" disabled>
+              </div>
+
+              <!-- ✅ Branch dropdown (admin only) -->
+              {% if is_admin %}
+              <div class="col-12">
+                <label class="form-label mb-1">Branch</label>
+                <select name="branch" class="form-select">
+                  <option value="">-- No Branch --</option>
+                  {% for b in branches %}
+                    <option value="{{ b.id }}" {% if profile.branch and profile.branch.id == b.id %}selected{% endif %}>
+                      {{ b.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted">Admin can assign branch for this user.</small>
+              </div>
+              {% else %}
+              <div class="col-12">
+                <label class="form-label mb-1">Branch</label>
+                <input type="text" class="form-control"
+                       value="{% if profile.branch %}{{ profile.branch.name }}{% else %}Not assigned{% endif %}"
+                       disabled>
+                <small class="text-muted">Only admin can change branch.</small>
+              </div>
+              {% endif %}
+
+              <div class="col-12 d-flex gap-2 mt-2">
+                <button class="btn btn-primary">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                </button>
+                <a href="/" class="btn btn-outline-secondary">Back</a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

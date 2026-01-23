@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KingSize Hardware</title>
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light">
+    <span class="navbar-brand">
+      KingSize Hardware — {{ role|capfirst }} Dashboard
+    </span>
+    <a href="{% url 'logout' %}">Logout</a>
+  </nav>
+  <div class="container mt-4">
+    {% block content %}{% endblock %}
+  </div>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

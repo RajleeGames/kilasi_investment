@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Expense History{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <div>
+    <h4 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2"></i>Expense History</h4>
+    <small class="text-muted">
+      {% if selected_branch_obj %}Branch: <b>{{ selected_branch_obj.name }}</b>{% else %}All Branches{% endif %}
+    </small>
+  </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+
+  {% if is_admin %}
+  <div class="col-12 col-md-4">
+    <label class="form-label">Branch</label>
+    <select name="branch" class="form-select">
+      <option value="">All Branches</option>
+      {% for b in branches %}
+        <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+          {{ b.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  <div class="col-12 col-md-4">
+    <label class="form-label">Exact Date</label>
+    <input type="date" name="date" value="{{ exact_date }}" class="form-control">
+  </div>
+
+  <div class="col-12 col-md-4 d-flex gap-2">
+    <button type="submit" class="btn btn-primary w-100">
+      <i class="fa-solid fa-filter me-1"></i> Filter
+    </button>
+    <a href="{% url 'sales:expense_history' %}" class="btn btn-outline-secondary w-100">
+      Reset
+    </a>
+  </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th class="text-end">Amount (TSH)</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exp in expenses %}
+          <tr>
+            <td>{{ exp.date }}</td>
+            <td>{{ exp.category }}</td>
+            <td class="text-end">Tsh {{ exp.amount|floatformat:0|intcomma }}</td>
+            <td class="text-muted">{{ exp.description|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">No expenses found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

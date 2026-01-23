@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Transport Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --text:#0b1220;
+  --muted:#6b7280;
+  --card:#fff;
+  --line:rgba(15,23,42,.08);
+  --a1:#06b6d4;
+  --a2:#60a5fa;
+  --ind:#6366f1;
+  --r:16px;
+  --shadow:0 10px 24px rgba(2,6,23,.08);
+  --fs:13px;
+}
+.dash{max-width:1180px;margin:12px auto;padding:0 10px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--text);font-size:var(--fs);}
+.hero{background:radial-gradient(900px 320px at 10% 0%, rgba(6,182,212,.15), transparent 55%),radial-gradient(800px 320px at 90% 0%, rgba(96,165,250,.12), transparent 55%),#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;}
+.h1{display:flex;gap:10px;align-items:center;}
+.ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg, rgba(6,182,212,.22), rgba(96,165,250,.16));border:1px solid rgba(15,23,42,.06);}
+.h1 h1{margin:0;font-size:1.02rem;font-weight:950;}
+.sub{color:var(--muted);font-weight:700;font-size:.86rem;margin-top:2px;}
+.actions{display:flex;gap:8px;flex-wrap:wrap;}
+.actions .btn{border-radius:12px;padding:.5rem .75rem;font-weight:900;font-size:.9rem;}
+
+.kpis{margin-top:10px;display:grid;grid-template-columns:1fr;gap:10px;}
+@media(min-width:720px){.kpis{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:992px){.kpis{grid-template-columns:repeat(4,1fr);}}
+.kpi{background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;min-height:88px;}
+.kpi-in{display:flex;justify-content:space-between;gap:10px;align-items:center;}
+.k-left{display:flex;gap:10px;align-items:center;min-width:0;}
+.k-ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg, rgba(6,182,212,.18), rgba(96,165,250,.14));border:1px solid rgba(15,23,42,.06);}
+.k-t{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:#334155;font-weight:900;}
+.k-v{font-size:1.08rem;font-weight:950;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.k-r{color:var(--muted);font-weight:750;font-size:.82rem;text-align:right;}
+.pill{margin-top:6px;display:inline-flex;gap:6px;align-items:center;padding:.18rem .55rem;border-radius:999px;font-weight:950;font-size:.76rem;border:1px solid rgba(15,23,42,.10);background:rgba(2,6,23,.02);}
+.pill.profit{color:#0f766e;background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.25);}
+.pill.loss{color:#b91c1c;background:rgba(185,28,28,.08);border-color:rgba(185,28,28,.25);}
+.pill.even{color:#334155;}
+
+.grid{margin-top:10px;display:grid;grid-template-columns:1fr;gap:10px;}
+@media(min-width:992px){.grid{grid-template-columns:1.55fr .95fr;}}
+.card{background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;}
+.chead{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;}
+.chead .h{font-weight:950;font-size:.98rem;}
+.chead .n{color:var(--muted);font-weight:750;font-size:.84rem;}
+
+.chart-wrap{position:relative;width:100%;height:290px;}
+@media(max-width:480px){.chart-wrap{height:240px;}}
+.pie-wrap{position:relative;width:100%;height:200px;}
+@media(max-width:480px){.pie-wrap{height:190px;}}
+.chart-wrap canvas,.pie-wrap canvas{width:100%!important;height:100%!important;display:block;}
+
+.no-data{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:10px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.92));border:1px dashed rgba(15,23,42,.12);color:var(--muted);font-weight:900;font-size:.88rem;}
+
+.debug{margin-top:8px;font-weight:900;font-size:.85rem;color:#334155;}
+.debug span{padding:2px 8px;border-radius:999px;border:1px solid rgba(15,23,42,.12);background:rgba(2,6,23,.02);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash">
+  <div class="hero">
+    <div class="top">
+      <div class="h1">
+        <div class="ico"><i class="fa-solid fa-truck-fast"></i></div>
+        <div>
+          <h1>Transport Dashboard</h1>
+          <div class="sub">Trips, income, expenses, profit & loss</div>
+        </div>
+      </div>
+      <div class="actions">
+        <a href="{% url 'transport:trip_create' %}" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-route me-2"></i>Trip</a>
+        <a href="{% url 'transport:expense_create' %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-receipt me-2"></i>Expense</a>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-in">
+          <div class="k-left">
+            <div class="k-ico"><i class="fa-solid fa-route"></i></div>
+            <div>
+              <div class="k-t">Trips</div>
+              <div class="k-v">{{ trips_count|default:"0" }}</div>
+            </div>
+          </div>
+          <div class="k-r">All time</div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-in">
+          <div class="k-left">
+            <div class="k-ico"><i class="fa-solid fa-wallet"></i></div>
+            <div>
+              <div class="k-t">Income</div>
+              <div class="k-v">{{ trips_total|default:0|floatformat:2|intcomma }}</div>
+            </div>
+          </div>
+          <div class="k-r">Revenue</div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-in">
+          <div class="k-left">
+            <div class="k-ico"><i class="fa-solid fa-receipt"></i></div>
+            <div>
+              <div class="k-t">Expenses</div>
+              <div class="k-v">{{ expenses_total|default:0|floatformat:2|intcomma }}</div>
+            </div>
+          </div>
+          <div class="k-r">Costs</div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-in">
+          <div class="k-left">
+            <div class="k-ico"><i class="fa-solid fa-chart-line"></i></div>
+            <div>
+              <div class="k-t">Profit / Loss</div>
+              <div class="k-v">{{ net_total|default:0|floatformat:2|intcomma }}</div>
+              {% if net_total > 0 %}
+                <span class="pill profit"><i class="fa-solid fa-arrow-trend-up"></i> PROFIT</span>
+              {% elif net_total < 0 %}
+                <span class="pill loss"><i class="fa-solid fa-arrow-trend-down"></i> LOSS</span>
+              {% else %}
+                <span class="pill even"><i class="fa-solid fa-minus"></i> EVEN</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="k-r">Income − Expenses</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="debug">
+      JS status: <span id="jsStatus">NOT RUNNING</span> • Chart.js: <span id="chartStatus">UNKNOWN</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="chead">
+        <div>
+          <div class="h">Activity (Last 30 Days)</div>
+          <div class="n">Income vs Expenses</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="activityChart"></canvas>
+        <div id="lineNoData" class="no-data">No activity data for last 30 days.</div>
+      </div>
+
+      {{ trips_chart_labels|json_script:"chart-labels" }}
+      {{ trips_chart_values|json_script:"chart-income" }}
+      {{ expenses_chart_values|json_script:"chart-expenses" }}
+    </div>
+
+    <div class="card">
+      <div class="chead">
+        <div>
+          <div class="h">Profit Breakdown</div>
+          <div class="n">Income • Expenses • Profit/Loss</div>
+        </div>
+      </div>
+
+      <div class="pie-wrap">
+        <canvas id="incomeExpensePie"></canvas>
+        <div id="pie1NoData" class="no-data">No income/expense data yet.</div>
+      </div>
+
+      <div class="pie-wrap" style="margin-top:10px;">
+        <canvas id="profitLossPie"></canvas>
+        <div id="pie2NoData" class="no-data">No profit/loss yet.</div>
+      </div>
+
+      {{ trips_total|json_script:"income-total" }}
+      {{ expenses_total|json_script:"expense-total" }}
+      {{ profit_value|json_script:"profit-value" }}
+      {{ loss_value|json_script:"loss-value" }}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ✅ load LOCAL chart.js (no CDN issues) -->
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // debug
+  const jsStatus = document.getElementById('jsStatus');
+  const chartStatus = document.getElementById('chartStatus');
+  if (jsStatus) jsStatus.textContent = 'RUNNING ✅';
+  if (chartStatus) chartStatus.textContent = (typeof Chart === 'undefined') ? 'NOT LOADED ❌' : 'LOADED ✅';
+
+  if (typeof Chart === 'undefined') return;
+
+  function readJSON(id, fallback){
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    try { return JSON.parse(el.textContent || 'null'); } catch(e) { return fallback; }
+  }
+  function toNum(x){
+    if (x === null || x === undefined) return 0;
+    if (typeof x === 'number') return isFinite(x) ? x : 0;
+    const n = Number(String(x).replace(/,/g,'').trim());
+    return isFinite(n) ? n : 0;
+  }
+
+  const labels = readJSON('chart-labels', []);
+  const incomeArr = readJSON('chart-income', []);
+  const expArr = readJSON('chart-expenses', []);
+
+  const hasLineData = (incomeArr||[]).some(v => toNum(v) > 0) || (expArr||[]).some(v => toNum(v) > 0);
+  if (!hasLineData) document.getElementById('lineNoData').style.display = 'grid';
+
+  const canvas = document.getElementById('activityChart');
+  if (canvas && hasLineData) {
+    new Chart(canvas.getContext('2d'), {
+      type:'line',
+      data:{
+        labels: labels,
+        datasets:[
+          { label:'Income', data: (incomeArr||[]).map(toNum), borderWidth:2, tension:.35, fill:true, borderColor:'#06b6d4', pointRadius:2 },
+          { label:'Expenses', data: (expArr||[]).map(toNum), borderWidth:2, tension:.35, fill:true, borderColor:'#6366f1', pointRadius:2 }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{ legend:{position:'top'} },
+        scales:{
+          x:{ grid:{display:false}, ticks:{ maxRotation:0, autoSkip:true, maxTicksLimit:7 } },
+          y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } }
+        }
+      }
+    });
+  }
+
+  const incomeTotal = toNum(readJSON('income-total', 0));
+  const expenseTotal = toNum(readJSON('expense-total', 0));
+  const profitValue = toNum(readJSON('profit-value', 0));
+  const lossValue = toNum(readJSON('loss-value', 0));
+
+  const pie1Has = (incomeTotal > 0 || expenseTotal > 0);
+  if (!pie1Has) document.getElementById('pie1NoData').style.display = 'grid';
+  if (pie1Has) {
+    new Chart(document.getElementById('incomeExpensePie').getContext('2d'), {
+      type:'doughnut',
+      data:{ labels:['Income','Expenses'], datasets:[{ data:[incomeTotal, expenseTotal], borderWidth:0 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{position:'bottom'} } }
+    });
+  }
+
+  const pie2Has = (profitValue > 0 || lossValue > 0);
+  if (!pie2Has) document.getElementById('pie2NoData').style.display = 'grid';
+  if (pie2Has) {
+    new Chart(document.getElementById('profitLossPie').getContext('2d'), {
+      type:'doughnut',
+      data:{ labels:['Profit','Loss'], datasets:[{ data:[profitValue, lossValue], borderWidth:0 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{position:'bottom'} } }
+    });
+  }
+});
+</script>
+{% endblock %}

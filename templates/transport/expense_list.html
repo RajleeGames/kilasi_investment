@@ -1,0 +1,420 @@
+{# templates/transport/expense_list.html #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Transport Expenses{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --bg: #f7fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: rgba(15,23,42,.08);
+  --border2: rgba(15,23,42,.06);
+  --shadow: 0 12px 30px rgba(2,6,23,.08);
+  --shadow2: 0 8px 22px rgba(2,6,23,.06);
+  --radius: 14px;
+  --focus: rgba(14,165,233,.25);
+  --accent: #0ea5e9;
+  --good: #10b981;
+  --danger: #ef4444;
+  --small: .92rem;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* Page wrapper */
+.exp-card{
+  max-width: 1120px;
+  margin: 18px auto;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+.exp-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 4px 4px 12px 4px;
+}
+
+.exp-title{
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.exp-sub{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.exp-actions{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+
+.exp-search{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-width: 280px;
+  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+}
+
+.exp-search i{ color: var(--muted); }
+
+.exp-search input{
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: .95rem;
+  background: transparent;
+}
+
+.exp-search input::placeholder{ color: #94a3b8; }
+
+.exp-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  color: var(--muted);
+  font-size: .86rem;
+  user-select:none;
+}
+
+.exp-chip strong{
+  color: var(--text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+}
+
+/* Table */
+.exp-table-wrap{ padding-top: 6px; }
+
+.exp-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.exp-table thead th{
+  padding: .65rem .85rem;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #475569;
+  border: 0;
+  background: transparent;
+  font-weight: 800;
+}
+
+.exp-row{
+  background: #fff;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow2);
+  border-radius: 12px;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.exp-row:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(2,6,23,.10);
+  border-color: rgba(14,165,233,.18);
+}
+
+.exp-table td{
+  padding: .7rem .85rem;
+  border: 0;
+  vertical-align: middle;
+  font-size: var(--small);
+  color: var(--text);
+  max-width: 360px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exp-muted{ color: var(--muted); }
+
+.exp-date{
+  font-family: var(--mono);
+  font-size: .88rem;
+  color: #0b1220;
+}
+
+.exp-amount{
+  text-align: right;
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.amount-pill{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(16,185,129,.18);
+  background: rgba(16,185,129,.08);
+  color: #065f46;
+}
+
+.amount-pill .tzs{
+  font-weight: 800;
+  opacity: .9;
+  font-size: .82rem;
+}
+
+.exp-clickable{
+  cursor: pointer;
+}
+
+.exp-clickable:focus,
+.exp-clickable:focus-within{
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Empty state */
+.exp-empty{
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+  background: linear-gradient(180deg, #fbfdff, #fff);
+  border-radius: 12px;
+  border: 1px dashed rgba(15,23,42,.14);
+}
+
+/* Mobile layout */
+.td-label{ display:none; }
+
+@media (max-width: 991.98px){
+  .exp-top{ flex-direction: column; align-items: flex-start; }
+  .exp-actions{ justify-content:flex-start; width: 100%; }
+  .exp-search{ min-width: 100%; }
+
+  .exp-table thead{ display:none; }
+  .exp-row{ display:block; padding: .65rem .75rem; }
+  .exp-table td{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: .5rem 0;
+    white-space: normal;
+    max-width: none;
+    border-bottom: 1px dashed rgba(15,23,42,.08);
+  }
+  .exp-table td:last-child{ border-bottom: 0; }
+  .td-label{
+    display:inline-block;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: .82rem;
+    min-width: 34%;
+  }
+  .exp-amount{ text-align: left; }
+}
+
+/* Small helpers */
+.me-1{ margin-right: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exp-card">
+  <div class="exp-top">
+    <div>
+      <h2 class="exp-title">
+        <i class="fa-solid fa-truck-moving"></i>
+        Transport Expenses
+      </h2>
+      <div class="exp-sub">Track vehicle costs, filter fast, and open a record by clicking a row.</div>
+    </div>
+
+    <div class="exp-actions">
+      <div class="exp-search" title="Search expenses">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="expenseSearch" type="search" placeholder="Search vehicle, type, desc, branch, user..." aria-label="Search expenses">
+      </div>
+
+      <span class="exp-chip" title="Visible rows">
+        Showing <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong>
+      </span>
+
+      <a href="{% url 'transport:expense_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> Add Expense
+      </a>
+    </div>
+  </div>
+
+  <div class="exp-table-wrap">
+    {% if expenses %}
+      <div class="table-responsive" role="region" aria-label="Transport expenses list">
+        <table class="exp-table" id="expensesTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th class="text-end">Amount</th>
+              <th>Branch</th>
+              <th>Recorded By</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for e in expenses %}
+            <tr class="exp-row expense-row {% if e.get_absolute_url %}exp-clickable{% endif %}"
+                {% if e.get_absolute_url %}data-href="{{ e.get_absolute_url }}"{% endif %}
+                tabindex="0"
+                aria-label="Expense row">
+              <td data-label="Date">
+                <span class="td-label">Date</span>
+                <span class="exp-date">{{ e.expense_date|date:"d M Y H:i" }}</span>
+              </td>
+
+              <td data-label="Vehicle">
+                <span class="td-label">Vehicle</span>
+                <span>{{ e.vehicle|default:"—" }}</span>
+              </td>
+
+              <td data-label="Type">
+                <span class="td-label">Type</span>
+                <span class="exp-muted">{{ e.get_expense_type_display|default:"—" }}</span>
+              </td>
+
+              <td data-label="Description">
+                <span class="td-label">Description</span>
+                <span title="{{ e.description|default:'' }}">{{ e.description|default:"—" }}</span>
+              </td>
+
+              <td data-label="Amount" class="exp-amount">
+                <span class="td-label">Amount</span>
+                <span class="amount-pill amount-badge" data-raw="{{ e.amount }}">
+                  <span class="tzs">TZS</span>
+                  <span class="amt">{{ e.amount|floatformat:2|intcomma }}</span>
+                </span>
+              </td>
+
+              <td data-label="Branch">
+                <span class="td-label">Branch</span>
+                <span class="exp-muted">{{ e.branch|default:"—" }}</span>
+              </td>
+
+              <td data-label="Recorded By">
+                <span class="td-label">Recorded By</span>
+                <span class="exp-muted">{{ e.recorded_by.username|default:"—" }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="exp-empty">
+        No expenses recorded yet. Click <a href="{% url 'transport:expense_create' %}">Add Expense</a> to start.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Click + keyboard open row (only if data-href exists)
+  document.querySelectorAll('.expense-row').forEach(function (row) {
+    const href = row.dataset.href;
+    if (!href) return;
+
+    row.addEventListener('click', function () {
+      window.location.assign(href);
+    });
+
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.assign(href);
+      }
+    });
+  });
+
+  // Count chips
+  const totalEl = document.getElementById('totalCount');
+  const visibleEl = document.getElementById('visibleCount');
+  const table = document.getElementById('expensesTable');
+
+  function updateCounts() {
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const visibleRows = rows.filter(r => r.style.display !== 'none');
+    totalEl && (totalEl.textContent = rows.length);
+    visibleEl && (visibleEl.textContent = visibleRows.length);
+  }
+
+  // Search filter
+  const searchInput = document.getElementById('expenseSearch');
+  function applyFilter() {
+    if (!table) return;
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach(r => {
+      const text = r.textContent.trim().toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+
+    updateCounts();
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', applyFilter);
+  }
+
+  // Format amounts (keeps server formatting, but if raw number exists, ensure nice locale)
+  document.querySelectorAll('.amount-badge').forEach(function (pill) {
+    const raw = pill.dataset.raw;
+    if (!raw) return;
+    const n = Number(raw);
+    if (Number.isFinite(n)) {
+      const amt = pill.querySelector('.amt');
+      if (amt) {
+        amt.textContent = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    }
+  });
+
+  // Initial counts
+  updateCounts();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Stock Management{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sm-wrap{ max-width: 1200px; margin: 0 auto; padding: 16px; }
+  .sm-card{
+    background:#fff; border:1px solid rgba(15,23,42,.08);
+    border-radius:14px; box-shadow:0 10px 24px rgba(2,6,23,.06);
+  }
+  .sm-card .hd{
+    padding:14px 16px; border-bottom:1px solid rgba(15,23,42,.08);
+    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .sm-title{ font-weight:900; margin:0; }
+  .sm-sub{ color:#64748b; font-size:.9rem; }
+  .sm-body{ padding:16px; }
+  .sm-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  @media (max-width: 991.98px){ .sm-grid{ grid-template-columns:1fr; } }
+
+  .sm-field label{ font-weight:800; font-size:.86rem; color:#334155; margin-bottom:6px; display:block; }
+  .sm-field .form-control, .sm-field .form-select{ border-radius:12px; }
+
+  .sm-search-box{ position:relative; }
+  .sm-results{
+    position:absolute; left:0; right:0; top:100%;
+    background:#fff; border:1px solid rgba(15,23,42,.12);
+    border-radius:12px; margin-top:6px; max-height:260px; overflow:auto; z-index:50;
+    box-shadow: 0 14px 28px rgba(2,6,23,.12);
+  }
+  .sm-results button{
+    width:100%; text-align:left; padding:10px 12px; border:0; background:#fff;
+    display:flex; justify-content:space-between; gap:10px;
+  }
+  .sm-results button:hover{ background:#f1f5f9; }
+  .pill{ font-size:.78rem; padding:3px 10px; border-radius:999px; border:1px solid rgba(15,23,42,.12); background:#f8fafc; color:#475569; }
+  .pill.good{ background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.22); color:#065f46; }
+  .pill.bad{ background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.22); color:#7f1d1d; }
+
+  .sm-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .btn-round{ border-radius:12px; font-weight:800; }
+
+  .sm-table thead th{ font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; color:#475569; }
+  .sm-table td{ vertical-align:middle; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sm-wrap">
+
+  <div class="sm-card mb-3">
+    <div class="hd">
+      <div>
+        <h4 class="sm-title mb-1"><i class="fa-solid fa-boxes-stacked me-2"></i>Stock Management</h4>
+        <div class="sm-sub">Admin only • Add or reduce stock per branch • Movements are logged</div>
+      </div>
+
+      <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="input-group input-group-sm" style="min-width:260px;">
+          <span class="input-group-text"><i class="fa-solid fa-building"></i></span>
+          <select name="branch" class="form-select" onchange="this.form.submit()">
+            {% for b in branches %}
+              <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                {{ b.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <noscript><button class="btn btn-sm btn-outline-primary">Apply</button></noscript>
+      </form>
+    </div>
+
+    <div class="sm-body">
+      <form method="post" class="sm-grid">
+        {% csrf_token %}
+
+        <input type="hidden" name="branch" value="{{ selected_branch }}">
+        <input type="hidden" name="product_id" id="productId">
+
+        <div class="sm-field">
+          <label>Selected Branch</label>
+          <div class="form-control" style="background:#f8fafc;">
+            {{ selected_branch_obj.name|default:"—" }}
+          </div>
+        </div>
+
+        <div class="sm-field sm-search-box">
+          <label>Search Product</label>
+          <input type="text" id="productSearch" class="form-control"
+                 placeholder="Type product name…"
+                 autocomplete="off">
+          <div id="searchResults" class="sm-results d-none"></div>
+          <div class="sm-sub mt-1" id="selectedProductText">No product selected.</div>
+        </div>
+
+        <div class="sm-field">
+          <label>Quantity</label>
+          <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+          <div class="sm-sub mt-1">Enter how many units to add/reduce</div>
+        </div>
+
+        <div class="sm-field">
+          <label>Action</label>
+          <select name="action" class="form-select">
+            <option value="add">Add Stock (Restock)</option>
+            <option value="reduce">Reduce Stock</option>
+          </select>
+          <div class="sm-sub mt-1">Reduce is for corrections/damage/etc.</div>
+        </div>
+
+        <div class="sm-field" style="grid-column: 1 / -1;">
+          <label>Note (optional)</label>
+          <input type="text" name="note" class="form-control"
+                 placeholder="Example: Supplier delivery invoice #123 / Damaged items / Stock correction">
+        </div>
+
+        <div class="sm-actions" style="grid-column: 1 / -1;">
+          <button type="submit" class="btn btn-primary btn-round">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Save Stock Change
+          </button>
+          <a href="{% url 'sales:stock_management' %}" class="btn btn-outline-secondary btn-round">
+            <i class="fa-solid fa-rotate me-1"></i> Reset
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="sm-card">
+    <div class="hd">
+      <div>
+        <h5 class="mb-1"><i class="fa-solid fa-clock-rotate-left me-2"></i>Recent Stock Movements</h5>
+        <div class="sm-sub">
+          Showing latest movements for
+          <strong>{{ selected_branch_obj.name|default:"All" }}</strong>
+        </div>
+      </div>
+      <span class="pill">Updated: {{ today_str }}</span>
+    </div>
+
+    <div class="sm-body">
+      <div class="table-responsive">
+        <table class="table sm-table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product</th>
+              <th>Branch</th>
+              <th class="text-end">Change</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in movements %}
+              <tr>
+                <td>{{ m.timestamp|date:"d M Y H:i" }}</td>
+                <td class="fw-semibold">{{ m.product.name }}</td>
+                <td>{{ m.branch.name|default:"—" }}</td>
+                <td class="text-end">
+                  {% if m.change >= 0 %}
+                    <span class="pill good">+{{ m.change }}</span>
+                  {% else %}
+                    <span class="pill bad">{{ m.change }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-muted">{{ m.note|default:"—" }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">No stock movements yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const branchId = "{{ selected_branch|escapejs }}";
+  const searchInput = document.getElementById("productSearch");
+  const resultsBox = document.getElementById("searchResults");
+  const productIdEl = document.getElementById("productId");
+  const selectedText = document.getElementById("selectedProductText");
+
+  let t = null;
+
+  function hideResults(){
+    resultsBox.classList.add("d-none");
+    resultsBox.innerHTML = "";
+  }
+
+  function showResults(items){
+    if(!items.length){ hideResults(); return; }
+    resultsBox.innerHTML = "";
+    items.forEach(p => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerHTML = `
+        <div>
+          <div class="fw-semibold">${p.name}</div>
+          <div class="sm-sub">TZS ${Number(p.price).toLocaleString()}</div>
+        </div>
+        <div class="pill ${p.stock > 0 ? "good" : "bad"}">Stock: ${p.stock}</div>
+      `;
+      btn.addEventListener("click", () => {
+        productIdEl.value = p.id;
+        selectedText.innerHTML = `Selected: <strong>${p.name}</strong> • Current stock: <strong>${p.stock}</strong>`;
+        searchInput.value = p.name;
+        hideResults();
+      });
+      resultsBox.appendChild(btn);
+    });
+    resultsBox.classList.remove("d-none");
+  }
+
+  async function doSearch(){
+    const q = (searchInput.value || "").trim();
+    if(q.length < 2){ hideResults(); return; }
+
+    const url = `{% url 'sales:stock_search_products' %}?q=${encodeURIComponent(q)}&branch=${encodeURIComponent(branchId)}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    showResults(data || []);
+  }
+
+  searchInput.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(doSearch, 250);
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!resultsBox.contains(e.target) && e.target !== searchInput){
+      hideResults();
+    }
+  });
+})();
+</script>
+{% endblock %}

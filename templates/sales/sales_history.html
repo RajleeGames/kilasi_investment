@@ -1,0 +1,303 @@
+{# templates/sales/kilasi_sales_history.html #}
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Sales History{% endblock %}
+
+{% block extra_css %}
+<style>
+  .k-card{
+    border: 1px solid rgba(15,23,42,.06);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(2,6,23,.08);
+    overflow: hidden;
+  }
+  .k-hero{
+    border-radius: 18px;
+    background:
+      radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
+      radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
+      linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.65));
+    border: 1px solid rgba(15,23,42,.06);
+    box-shadow: 0 12px 30px rgba(2,6,23,.08);
+    padding: 14px;
+  }
+  @media(min-width: 768px){
+    .k-hero{ padding: 18px; }
+  }
+
+  .k-title{
+    font-weight: 800;
+    letter-spacing: .2px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: .35rem .6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,.08);
+    background: rgba(255,255,255,.8);
+  }
+
+  .filter-card .form-control,
+  .filter-card .form-select{
+    border-radius: 14px;
+    height: 44px;
+  }
+
+  .k-btn{
+    border-radius: 14px;
+    height: 44px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .k-table thead th{
+    font-size: .84rem;
+    color: #334155;
+    border-bottom: 1px solid rgba(15,23,42,.08);
+    white-space: nowrap;
+  }
+  .k-table tbody td{
+    vertical-align: middle;
+    border-top: 1px solid rgba(15,23,42,.06);
+  }
+
+  .mono{ font-variant-numeric: tabular-nums; }
+
+  .btn-receipt{
+    border-radius: 14px;
+    height: 38px;
+    padding: 0 12px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-weight: 700;
+  }
+
+  .btn-view{
+    border-radius: 14px;
+    height: 38px;
+    padding: 0 12px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-weight: 700;
+  }
+
+  @media(max-width: 576px){
+    .hide-xs{ display:none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="k-hero mb-3">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="pill">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span class="k-title">Sales History</span>
+        </span>
+
+        {% if selected_branch_obj %}
+          <span class="pill">
+            <i class="fa-solid fa-building"></i>
+            <span class="fw-semibold">{{ selected_branch_obj.name }}</span>
+          </span>
+        {% endif %}
+      </div>
+      <div class="text-muted small mt-2">
+        All invoices (Cash • Bank • Debt). Use “Receipt” to print thermal invoice.
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'sales:kilasi_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+         class="btn btn-outline-primary k-btn">
+        <i class="fa-solid fa-calendar-day"></i> <span class="d-none d-sm-inline">Daily Report</span>
+        <span class="d-inline d-sm-none">Report</span>
+      </a>
+
+      <a href="{% url 'sales:enhanced_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+         class="btn btn-outline-dark k-btn">
+        <i class="fa-solid fa-chart-simple"></i> <span class="d-none d-sm-inline">Enhanced</span>
+        <span class="d-inline d-sm-none">Charts</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if branches %}
+<div class="k-card filter-card mb-3">
+  <div class="p-3 p-md-4">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-7">
+        <label class="form-label fw-semibold mb-1">Branch</label>
+        <select name="branch" class="form-select">
+          <option value="">All Branches</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+              {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-md-5 d-flex gap-2">
+        <button class="btn btn-primary k-btn w-100">
+          <i class="fa-solid fa-filter"></i> Apply
+        </button>
+        <a class="btn btn-outline-secondary k-btn w-100"
+           href="{% url 'sales:kilasi_sales_history' %}">
+          Reset
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="k-card">
+  <div class="p-3 p-md-4 border-bottom" style="background:rgba(255,255,255,.7);">
+    <div class="d-flex align-items-center justify-content-between gap-2">
+      <div class="fw-bold">
+        <i class="fa-solid fa-list me-2"></i>Invoices
+      </div>
+      <div class="text-muted small">
+        Showing {{ invoices|length }} record(s)
+      </div>
+    </div>
+  </div>
+
+  <div class="p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 k-table">
+        <thead class="table-light">
+          <tr>
+            <th class="mono">ID</th>
+            <th class="hide-xs">Date</th>
+            <th>Customer</th>
+            <th class="hide-xs">Seller</th>
+            <th>Status</th>
+            <th class="text-end mono">Total</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for inv in invoices %}
+            <tr>
+              <td class="fw-bold mono">
+                <a class="text-decoration-none"
+                   href="{% url 'sales:invoice_detail' inv.id %}">
+                  #{{ inv.id }}
+                </a>
+              </td>
+
+              <td class="hide-xs mono">
+                {{ inv.created_at|date:"Y-m-d H:i" }}
+              </td>
+
+              <td class="fw-semibold">
+                <div class="d-flex flex-column">
+                  <span>{{ inv.customer|default:"Walk-in" }}</span>
+                  <small class="text-muted d-inline d-sm-none mono">
+                    {{ inv.created_at|date:"Y-m-d H:i" }}
+                  </small>
+                </div>
+              </td>
+
+              <td class="hide-xs">
+                {{ inv.seller.username }}
+              </td>
+
+              <td>
+                {% if inv.status == "cash" %}
+                  <span class="badge bg-success">Cash</span>
+                {% elif inv.status == "bank" %}
+                  <span class="badge bg-primary">Bank</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Debt</span>
+                {% endif %}
+
+                {% if inv.paid %}
+                  <span class="badge bg-dark ms-1">Paid</span>
+                {% else %}
+                  {% if inv.status == "debt" %}
+                    <span class="badge bg-danger ms-1">Unpaid</span>
+                  {% endif %}
+                {% endif %}
+              </td>
+
+              <td class="text-end fw-bold mono">
+                Tsh {{ inv.total_amount|floatformat:0|intcomma }}
+              </td>
+
+              <td class="text-end d-flex justify-content-end gap-2 flex-wrap">
+                <a class="btn btn-outline-secondary btn-sm btn-view"
+                   href="{% url 'sales:invoice_detail' inv.id %}">
+                  <i class="fa-solid fa-eye"></i>
+                  <span class="d-none d-md-inline">View</span>
+                </a>
+
+                <a class="btn btn-outline-dark btn-sm btn-receipt"
+                   href="{% url 'sales:invoice_receipt' inv.id %}?autoprint=1"
+                   target="_blank" rel="noopener">
+                  <i class="fa-solid fa-receipt"></i>
+                  <span class="d-none d-md-inline">Receipt</span>
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <div class="mb-2"><i class="fa-regular fa-face-frown fa-lg"></i></div>
+                No invoices found.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <div class="p-3 p-md-4 border-top" style="background:rgba(255,255,255,.7);">
+        <nav>
+          <ul class="pagination mb-0 justify-content-center flex-wrap">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                  ‹ Prev
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">‹ Prev</span></li>
+            {% endif %}
+
+            <li class="page-item disabled">
+              <span class="page-link">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                  Next ›
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Next ›</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

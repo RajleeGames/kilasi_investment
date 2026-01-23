@@ -1,0 +1,834 @@
+{# templates/base.html #}
+{% load static %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}KILASI INVESTMENT{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" / >
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous"/>
+
+  <!-- Select2 -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg: #f6f8fc;
+      --text: #0b1220;
+      --muted: #6b7280;
+      --accent: #0ea5e9;
+
+      --sb-w: 280px;
+      --sb-w-collapsed: 78px;
+
+      --radius: 14px;
+      --shadow-sm: 0 10px 28px rgba(2,6,23,.08);
+      --shadow-md: 0 18px 46px rgba(2,6,23,.12);
+
+      --sb-bg1: #061126;
+      --sb-bg2: #0b1b2b;
+      --sb-text: #e6eef6;
+      --sb-line: rgba(255,255,255,.08);
+    }
+
+    html, body { height:100%; margin:0; }
+    html { scroll-behavior: smooth; }
+    body{
+      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.06), transparent 50%),
+        radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.04), transparent 45%),
+        var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ONE SCROLL: page scroll only */
+    .app{
+      min-height:100vh;
+      display:flex;
+      align-items:stretch;
+    }
+
+    /* ===================== DESKTOP SIDEBAR ===================== */
+    .sidebar{
+      width: var(--sb-w);
+      flex: 0 0 var(--sb-w);
+      padding: 14px;
+
+      background: linear-gradient(180deg, var(--sb-bg1) 0%, var(--sb-bg2) 60%, var(--sb-bg1) 100%);
+      color: var(--sb-text);
+      border-right: 1px solid var(--sb-line);
+      box-shadow: var(--shadow-sm);
+
+      /* IMPORTANT: no inner scroll */
+      position: relative;
+      overflow: visible;
+
+      display:none;
+    }
+    @media(min-width: 992px){ .sidebar{ display:flex; flex-direction:column; } }
+
+    .sidebar.collapsed{
+      width: var(--sb-w-collapsed);
+      flex-basis: var(--sb-w-collapsed);
+    }
+
+    .sb-brand{
+      display:flex; align-items:center; gap:12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      margin-bottom: 10px;
+    }
+    .sb-brand .logo{
+      width:46px; height:46px; border-radius: 14px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(96,165,250,.12));
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 18px;
+      flex: 0 0 auto;
+    }
+    .sb-brand .name{ font-weight:800; color:#ecf8ff; line-height:1.1; }
+    .sb-brand .sub{ font-size:.78rem; color: rgba(235,245,255,.68); }
+
+    .sidebar.collapsed .sb-brand .name,
+    .sidebar.collapsed .sb-brand .sub{ display:none; }
+
+    .sb-section-title{
+      margin: 14px 6px 8px;
+      font-size:.72rem;
+      letter-spacing:.12em;
+      text-transform: uppercase;
+      color: rgba(235,245,255,.58);
+    }
+    .sidebar.collapsed .sb-section-title{ display:none; }
+
+    .sb-link{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      color: rgba(235,245,255,.92);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: background .14s ease, transform .14s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      width:100%;
+    }
+    .sb-link i{ width:20px; text-align:center; font-size:16px; }
+    .sb-link:hover{
+      background: rgba(14,165,233,.10);
+      transform: translateX(2px);
+      color:#eafcff;
+    }
+    .sb-link.active{
+      background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.10));
+      border-color: rgba(14,165,233,.20);
+      color:#fff;
+    }
+
+    /* collapse mode: icons only, everything centered */
+    .sidebar.collapsed .sb-link{ justify-content:center; padding: 13px 10px; }
+    .sidebar.collapsed .sb-link .label{ display:none; }
+
+    /* dropdown chevron */
+    .chev{ margin-left:auto; opacity:.8; }
+    .sidebar.collapsed .chev{ display:none; }
+
+    /* Submenu */
+    .sb-sub{
+      margin: 8px 0 0 10px;
+      padding-left: 10px;
+      border-left: 1px dashed rgba(255,255,255,.14);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    /* IMPORTANT: in collapsed mode hide submenus completely (clean look) */
+    .sidebar.collapsed .collapse{ display:none !important; }
+
+    /* ===================== FOOTER ===================== */
+    .sb-footer{
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .avatar{
+      width:46px; height:46px; border-radius: 14px;
+      object-fit:cover;
+      border:2px solid rgba(14,165,233,.22);
+      background:#071227;
+      flex:0 0 auto;
+    }
+    .role-pill{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:.78rem;
+      color:#eafcff;
+      background: rgba(14,165,233,.10);
+      border: 1px solid rgba(14,165,233,.16);
+      padding: .22rem .55rem;
+      border-radius: 999px;
+      margin-top: 6px;
+    }
+    .role-pill small{ color: rgba(235,245,255,.75); }
+
+    /* Footer actions */
+    .footer-actions{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+    }
+    .footer-actions .btn{
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* COLLAPSED FOOTER FIX (THIS is what your screenshot needs) */
+    .sidebar.collapsed .sb-footer{
+      padding: 10px 8px;
+      text-align:center;
+    }
+    .sidebar.collapsed .sb-footer .profile-details{ display:none; }
+    .sidebar.collapsed .avatar{
+      width:40px; height:40px; border-radius: 12px;
+      margin: 0 auto;
+      display:block;
+    }
+    .sidebar.collapsed .footer-actions{
+      justify-content:center;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .btn-icon{
+      width:44px; height:44px;
+      padding:0 !important;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 14px;
+    }
+    .btn-icon span{ display:none; } /* hide text always inside icon buttons */
+    .btn-icon i{ font-size: 16px; }
+
+    /* ===================== MAIN ===================== */
+    .main{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      min-height:100vh;
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(15,23,42,.06);
+      padding: 10px 12px;
+    }
+
+    .brand-mini{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800;
+      color: var(--text);
+      text-decoration:none;
+    }
+    .brand-mini .dot{
+      width:38px; height:38px; border-radius: 14px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(96,165,250,.12));
+      border: 1px solid rgba(15,23,42,.06);
+    }
+
+    .clock{ font-size:.9rem; color:#334155; white-space:nowrap; }
+
+    /* Desktop toggle */
+    .btn-toggle-sidebar{ display:none; }
+    @media(min-width: 992px){
+      .btn-toggle-sidebar{
+        display:inline-flex;
+        width:44px; height:44px;
+        align-items:center; justify-content:center;
+        border-radius: 14px;
+      }
+    }
+
+    .page{ padding: 16px; flex:1; }
+    @media(min-width: 576px){ .page{ padding: 18px; } }
+    @media(min-width: 992px){ .page{ padding: 22px; } }
+
+    .alert{
+      border-radius: var(--radius);
+      border: 1px solid rgba(15,23,42,.06);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ===================== MOBILE OFFCANVAS ===================== */
+    .offcanvas.sidebar-offcanvas{
+      background: linear-gradient(180deg, var(--sb-bg1) 0%, var(--sb-bg2) 60%, var(--sb-bg1) 100%);
+      color: var(--sb-text);
+      width: min(86vw, 360px);
+      box-shadow: var(--shadow-md);
+      border-right: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .offcanvas.sidebar-offcanvas .offcanvas-header{
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      padding: 14px;
+    }
+    .offcanvas.sidebar-offcanvas .offcanvas-body{
+      padding: 12px 14px 14px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .offcanvas.sidebar-offcanvas .sb-link{
+      padding: 13px 12px;
+      border-radius: 14px;
+      font-size: 15px;
+    }
+    .offcanvas.sidebar-offcanvas .sb-sub .sb-link{
+      padding: 11px 12px;
+      font-size: 14px;
+    }
+
+    /* Select2 */
+    .select2-container .select2-selection--single{
+      height:42px; border-radius:12px; display:flex; align-items:center;
+    }
+
+    /* ----------------------------------------------------------
+       NEW RULE: hide the desktop sidebar footer (avatar + username)
+       but keep mobile/offcanvas profile links (so mobile still shows them)
+       ---------------------------------------------------------- */
+    @media(min-width: 992px){
+      .sb-footer {
+        display: none !important;
+      }
+    }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ===================== DESKTOP SIDEBAR ===================== -->
+  <aside class="sidebar" id="primarySidebar">
+
+     <div class="sb-brand">
+      <div class="logo"><i class="fa-solid fa-building"></i></div>
+      <div>
+        <div class="name">KILASI INVESTMENT</div>
+        <div class="sub">Sales • Stock • Transport</div>
+      </div>
+    </div>
+
+    <nav>
+      {% if request.user.is_authenticated and request.user.profile %}
+        {% with role=request.user.profile.role %}
+
+          <div class="sb-section-title">Main</div>
+
+          {% if role == 'admin' or role == 'cashier' %}
+            <a class="sb-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+               href="{% url 'sales:admin_dashboard' %}" title="Dashboard">
+              <i class="fa-solid fa-gauge-high"></i> <span class="label">Dashboard</span>
+            </a>
+          {% endif %}
+
+          {% if role == 'seller' %}
+            <a class="sb-link {% if request.resolver_match.url_name == 'seller_dashboard' %}active{% endif %}"
+               href="{% url 'sales:seller_dashboard' %}" title="POS (Sell)">
+              <i class="fa-solid fa-store"></i> <span class="label">POS (Sell)</span>
+            </a>
+          {% endif %}
+
+         {# ✅ Sales-only menus: hide from transport #}
+{% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+
+  <a class="sb-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}"
+     href="{% url 'sales:product_list' %}" title="Products">
+    <i class="fa-solid fa-boxes-stacked"></i> <span class="label">Products</span>
+  </a>
+
+  <a class="sb-link {% if request.resolver_match.url_name == 'top_selling_products' %}active{% endif %}"
+     href="{% url 'sales:top_selling_products' %}" title="Top Selling">
+    <i class="fa-solid fa-ranking-star"></i> <span class="label">Top Selling</span>
+  </a>
+
+{% endif %}
+
+          {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+  <a class="sb-link {% if request.resolver_match.url_name == 'outstanding_debts' %}active{% endif %}"
+     href="{% url 'sales:outstanding_debts' %}" title="Debts">
+    <i class="fa-solid fa-clock-rotate-left"></i> <span class="label">Debts</span>
+  </a>
+
+
+
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsDesk" role="button"
+               aria-expanded="false" aria-controls="sbReportsDesk" title="Reports">
+              <i class="fa-solid fa-chart-line"></i> <span class="label">Reports</span>
+              <i class="fa-solid fa-chevron-down fa-xs chev"></i>
+            </a>
+            <div class="collapse {% if request.resolver_match.url_name in 'sales_history sales_report enhanced_sales_report expense_overview' %}show{% endif %}"
+                 id="sbReportsDesk">
+              <div class="sb-sub">
+                <a class="sb-link {% if request.resolver_match.url_name == 'sales_history' %}active{% endif %}"
+                   href="{% url 'sales:kilasi_sales_history' %}" title="History">
+                  <i class="fa-regular fa-clock"></i> <span class="label">History</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}"
+                   href="{% url 'sales:kilasi_sales_report' %}" title="Daily">
+                  <i class="fa-solid fa-calendar-day"></i> <span class="label">Daily</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'enhanced_sales_report' %}active{% endif %}"
+                   href="{% url 'sales:enhanced_sales_report' %}" title="Enhanced">
+                  <i class="fa-solid fa-chart-simple"></i> <span class="label">Enhanced</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'expense_overview' %}active{% endif %}"
+                   href="{% url 'sales:expense_overview' %}" title="Expenses">
+                  <i class="fa-solid fa-receipt"></i> <span class="label">Expenses</span>
+                </a>
+              </div>
+            </div>
+          {% endif %}
+
+          {# ===== TRANSPORT DROPDOWN (Admin/Cashier/Transport) ===== #}
+          {% if role == 'admin' or role == 'cashier' or role == 'transport' %}
+            <a class="sb-link {% if request.resolver_match.namespace == 'transport' %}active{% endif %}"
+               data-bs-toggle="collapse" href="#sbTransportDesk" role="button"
+               aria-expanded="{% if request.resolver_match.namespace == 'transport' %}true{% else %}false{% endif %}"
+               aria-controls="sbTransportDesk" title="Transport">
+              <i class="fa-solid fa-truck-moving"></i> <span class="label">Transport</span>
+              <i class="fa-solid fa-chevron-down fa-xs chev"></i>
+            </a>
+
+             <div class="collapse {% if request.resolver_match.namespace == 'transport' %}show{% endif %}" id="sbTransportDesk">
+              <div class="sb-sub">
+                <a class="sb-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}"
+                   href="{% url 'transport:index' %}" title="Transport Dashboard">
+                  <i class="fa-solid fa-gauge"></i> <span class="label">Dashboard</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'trip_list' %}active{% endif %}"
+                   href="{% url 'transport:trip_list' %}" title="Trips">
+                  <i class="fa-solid fa-route"></i> <span class="label">Trips</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'vehicle_list' %}active{% endif %}"
+                   href="{% url 'transport:vehicle_list' %}" title="Vehicles">
+                  <i class="fa-solid fa-truck"></i> <span class="label">Vehicles</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'driver_list' %}active{% endif %}"
+                   href="{% url 'transport:driver_list' %}" title="Drivers">
+                  <i class="fa-solid fa-id-card"></i> <span class="label">Drivers</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}"
+                   href="{% url 'transport:expense_list' %}" title="Expenses">
+                  <i class="fa-solid fa-gas-pump"></i> <span class="label">Expenses</span>
+                </a>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if role == 'admin' %}
+            <div class="sb-section-title">Admin</div>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'stock_management' %}active{% endif %}"
+               href="{% url 'sales:stock_management' %}" title="Stock Management">
+              <i class="fa-solid fa-boxes-packing"></i> <span class="label">Stock</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}"
+               href="{% url 'sales:customer_list' %}" title="Customers">
+              <i class="fa-solid fa-users"></i> <span class="label">Customers</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'supplier_list' %}active{% endif %}"
+               href="{% url 'sales:supplier_list' %}" title="Suppliers">
+              <i class="fa-solid fa-truck-field"></i> <span class="label">Suppliers</span>
+            </a>
+          {% endif %}
+
+          {% if request.user.is_authenticated and request.user.profile %}
+  {% with role=request.user.profile.role %}
+    {% if role != 'transport' %}
+      <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
+         href="{% url 'contacts:contact_list' %}">
+        <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
+      </a>
+    {% endif %}
+  {% endwith %}
+{% endif %}
+
+
+        {% endwith %}
+      {% else %}
+        <div class="sb-section-title">Account</div>
+        <a class="sb-link" href="{% url 'login' %}" title="Login">
+          <i class="fa-solid fa-right-to-bracket"></i> <span class="label">Login</span>
+        </a>
+      {% endif %}
+    </nav>
+
+    <!-- Footer (HIDDEN ON DESKTOP by media-query above) -->
+    <div class="sb-footer mt-auto">
+      {% if request.user.is_authenticated and request.user.profile %}
+        <div class="d-flex align-items-center gap-3">
+          {% if request.user.profile.picture %}
+            <img class="avatar" src="{{ request.user.profile.picture.url }}" alt="avatar">
+          {% else %}
+            <img class="avatar" src="{% static 'images/default-avatar.png' %}" alt="default avatar">
+          {% endif %}
+
+          <div class="min-w-0 profile-details">
+            <div class="fw-semibold text-truncate" style="max-width:155px;">
+              {{ request.user.get_full_name|default:request.user.username }}
+            </div>
+            <div class="role-pill">
+              <i class="fa-solid fa-id-badge"></i>
+              <span>{{ request.user.profile.get_role_display }}</span>
+              {% if request.user.profile.branch %}
+                <small>• {{ request.user.profile.branch.name }}</small>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Full mode buttons (text) + collapsed mode icon-buttons -->
+        <div class="footer-actions">
+          <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info w-100 d-none d-lg-inline-flex"
+             style="border-radius:14px;">
+            <i class="fa-solid fa-user-pen me-2"></i> Profile
+          </a>
+
+          <form method="post" action="{% url 'logout' %}" class="w-100 d-none d-lg-block">
+            {% csrf_token %}
+            <button class="btn btn-outline-light w-100" type="submit" style="border-radius:14px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+            </button>
+          </form>
+
+          {# Icon buttons: always exist, but they only look correct in collapsed mode #}
+          <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info btn-icon" title="Profile">
+            <i class="fa-solid fa-user-pen"></i><span>Profile</span>
+          </a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-light btn-icon" type="submit" title="Logout">
+              <i class="fa-solid fa-right-from-bracket"></i><span>Logout</span>
+            </button>
+          </form>
+        </div>
+
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-outline-light w-100" style="border-radius:14px;">Login</a>
+      {% endif %}
+    </div>
+
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <section class="main">
+
+    <div class="topbar">
+      <div class="d-flex align-items-center justify-content-between">
+
+        <div class="d-flex align-items-center">
+          <!-- Mobile hamburger -->
+          <button class="btn btn-outline-dark d-lg-none"
+                  type="button"
+                  data-bs-toggle="offcanvas"
+                  data-bs-target="#mobileSidebar"
+                  aria-controls="mobileSidebar"
+                  style="border-radius:14px; width:44px; height:44px;">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <!-- Desktop collapse toggle -->
+          <button id="btnToggleSidebar"
+                  class="btn btn-outline-dark btn-toggle-sidebar ms-0 me-2"
+                  type="button"
+                  aria-controls="primarySidebar"
+                  aria-expanded="true"
+                  title="Toggle sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <a class="brand-mini ms-2" href="{% url 'dashboard' %}">
+            <span class="dot"><i class="fa-solid fa-building"></i></span>
+            <span>KILASI INVESTMENT</span>
+          </a>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <div class="clock" id="navClock"></div>
+
+          <div class="dropdown">
+            <a class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle"
+               href="#" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+              {% if request.user.is_authenticated and request.user.profile and request.user.profile.picture %}
+                <img src="{{ request.user.profile.picture.url }}" class="rounded-circle" width="36" height="36" style="object-fit:cover;" alt="avatar">
+              {% else %}
+                <img src="{% static 'images/default-avatar.png' %}" class="rounded-circle" width="36" height="36" style="object-fit:cover;" alt="avatar">
+              {% endif %}
+              <span class="fw-semibold d-none d-sm-inline">
+                {% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}
+              </span>
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu" style="border-radius:14px;">
+              {% if request.user.is_authenticated %}
+                <li><a class="dropdown-item" href="{% url 'users:profile_update' %}"><i class="fa-solid fa-user-pen me-2"></i> Edit Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button class="dropdown-item" type="submit"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</button>
+                  </form>
+                </li>
+              {% else %}
+                <li><a class="dropdown-item" href="{% url 'login' %}">Login</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="page">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+
+  </section>
+</div>
+
+<!-- ===================== MOBILE OFFCANVAS ===================== -->
+<div class="offcanvas offcanvas-start sidebar-offcanvas d-lg-none"
+     tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel"
+     data-bs-backdrop="true" data-bs-auto-focus="false">
+
+  <div class="offcanvas-header py-3 px-3"
+       style="border-bottom: 1px solid rgba(255,255,255,.10);">
+       
+    <h5 class="offcanvas-title m-0" id="mobileSidebarLabel">
+      <div class="d-flex align-items-center gap-2"
+           style="color:#e6eef6;">
+           
+        <span class="d-inline-flex align-items-center justify-content-center"
+              style="
+                width:42px;height:42px;border-radius:14px;
+                background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));
+                border: 1px solid rgba(255,255,255,.12);
+              ">
+          <i class="fa-solid fa-building"></i>
+        </span>
+
+        <div class="lh-sm">
+          <div class="fw-bold" style="letter-spacing:.4px;">KILASI INVESTMENT</div>
+          <div style="font-size:.78rem; color: rgba(235,245,255,.68);">
+            Sales • Stock • Transport
+          </div>
+        </div>
+
+      </div>
+    </h5>
+
+    <button type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+  </div>
+
+
+  <div class="offcanvas-body">
+    <nav>
+      {% if request.user.is_authenticated and request.user.profile %}
+        {% with role=request.user.profile.role %}
+
+          {% if role == 'admin' or role == 'cashier' %}
+            <a class="sb-link" href="{% url 'sales:admin_dashboard' %}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+          {% endif %}
+
+          {% if role == 'seller' %}
+            <a class="sb-link" href="{% url 'sales:seller_dashboard' %}"><i class="fa-solid fa-store"></i> POS (Sell)</a>
+          {% endif %}
+
+            {# ✅ Sales-only menus: hide from transport #}
+{% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+  <a class="sb-link" href="{% url 'sales:product_list' %}">
+    <i class="fa-solid fa-boxes-stacked"></i> Products
+  </a>
+  <a class="sb-link" href="{% url 'sales:top_selling_products' %}">
+    <i class="fa-solid fa-ranking-star"></i> Top Selling
+  </a>
+{% endif %}
+
+           {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+  <a class="sb-link" href="{% url 'sales:outstanding_debts' %}">
+    <i class="fa-solid fa-clock-rotate-left"></i> Debts
+  </a>
+
+
+
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsMob" role="button" aria-expanded="false" aria-controls="sbReportsMob">
+              <i class="fa-solid fa-chart-line"></i> Reports <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            </a>
+            <div class="collapse" id="sbReportsMob">
+              <div class="sb-sub">
+                <a class="sb-link" href="{% url 'sales:kilasi_sales_history' %}"><i class="fa-regular fa-clock"></i> History</a>
+                <a class="sb-link" href="{% url 'sales:kilasi_sales_report' %}"><i class="fa-solid fa-calendar-day"></i> Daily</a>
+                <a class="sb-link" href="{% url 'sales:enhanced_sales_report' %}"><i class="fa-solid fa-chart-simple"></i> Enhanced</a>
+                <a class="sb-link" href="{% url 'sales:expense_overview' %}"><i class="fa-solid fa-receipt"></i> Expenses</a>
+              </div>
+            </div>
+          {% endif %}
+
+          {# TRANSPORT DROPDOWN (mobile) #}
+          {% if role == 'admin' or role == 'cashier' or role == 'transport' %}
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbTransportMob" role="button" aria-expanded="false" aria-controls="sbTransportMob">
+              <i class="fa-solid fa-truck-moving"></i> Transport <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            </a>
+            <div class="collapse" id="sbTransportMob">
+              <div class="sb-sub">
+                <a class="sb-link" href="{% url 'transport:index' %}"><i class="fa-solid fa-grid-2"></i> Dashboard</a>
+                <a class="sb-link" href="{% url 'transport:trip_list' %}"><i class="fa-solid fa-route"></i> Trips</a>
+                <a class="sb-link" href="{% url 'transport:vehicle_list' %}"><i class="fa-solid fa-truck"></i> Vehicles</a>
+                <a class="sb-link" href="{% url 'transport:driver_list' %}"><i class="fa-solid fa-id-card"></i> Drivers</a>
+                <a class="sb-link" href="{% url 'transport:expense_list' %}"><i class="fa-solid fa-gas-pump"></i> Expenses</a>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if role == 'admin' %}
+            <hr style="border-color: rgba(255,255,255,.10);">
+            <a class="sb-link" href="{% url 'sales:stock_management' %}"><i class="fa-solid fa-boxes-packing"></i> Stock</a>
+            <a class="sb-link" href="{% url 'sales:customer_list' %}"><i class="fa-solid fa-users"></i> Customers</a>
+            <a class="sb-link" href="{% url 'sales:supplier_list' %}"><i class="fa-solid fa-truck-field"></i> Suppliers</a>
+
+          {% endif %}
+
+          {% if request.user.is_authenticated and request.user.profile %}
+  {% with role=request.user.profile.role %}
+    {% if role != 'transport' %}
+      <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
+         href="{% url 'contacts:contact_list' %}">
+        <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
+      </a>
+    {% endif %}
+  {% endwith %}
+{% endif %}
+
+
+          <hr style="border-color: rgba(255,255,255,.10);">
+          <a class="sb-link" href="{% url 'users:profile_update' %}"><i class="fa-solid fa-user-pen"></i> Profile</a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sb-link w-100 text-start" style="background:transparent;border:0;">
+              <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+          </form>
+
+        {% endwith %}
+      {% else %}
+        <a class="sb-link" href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+      {% endif %}
+    </nav>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{% static 'js/cart.js' %}"></script>
+
+<script>
+  // Clock
+  function updateClock(){
+    const now = new Date();
+    const el = document.getElementById('navClock');
+    if(!el) return;
+    el.textContent = now.toLocaleString('en-GB', {
+      weekday:'short', day:'2-digit', month:'short',
+      hour:'2-digit', minute:'2-digit'
+    });
+  }
+  updateClock();
+  setInterval(updateClock, 60 * 1000);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Select2 init
+    if (window.jQuery && jQuery().select2) {
+      jQuery('select.select2').select2({ width: '100%' });
+    }
+
+    // Desktop sidebar collapse (persist)
+    const sidebar = document.getElementById('primarySidebar');
+    const btn = document.getElementById('btnToggleSidebar');
+    const KEY = 'chui_sb_collapsed';
+
+    if (sidebar && btn) {
+      try {
+        if (localStorage.getItem(KEY) === 'true') sidebar.classList.add('collapsed');
+        btn.setAttribute('aria-expanded', String(!sidebar.classList.contains('collapsed')));
+      } catch(e){}
+
+      btn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        const collapsed = sidebar.classList.contains('collapsed');
+        try { localStorage.setItem(KEY, collapsed ? 'true' : 'false'); } catch(e){}
+        btn.setAttribute('aria-expanded', String(!collapsed));
+      });
+    }
+
+    // Mobile: close offcanvas when clicking a normal link (not collapse toggles)
+    const mobileEl = document.getElementById('mobileSidebar');
+    if (mobileEl) {
+      const off = bootstrap.Offcanvas.getOrCreateInstance(mobileEl);
+      mobileEl.addEventListener('click', (e) => {
+        const link = e.target.closest('a.sb-link, button.sb-link');
+        if (!link) return;
+        const isCollapse = link.getAttribute('data-bs-toggle') === 'collapse';
+        if (!isCollapse) { try { off.hide(); } catch(err){} }
+      });
+    }
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

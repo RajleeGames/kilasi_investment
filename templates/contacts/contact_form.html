@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">{{ title }}</h3>
+  <a href="{% url 'contacts:contact_list' %}" class="btn btn-outline-secondary">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="card shadow-sm" style="border-radius:14px;">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+
+      <div class="col-md-6">{{ form.full_name.label_tag }} {{ form.full_name }}</div>
+      <div class="col-md-6">{{ form.role.label_tag }} {{ form.role }}</div>
+
+      <div class="col-md-6">{{ form.phone.label_tag }} {{ form.phone }}</div>
+      <div class="col-md-6">{{ form.whatsapp.label_tag }} {{ form.whatsapp }}</div>
+
+      <div class="col-md-6">{{ form.email.label_tag }} {{ form.email }}</div>
+      <div class="col-md-6">{{ form.company.label_tag }} {{ form.company }}</div>
+
+      <div class="col-12">{{ form.address.label_tag }} {{ form.address }}</div>
+      <div class="col-12">{{ form.notes.label_tag }} {{ form.notes }}</div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Save
+        </button>
+        <a class="btn btn-outline-secondary" href="{% url 'contacts:contact_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

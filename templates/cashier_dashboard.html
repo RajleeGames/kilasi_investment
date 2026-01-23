@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Cashier Dashboard{% endblock %}
+
+{% block content %}
+  <!-- Header + Filter/Search -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="fa-solid fa-cash-register me-2 text-primary"></i>
+      Cashier Dashboard
+    </h2>
+    <form method="get" class="d-flex">
+      <input type="date" name="start_date" value="{{ start_date }}" class="form-control me-2">
+      <input type="date" name="end_date"   value="{{ end_date }}"   class="form-control me-2">
+      <select name="status" class="form-select me-2">
+        <option value=""   {% if not status %}selected{% endif %}>All</option>
+        <option value="paid"   {% if status == 'paid'   %}selected{% endif %}>Paid</option>
+        <option value="unpaid" {% if status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+      </select>
+      <input type="text"
+             name="customer"
+             value="{{ customer_q }}"
+             class="form-control me-2"
+             placeholder="Customer…"
+             autocomplete="off">
+      <button type="submit" class="btn btn-primary me-2">
+        <i class="fa-solid fa-filter"></i>
+      </button>
+      <a href="{% url 'cashier_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-rotate"></i>
+      </a>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row row-cols-1 row-cols-md-4 g-4 mb-5">
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="fa-solid fa-list-check fa-2x mb-2 text-secondary"></i>
+          <h6 class="card-title">Total Invoices</h6>
+          <p class="fs-4">{{ total_invoices }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="fa-solid fa-square-check fa-2x mb-2 text-success"></i>
+          <h6 class="card-title">Paid</h6>
+          <p class="fs-4">{{ paid_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="fa-solid fa-hourglass-half fa-2x mb-2 text-warning"></i>
+          <h6 class="card-title">Unpaid</h6>
+          <p class="fs-4">{{ unpaid_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="fa-solid fa-money-bill-wave fa-2x mb-2 text-info"></i>
+          <h6 class="card-title">Total Revenue</h6>
+          <p class="fs-5">Tsh {{ total_revenue|floatformat:0|intcomma }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoices Table -->
+  <div class="table-responsive shadow-sm">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Invoice #</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Date</th>
+          <th class="text-end">Total</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <td>{{ invoice.id }}</td>
+            <td>{{ invoice.customer.name|default:"Walk-in" }}</td>
+            <td>{{ invoice.customer.phone|default:"—" }}</td>
+            <td>{{ invoice.created_at|date:"Y-m-d H:i" }}</td>
+            <td class="text-end">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</td>
+            <td class="text-center">
+              {% if invoice.paid %}
+                <span class="badge bg-success">Paid</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">Unpaid</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'invoice_detail' invoice.id %}"
+                 class="btn btn-sm btn-outline-info me-1">
+                <i class="fa-solid fa-eye"></i>
+              </a>
+              {% if not invoice.paid %}
+                <form method="post" action="{% url 'mark_paid' invoice.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-success">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              <i class="fa-regular fa-face-sad-tear me-2"></i>No invoices to display.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if invoices.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center mb-0">
+        {% if invoices.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?page={{ invoices.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">
+              &laquo; Prev
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
+        {% endif %}
+        {% for n in invoices.paginator.page_range %}
+          <li class="page-item{% if invoices.number == n %} active{% endif %}">
+            <a class="page-link"
+               href="?page={{ n }}{% if querystring %}&{{ querystring }}{% endif %}">
+              {{ n }}
+            </a>
+          </li>
+        {% endfor %}
+        {% if invoices.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?page={{ invoices.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">
+              Next &raquo;
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% endblock %}

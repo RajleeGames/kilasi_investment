@@ -1,0 +1,365 @@
+{# templates/transport/vehicle_list.html #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Vehicles{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:rgba(15,23,42,.10);
+  --border2:rgba(15,23,42,.06);
+  --shadow:0 12px 30px rgba(2,6,23,.08);
+  --shadow2:0 8px 22px rgba(2,6,23,.06);
+  --radius:14px;
+  --accent:#0ea5e9;
+  --focus:rgba(14,165,233,.25);
+  --good:#10b981;
+  --bad:#ef4444;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+}
+
+/* -------- Wrapper -------- */
+.veh-card{
+  max-width: 980px;
+  margin: 18px auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+/* -------- Header -------- */
+.veh-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 4px 4px 12px 4px;
+}
+.veh-title{
+  margin:0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing:.2px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+.veh-sub{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.veh-actions{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+
+.veh-search{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  min-width: 260px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+}
+.veh-search i{ color: var(--muted); }
+.veh-search input{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:.95rem;
+  background: transparent;
+}
+.veh-search input::placeholder{ color:#94a3b8; }
+
+.veh-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  color: var(--muted);
+  font-size: .86rem;
+  user-select:none;
+}
+.veh-chip strong{
+  color: var(--text);
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------- Table -------- */
+.veh-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+.veh-table thead th{
+  padding: .65rem .85rem;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #475569;
+  border: 0;
+  background: transparent;
+  font-weight: 900;
+}
+.veh-row{
+  background:#fff;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  box-shadow: var(--shadow2);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.veh-row:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(2,6,23,.10);
+  border-color: rgba(14,165,233,.18);
+}
+.veh-row.veh-clickable{ cursor:pointer; }
+.veh-row:focus,
+.veh-row:focus-within{
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.veh-table td{
+  padding: .7rem .85rem;
+  border: 0;
+  vertical-align: middle;
+  font-size: .92rem;
+  color: var(--text);
+  max-width: 360px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.veh-plate{
+  font-family: var(--mono);
+  font-weight: 900;
+  letter-spacing: .03em;
+}
+
+.veh-muted{ color: var(--muted); }
+
+/* Active badge */
+.veh-badge{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: .86rem;
+  border: 1px solid;
+}
+.veh-badge .dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.veh-badge.on{
+  background: rgba(16,185,129,.10);
+  border-color: rgba(16,185,129,.25);
+  color: #065f46;
+}
+.veh-badge.on .dot{ background: var(--good); }
+.veh-badge.off{
+  background: rgba(239,68,68,.08);
+  border-color: rgba(239,68,68,.22);
+  color: #7f1d1d;
+}
+.veh-badge.off .dot{ background: var(--bad); }
+
+/* Empty */
+.veh-empty{
+  padding: 18px;
+  text-align:center;
+  color: var(--muted);
+  background: linear-gradient(180deg, #fbfdff, #fff);
+  border-radius: 12px;
+  border: 1px dashed rgba(15,23,42,.14);
+}
+
+/* Mobile stacked */
+.td-label{ display:none; }
+@media (max-width: 991.98px){
+  .veh-head{ flex-direction:column; align-items:flex-start; }
+  .veh-actions{ justify-content:flex-start; width:100%; }
+  .veh-search{ min-width: 100%; }
+
+  .veh-table thead{ display:none; }
+  .veh-row{ display:block; padding: .65rem .75rem; }
+  .veh-table td{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: .5rem 0;
+    white-space: normal;
+    max-width:none;
+    border-bottom: 1px dashed rgba(15,23,42,.08);
+  }
+  .veh-table td:last-child{ border-bottom:0; }
+  .td-label{
+    display:inline-block;
+    color: var(--muted);
+    font-weight: 900;
+    font-size: .82rem;
+    min-width: 34%;
+  }
+}
+
+/* helpers */
+.me-1{ margin-right:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="veh-card">
+  <div class="veh-head">
+    <div>
+      <h1 class="veh-title">
+        <i class="fa-solid fa-truck"></i>
+        Vehicles
+      </h1>
+      <div class="veh-sub">Search vehicles and click a row to open details (if you have a detail page).</div>
+    </div>
+
+    <div class="veh-actions">
+      <div class="veh-search" title="Search vehicles">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="vehicleSearch" type="search" placeholder="Search plate, model, capacity, active..." aria-label="Search vehicles">
+      </div>
+
+      <span class="veh-chip" title="Visible rows">
+        Showing <strong id="visibleVehicles">0</strong> / <strong id="totalVehicles">0</strong>
+      </span>
+
+      <a href="{% url 'transport:vehicle_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> Add Vehicle
+      </a>
+    </div>
+  </div>
+
+  {% if vehicles %}
+    <div class="table-responsive" role="region" aria-label="Vehicles list">
+      <table class="veh-table" id="vehiclesTable">
+        <thead>
+          <tr>
+            <th>Plate</th>
+            <th>Model</th>
+            <th>Capacity</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for v in vehicles %}
+          <tr class="veh-row veh-row-js {% if v.get_absolute_url %}veh-clickable{% endif %}"
+              {% if v.get_absolute_url %}data-href="{{ v.get_absolute_url }}"{% endif %}
+              tabindex="0"
+              aria-label="Vehicle row">
+            <td data-label="Plate">
+              <span class="td-label">Plate</span>
+              <span class="veh-plate">{{ v.plate_number|default:"—" }}</span>
+            </td>
+
+            <td data-label="Model">
+              <span class="td-label">Model</span>
+              <span class="veh-muted">{{ v.model|default:"—" }}</span>
+            </td>
+
+            <td data-label="Capacity">
+              <span class="td-label">Capacity</span>
+              <span class="veh-muted">{{ v.capacity|default:"—" }}</span>
+            </td>
+
+            <td data-label="Active">
+              <span class="td-label">Active</span>
+              {% if v.is_active %}
+                <span class="veh-badge on"><span class="dot"></span> Active</span>
+              {% else %}
+                <span class="veh-badge off"><span class="dot"></span> Inactive</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="veh-empty">No vehicles yet. Click <a href="{% url 'transport:vehicle_create' %}">Add Vehicle</a>.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const table = document.getElementById('vehiclesTable');
+  const totalEl = document.getElementById('totalVehicles');
+  const visibleEl = document.getElementById('visibleVehicles');
+
+  function updateCounts(){
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const visible = rows.filter(r => r.style.display !== 'none');
+    if (totalEl) totalEl.textContent = rows.length;
+    if (visibleEl) visibleEl.textContent = visible.length;
+  }
+
+  // Click + keyboard open row if data-href exists
+  document.querySelectorAll('.veh-row-js').forEach(function (row) {
+    const href = row.dataset.href;
+    if (!href) return;
+
+    row.addEventListener('click', function () {
+      window.location.assign(href);
+    });
+
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.assign(href);
+      }
+    });
+  });
+
+  // Search filter
+  const search = document.getElementById('vehicleSearch');
+  function applyFilter(){
+    if (!table) return;
+    const q = (search?.value || '').trim().toLowerCase();
+    table.querySelectorAll('tbody tr').forEach(r => {
+      const text = r.textContent.trim().toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+    updateCounts();
+  }
+  if (search) search.addEventListener('input', applyFilter);
+
+  updateCounts();
+});
+</script>
+{% endblock %}

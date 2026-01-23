@@ -1,0 +1,389 @@
+{# templates/transport/trip_list.html #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Trips{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:rgba(15,23,42,.10);
+  --border2:rgba(15,23,42,.06);
+  --shadow:0 12px 30px rgba(2,6,23,.08);
+  --shadow2:0 8px 22px rgba(2,6,23,.06);
+  --radius:14px;
+  --accent:#0ea5e9;
+  --focus:rgba(14,165,233,.25);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+}
+
+/* -------- Wrapper -------- */
+.trip-card{
+  max-width: 1120px;
+  margin: 18px auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+/* -------- Header -------- */
+.trip-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 4px 4px 12px 4px;
+}
+.trip-title{
+  margin:0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing:.2px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+.trip-sub{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.trip-actions{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+
+.trip-search{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  min-width: 280px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+}
+.trip-search i{ color: var(--muted); }
+.trip-search input{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:.95rem;
+  background: transparent;
+}
+.trip-search input::placeholder{ color:#94a3b8; }
+
+.trip-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  color: var(--muted);
+  font-size: .86rem;
+  user-select:none;
+}
+.trip-chip strong{
+  color: var(--text);
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------- Table -------- */
+.trip-table-wrap{ padding-top: 6px; }
+
+.trip-table{
+  width:100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+.trip-table thead th{
+  padding: .65rem .85rem;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #475569;
+  border: 0;
+  background: transparent;
+  font-weight: 900;
+}
+
+.trip-row{
+  background:#fff;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  box-shadow: var(--shadow2);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.trip-row:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(2,6,23,.10);
+  border-color: rgba(14,165,233,.18);
+}
+.trip-row.trip-clickable{ cursor:pointer; }
+.trip-row:focus,
+.trip-row:focus-within{
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.trip-table td{
+  padding: .7rem .85rem;
+  border: 0;
+  vertical-align: middle;
+  font-size: .92rem;
+  color: var(--text);
+  max-width: 340px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trip-date{
+  font-family: var(--mono);
+  font-size: .88rem;
+  color:#0b1220;
+}
+.trip-muted{ color: var(--muted); }
+
+/* Amount pill */
+.trip-amount{
+  text-align:right;
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.amount-pill{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(14,165,233,.20);
+  background: rgba(14,165,233,.10);
+  color: #075985;
+}
+.amount-pill .tzs{
+  font-size:.82rem;
+  font-weight: 900;
+  opacity: .9;
+}
+
+/* Empty state */
+.trip-empty{
+  padding: 18px;
+  text-align:center;
+  color: var(--muted);
+  background: linear-gradient(180deg, #fbfdff, #fff);
+  border-radius: 12px;
+  border: 1px dashed rgba(15,23,42,.14);
+}
+
+/* Mobile stacked rows */
+.td-label{ display:none; }
+
+@media (max-width: 991.98px){
+  .trip-head{ flex-direction:column; align-items:flex-start; }
+  .trip-actions{ justify-content:flex-start; width:100%; }
+  .trip-search{ min-width: 100%; }
+
+  .trip-table thead{ display:none; }
+  .trip-row{ display:block; padding: .65rem .75rem; }
+  .trip-table td{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: .5rem 0;
+    white-space: normal;
+    max-width:none;
+    border-bottom: 1px dashed rgba(15,23,42,.08);
+  }
+  .trip-table td:last-child{ border-bottom:0; }
+  .td-label{
+    display:inline-block;
+    color: var(--muted);
+    font-weight: 800;
+    font-size: .82rem;
+    min-width: 34%;
+  }
+  .trip-amount{ text-align:left; }
+}
+
+/* small helpers */
+.me-1{ margin-right:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trip-card">
+  <div class="trip-head">
+    <div>
+      <h1 class="trip-title">
+        <i class="fa-solid fa-road"></i>
+        Trips
+      </h1>
+      <div class="trip-sub">All recorded trips — search fast and open by clicking a row.</div>
+    </div>
+
+    <div class="trip-actions">
+      <div class="trip-search" title="Search trips">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="tripSearch" type="search" placeholder="Search vehicle, driver, from, to, branch..." aria-label="Search trips">
+      </div>
+
+      <span class="trip-chip" title="Visible rows">
+        Showing <strong id="visibleTrips">0</strong> / <strong id="totalTrips">0</strong>
+      </span>
+
+      <a href="{% url 'transport:trip_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> Record Trip
+      </a>
+    </div>
+  </div>
+
+  {% if trips %}
+    <div class="table-responsive trip-table-wrap" role="region" aria-label="Trips list">
+      <table class="trip-table" id="tripsTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Vehicle</th>
+            <th>Driver</th>
+            <th>From</th>
+            <th>To</th>
+            <th class="text-end">Amount</th>
+            <th>Branch</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for t in trips %}
+          <tr class="trip-row trip-row-js {% if t.get_absolute_url %}trip-clickable{% endif %}"
+              {% if t.get_absolute_url %}data-href="{{ t.get_absolute_url }}"{% endif %}
+              tabindex="0"
+              aria-label="Trip row">
+            <td data-label="Date">
+              <span class="td-label">Date</span>
+              <span class="trip-date">{{ t.trip_date|date:"d M Y" }}</span>
+            </td>
+
+            <td data-label="Vehicle">
+              <span class="td-label">Vehicle</span>
+              <span>{{ t.vehicle|default:"—" }}</span>
+            </td>
+
+            <td data-label="Driver">
+              <span class="td-label">Driver</span>
+              <span class="trip-muted">{{ t.driver|default:"—" }}</span>
+            </td>
+
+            <td data-label="From">
+              <span class="td-label">From</span>
+              <span class="trip-muted">{{ t.origin|default:"—" }}</span>
+            </td>
+
+            <td data-label="To">
+              <span class="td-label">To</span>
+              <span class="trip-muted">{{ t.destination|default:"—" }}</span>
+            </td>
+
+            <td data-label="Amount" class="trip-amount">
+              <span class="td-label">Amount</span>
+              <span class="amount-pill amount-badge" data-raw="{{ t.amount_charged }}">
+                <span class="tzs">TZS</span>
+                <span class="amt">{{ t.amount_charged|floatformat:2|intcomma }}</span>
+              </span>
+            </td>
+
+            <td data-label="Branch">
+              <span class="td-label">Branch</span>
+              <span class="trip-muted">{{ t.branch|default:"—" }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="trip-empty">
+      No trips recorded. Click <a href="{% url 'transport:trip_create' %}">Record Trip</a> to add one.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const table = document.getElementById('tripsTable');
+  const totalEl = document.getElementById('totalTrips');
+  const visibleEl = document.getElementById('visibleTrips');
+
+  function updateCounts(){
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const visible = rows.filter(r => r.style.display !== 'none');
+    if (totalEl) totalEl.textContent = rows.length;
+    if (visibleEl) visibleEl.textContent = visible.length;
+  }
+
+  // Row click/keyboard open if data-href exists
+  document.querySelectorAll('.trip-row-js').forEach(function (row) {
+    const href = row.dataset.href;
+    if (!href) return;
+
+    row.addEventListener('click', function () {
+      window.location.assign(href);
+    });
+
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.assign(href);
+      }
+    });
+  });
+
+  // Search filter
+  const search = document.getElementById('tripSearch');
+  function applyFilter(){
+    if (!table) return;
+    const q = (search?.value || '').trim().toLowerCase();
+    table.querySelectorAll('tbody tr').forEach(r => {
+      const text = r.textContent.trim().toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+    updateCounts();
+  }
+  if (search) search.addEventListener('input', applyFilter);
+
+  // Format amounts if raw numeric (extra safe)
+  document.querySelectorAll('.amount-badge').forEach(function (pill) {
+    const raw = pill.dataset.raw;
+    if (!raw) return;
+    const n = Number(raw);
+    if (Number.isFinite(n)) {
+      const amt = pill.querySelector('.amt');
+      if (amt) amt.textContent = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  });
+
+  updateCounts();
+});
+</script>
+{% endblock %}

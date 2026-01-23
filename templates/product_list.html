@@ -1,0 +1,433 @@
+{# templates/product_list.html (or sales/product_list.html) #}
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}All Products — Chui Hardware{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:rgba(15,23,42,.10);
+  --border2:rgba(15,23,42,.06);
+  --shadow:0 12px 30px rgba(2,6,23,.08);
+  --shadow2:0 8px 22px rgba(2,6,23,.06);
+  --radius:14px;
+  --accent:#0ea5e9;
+  --focus:rgba(14,165,233,.25);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Wrapper */
+.pwrap{
+  max-width: 1120px;
+  margin: 18px auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+/* Header */
+.phead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 4px 4px 12px 4px;
+  flex-wrap: wrap;
+}
+.ptitle{
+  margin:0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing:.2px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+.psub{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.ptools{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+
+/* Search */
+.psearch{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  min-width: 320px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+}
+.psearch i{ color: var(--muted); }
+.psearch input{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:.95rem;
+  background:transparent;
+}
+.psearch input::placeholder{ color:#94a3b8; }
+
+/* Chips */
+.pchip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg,#fff,#fbfdff);
+  color: var(--muted);
+  font-size: .86rem;
+  user-select:none;
+}
+.pchip strong{
+  color: var(--text);
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Table */
+.ptable-wrap{
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow2);
+  background: #fff;
+}
+.ptable{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.ptable thead th{
+  background: linear-gradient(180deg,#0b1220,#0f172a);
+  color: #e2e8f0;
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .75rem .9rem;
+  border: 0;
+  white-space: nowrap;
+}
+.ptable tbody td{
+  padding: .75rem .9rem;
+  border-top: 1px solid rgba(15,23,42,.06);
+  vertical-align: middle;
+  color: var(--text);
+  font-size: .94rem;
+}
+.ptable tbody tr{
+  transition: background .12s ease;
+}
+.ptable tbody tr:hover{
+  background: #f8fafc;
+}
+.ptable tbody tr.clickable{
+  cursor: pointer;
+}
+.pname{
+  font-weight: 900;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pmuted{ color: var(--muted); }
+.pmoney{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.pstock{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.dot{
+  width:10px;
+  height:10px;
+  border-radius: 999px;
+  background: rgba(14,165,233,.35);
+  border: 1px solid rgba(14,165,233,.55);
+}
+.badge-branch{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 900;
+  background: rgba(14,165,233,.10);
+  border: 1px solid rgba(14,165,233,.20);
+  color: #075985;
+  white-space: nowrap;
+}
+
+/* Pagination */
+.pager{
+  display:flex;
+  gap: 8px;
+  justify-content:center;
+  align-items:center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.pager a, .pager span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 40px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  text-decoration:none;
+  color: var(--text);
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(2,6,23,.04);
+  font-weight: 800;
+}
+.pager a:hover{
+  border-color: rgba(14,165,233,.25);
+}
+.pager .active{
+  background: rgba(14,165,233,.10);
+  border-color: rgba(14,165,233,.25);
+  color: #075985;
+}
+.pager .disabled{
+  opacity: .55;
+  pointer-events: none;
+}
+
+/* Empty */
+.pempty{
+  padding: 18px;
+  text-align:center;
+  color: var(--muted);
+  background: linear-gradient(180deg,#fbfdff,#fff);
+  border-radius: 12px;
+  border: 1px dashed rgba(15,23,42,.14);
+}
+
+/* Mobile tweaks */
+@media (max-width: 991.98px){
+  .psearch{ min-width: 100%; }
+  .ptable thead{ display:none; }
+  .ptable tbody tr{ display:block; padding: 10px 12px; }
+  .ptable tbody td{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px dashed rgba(15,23,42,.06);
+  }
+  .ptable tbody td:first-child{ border-top: 0; }
+  .tdlbl{
+    color: var(--muted);
+    font-weight: 800;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    min-width: 34%;
+    padding-right: 8px;
+  }
+  .pname{ max-width: 100%; }
+}
+
+/* helper */
+.me-1{ margin-right:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pwrap">
+  <div class="phead">
+    <div>
+      <h2 class="ptitle">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        All Products
+      </h2>
+      <div class="psub">
+        {% if use_branch_stock and branch %}
+          Showing stock for <span class="badge-branch"><i class="fa-solid fa-location-dot"></i> {{ branch.name }}</span>
+        {% else %}
+          Overview of products & stock levels.
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ptools" role="toolbar" aria-label="products toolbar">
+      <form method="get" class="psearch" role="search" title="Search products">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input
+          type="search"
+          id="searchInput"
+          name="q"
+          value="{{ query }}"
+          placeholder="Search products…"
+          aria-label="Search products"
+          autocomplete="off"
+        >
+      </form>
+
+      <span class="pchip" title="Visible rows">
+        Showing <strong id="visibleProducts">0</strong> / <strong id="totalProducts">0</strong>
+      </span>
+    </div>
+  </div>
+
+  {% if products %}
+    <div class="ptable-wrap" role="region" aria-label="Products list">
+      <div class="table-responsive">
+        <table class="ptable" id="productsTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price (Tsh)</th>
+              <th>
+                {% if use_branch_stock %}
+                  Branch Stock
+                {% else %}
+                  Current Stock
+                {% endif %}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr class="clickable"
+                tabindex="0"
+                data-href="{% url 'sales:product_detail' product.id %}">
+              <td data-label="Name">
+                <span class="tdlbl">Name</span>
+                <span class="pname" title="{{ product.name }}">{{ product.name }}</span>
+              </td>
+
+              <td data-label="Category" class="pmuted">
+                <span class="tdlbl">Category</span>
+                {{ product.category.name|default:"—" }}
+              </td>
+
+              <td data-label="Price" class="pmoney">
+                <span class="tdlbl">Price</span>
+                {{ product.price|floatformat:2|intcomma }}
+              </td>
+
+              <td data-label="Stock">
+                <span class="tdlbl">Stock</span>
+                <span class="pstock">
+                  <span class="dot" aria-hidden="true"></span>
+                  {% if use_branch_stock %}
+                    {{ product.branch_qty|default:0 }}
+                  {% else %}
+                    {{ product.stock|default:0 }}
+                  {% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="pager" aria-label="Pagination">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+        {% else %}
+          <span class="disabled">‹ Prev</span>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+          {% if num == page_obj.number %}
+            <span class="active">{{ num }}</span>
+          {% else %}
+            <a href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
+        {% else %}
+          <span class="disabled">Next ›</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="pempty">No products found.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const table = document.getElementById('productsTable');
+  const totalEl = document.getElementById('totalProducts');
+  const visibleEl = document.getElementById('visibleProducts');
+
+  function updateCounts(){
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const visible = rows.filter(r => r.style.display !== 'none');
+    if (totalEl) totalEl.textContent = rows.length;
+    if (visibleEl) visibleEl.textContent = visible.length;
+  }
+
+  // Make rows clickable + keyboard friendly
+  document.querySelectorAll('#productsTable tbody tr.clickable').forEach(function (row) {
+    const href = row.dataset.href;
+    if (!href) return;
+
+    row.addEventListener('click', function () {
+      window.location.assign(href);
+    });
+
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.assign(href);
+      }
+    });
+  });
+
+  // If search box is cleared, reset
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(){
+      if (!this.value.trim()) {
+        window.location.href = window.location.pathname;
+      }
+    });
+  }
+
+  updateCounts();
+});
+</script>
+{% endblock %}

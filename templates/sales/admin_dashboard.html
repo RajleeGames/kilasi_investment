@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Dashboard — Kilasi Investment{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<div class="container-fluid py-3">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+      <h4 class="mb-0">Dashboard</h4>
+      <small class="text-muted">
+        Sales • Debts • Payments • Expenses
+        {% if selected_branch_obj %} • <strong>{{ selected_branch_obj.name }}</strong>{% endif %}
+      </small>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="d-flex flex-wrap align-items-center gap-2">
+      <div class="input-group input-group-sm" style="min-width:260px;">
+        <span class="input-group-text"><i class="fa-solid fa-building"></i></span>
+        <select name="branch" class="form-select">
+          <option value="">All Branches</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+              {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline-primary" type="submit"><i class="fa-solid fa-filter me-1"></i>Filter</button>
+      </div>
+
+      <div class="input-group input-group-sm" style="width:140px;">
+        <span class="input-group-text"><i class="fa-solid fa-calendar"></i></span>
+        <select class="form-select" name="month">
+          <option value="">Month</option>
+          {% for m in months %}
+            <option value="{{ m }}" {% if selected_month|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="input-group input-group-sm" style="width:140px;">
+        <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
+        <select class="form-select" name="year">
+          <option value="">Year</option>
+          {% for y in years %}
+            <option value="{{ y }}" {% if selected_year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{% url 'sales:admin_dashboard' %}">
+         <i class="fa-solid fa-rotate"></i>
+      </a>
+    </form>
+  </div>
+
+  <!-- Top stats -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card shadow-sm border-0">
+        <div class="card-body d-flex align-items-center">
+          <i class="fa-solid fa-money-bill-wave fa-2x text-success me-3"></i>
+          <div>
+            <div class="fw-semibold">Cash Today</div>
+            <div class="h4 mb-0">Tsh {{ total_cash_today|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <a class="small text-decoration-none"
+             href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=cash{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+             View details →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card shadow-sm border-0">
+        <div class="card-body d-flex align-items-center">
+          <i class="fa-solid fa-building-columns fa-2x text-primary me-3"></i>
+          <div>
+            <div class="fw-semibold">Bank Today</div>
+            <div class="h4 mb-0">Tsh {{ total_bank_today|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <a class="small text-decoration-none"
+             href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=bank{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+             View details →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card shadow-sm border-0">
+        <div class="card-body d-flex align-items-center">
+          <i class="fa-solid fa-chart-line fa-2x text-info me-3"></i>
+          <div>
+            <div class="fw-semibold">Total Sales Today</div>
+            <div class="h4 mb-0">Tsh {{ total_today|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <span class="small text-muted">Net today shown below</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card shadow-sm border-0">
+        <div class="card-body d-flex align-items-center">
+          <i class="fa-solid fa-hand-holding-dollar fa-2x text-warning me-3"></i>
+          <div>
+            <div class="fw-semibold">Debt Payments</div>
+            <div class="h4 mb-0">Tsh {{ total_debt_payments|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <a class="small text-decoration-none"
+             href="{% url 'sales:all_payments' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+             View payments →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profit cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Expenses Today</div>
+            <div class="h4 mb-0">Tsh {{ expenses_today|floatformat:0|intcomma }}</div>
+          </div>
+          <i class="fa-solid fa-receipt fa-2x text-danger"></i>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <a class="small text-decoration-none"
+             href="{% url 'sales:expense_overview' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+             Open expenses →
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Net Today</div>
+            <div class="h4 mb-0">Tsh {{ net_today|floatformat:0|intcomma }}</div>
+            <div class="small text-muted">Overall Net: Tsh {{ net_overall|floatformat:0|intcomma }}</div>
+          </div>
+          <i class="fa-solid fa-chart-pie fa-2x text-dark"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Count cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4 col-lg-3">
+      <a class="text-decoration-none" href="{% url 'sales:outstanding_debts' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+        <div class="card text-white bg-dark shadow-sm border-0">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="small opacity-75">Unpaid Debts</div>
+              <div class="h2 mb-0">{{ num_debts }}</div>
+            </div>
+            <i class="fa-solid fa-hourglass-half fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-4 col-lg-3">
+      <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+        <div class="card text-white bg-success shadow-sm border-0">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="small opacity-75">Cash Transactions</div>
+              <div class="h2 mb-0">{{ num_cash_sales }}</div>
+            </div>
+            <i class="fa-solid fa-receipt fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-4 col-lg-3">
+      <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+        <div class="card text-white bg-primary shadow-sm border-0">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="small opacity-75">Bank Transactions</div>
+              <div class="h2 mb-0">{{ num_bank_sales }}</div>
+            </div>
+            <i class="fa-solid fa-building-columns fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card text-white bg-info shadow-sm border-0">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">All Transactions</div>
+            <div class="h2 mb-0">{{ total_transactions }}</div>
+          </div>
+          <i class="fa-solid fa-layer-group fa-2x opacity-75"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recently Added Products -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">Recently Added Products</h5>
+    <a href="{% url 'sales:product_list' %}" class="btn btn-outline-primary btn-sm">
+      <i class="fa-solid fa-list me-1"></i> View All
+    </a>
+  </div>
+
+  <ul class="list-group shadow-sm mb-2">
+    {% for prod in recent_products %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-box text-primary"></i>
+          <div>
+            <a href="{% url 'sales:product_detail' prod.pk %}" class="text-decoration-none fw-semibold">
+              {{ prod.name }}
+            </a>
+            <div class="text-muted small">{{ prod.category.name }}</div>
+          </div>
+        </div>
+        <div class="text-end">
+          <div>Tsh {{ prod.price|intcomma }}</div>
+          <span class="badge {% if prod.stock > prod.reorder_level %}bg-success{% else %}bg-danger{% endif %}">
+            {{ prod.stock }}
+          </span>
+        </div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-center text-muted">No recently added products.</li>
+    {% endfor %}
+  </ul>
+
+  {% if recent_products.has_other_pages %}
+    <nav>
+      <ul class="pagination justify-content-center mb-0">
+        {% if recent_products.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?recent_page={{ recent_products.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">
+              « Prev
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">« Prev</span></li>
+        {% endif %}
+
+        {% for num in recent_products.paginator.page_range %}
+          {% if recent_products.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= recent_products.number|add:"-2" and num <= recent_products.number|add:"2" %}
+            <li class="page-item">
+              <a class="page-link" href="?recent_page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">
+                {{ num }}
+              </a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if recent_products.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?recent_page={{ recent_products.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">
+              Next »
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next »</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

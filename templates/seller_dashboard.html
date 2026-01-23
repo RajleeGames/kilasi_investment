@@ -1,0 +1,691 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Seller Dashboard — KILASI INVESTMENT{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --line:rgba(15,23,42,.10);
+    --soft:#f8fafc;
+    --card:#ffffff;
+    --shadow: 0 14px 34px rgba(2,6,23,.08);
+    --shadow2: 0 10px 24px rgba(2,6,23,.08);
+    --radius:18px;
+  }
+
+  .k-wrap{
+    max-width: 1400px;
+    margin: 1.25rem auto 2rem;
+    padding: 0 1rem;
+  }
+
+  .k-hero{
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    padding: 14px;
+    background:
+      radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
+      radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
+      linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+  }
+  @media(min-width:768px){ .k-hero{ padding: 18px; } }
+
+  .k-title{
+    font-weight: 900;
+    letter-spacing: .2px;
+    margin: 0;
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .k-sub{
+    color: var(--muted);
+    font-size: .92rem;
+    margin-top: 6px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: .35rem .6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.8);
+    font-weight: 800;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .pill i{ opacity:.9; }
+
+  /* cards */
+  .k-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow2);
+    overflow: hidden;
+  }
+  .k-card-h{
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(15,23,42,.07);
+    background: rgba(255,255,255,.75);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .k-card-b{ padding: 14px 16px; }
+  @media(min-width:768px){
+    .k-card-h{ padding: 16px 18px; }
+    .k-card-b{ padding: 16px 18px; }
+  }
+
+  .k-h{
+    font-weight: 900;
+    color: var(--ink);
+    margin: 0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .k-h small{
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  /* picker grid */
+  .picker-grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  @media(min-width: 992px){
+    .picker-grid{ grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .k-field label{
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 6px;
+    display:block;
+    font-size: .92rem;
+  }
+  .k-field .form-control,
+  .k-field .form-select{
+    border-radius: 14px;
+    height: 44px;
+    border: 1px solid rgba(15,23,42,.12);
+  }
+  .k-field .form-control:focus,
+  .k-field .form-select:focus{
+    box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+    border-color: rgba(13,110,253,.35);
+  }
+
+  /* search results dropdown */
+  #searchResults{
+    position:absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.12);
+    border-top: none;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 1050;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    box-shadow: 0 12px 30px rgba(2,6,23,.10);
+  }
+  #searchResults li{
+    padding: .6rem .9rem;
+    cursor:pointer;
+    border-top: 1px solid rgba(15,23,42,.06);
+  }
+  #searchResults li:hover{
+    background: #f1f5f9;
+  }
+
+  /* selected product panel */
+  .selected-empty{
+    color: var(--muted);
+    font-size: .95rem;
+  }
+
+  .sel-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 10px 12px;
+    align-items:center;
+    margin-top: 10px;
+  }
+  .sel-badge{
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    padding: .3rem .6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(248,250,252,.9);
+    font-weight: 800;
+    color: var(--ink);
+    font-size: .88rem;
+  }
+  .mono{ font-variant-numeric: tabular-nums; }
+
+  .qtybar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    width:100%;
+    max-width: 420px;
+  }
+  .qtybar .form-control{ height: 44px; border-radius: 14px; }
+  .btn-k{
+    height: 44px;
+    border-radius: 14px;
+    font-weight: 900;
+    white-space: nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  /* cart table */
+  .k-table thead th{
+    font-size: .82rem;
+    color: #334155;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(15,23,42,.10);
+  }
+  .k-table tbody td{
+    vertical-align: middle;
+    border-top: 1px solid rgba(15,23,42,.06);
+  }
+
+  .prod-name{ font-weight: 900; color: var(--ink); }
+  .prod-sub{ color: var(--muted); font-size: .85rem; }
+
+  /* Discount input nicer */
+  .disc-wrap{
+    min-width: 150px;
+  }
+  .disc-input{
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(15,23,42,.12);
+    padding-left: 40px;
+  }
+  .disc-icon{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: .95rem;
+  }
+  .disc-help{
+    display:block;
+    margin-top: 4px;
+    font-size: .75rem;
+    color: var(--muted);
+  }
+
+  /* Mobile: make cart table stacky */
+  @media(max-width: 576px){
+    .hide-xs{ display:none !important; }
+    .k-card-b{ padding: 12px; }
+    .qtybar{ max-width: 100%; }
+    .disc-wrap{ min-width: 130px; }
+  }
+
+  /* Low-stock toast */
+  #lowStockToast{
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1100;
+    min-width: 280px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="k-wrap">
+
+  <!-- HERO -->
+  <div class="k-hero mb-3">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+      <div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="pill"><i class="fa-solid fa-store"></i> POS — Seller</span>
+          {% if branch %}
+            <span class="pill"><i class="fa-solid fa-building"></i> {{ branch.name }}</span>
+          {% endif %}
+        </div>
+        <h2 class="k-title mt-2">
+          <i class="fa-solid fa-cart-shopping"></i>
+          Seller Dashboard
+        </h2>
+        <div class="k-sub">
+          Search / Scan • Add to cart • Apply discount per item • Submit (Cash / Bank / Debt)
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-dark btn-k" href="{% url 'sales:kilasi_sales_history' %}">
+          <i class="fa-solid fa-clock-rotate-left"></i> <span class="d-none d-sm-inline">History</span>
+        </a>
+        <a class="btn btn-outline-primary btn-k" href="{% url 'sales:outstanding_debts' %}">
+          <i class="fa-solid fa-hand-holding-dollar"></i> <span class="d-none d-sm-inline">Debts</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- PICKERS -->
+    <div class="picker-grid">
+      <div class="k-field">
+        <label for="categoryFilter"><i class="fa-solid fa-layer-group me-1"></i> Category</label>
+        <select id="categoryFilter" class="form-select">
+          <option value="">All Categories</option>
+          {% for id,name in categories %}
+            <option value="{{ id }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="k-field position-relative">
+        <label for="textSearch"><i class="fa-solid fa-magnifying-glass me-1"></i> Search Products</label>
+        <div class="position-relative">
+          <i class="fa-solid fa-magnifying-glass position-absolute"
+             style="top:50%; left:14px; transform:translateY(-50%); color:#94a3b8;"></i>
+          <input type="text" id="textSearch" class="form-control ps-5"
+                 placeholder="Type product name…" autocomplete="off">
+        </div>
+        <ul id="searchResults" class="list-unstyled d-none mb-0"></ul>
+      </div>
+
+      <div class="k-field">
+        <label for="barcodeInput"><i class="fa-solid fa-barcode me-1"></i> Scan Barcode</label>
+        <div class="position-relative">
+          <i class="fa-solid fa-barcode position-absolute"
+             style="top:50%; left:14px; transform:translateY(-50%); color:#94a3b8;"></i>
+          <input type="text" id="barcodeInput" class="form-control ps-5"
+                 placeholder="Scan code then press Enter…" autocomplete="off">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row gy-3">
+    <!-- SELECTED PRODUCT -->
+    <div class="col-lg-6">
+      <div class="k-card h-100">
+        <div class="k-card-h">
+          <div class="k-h">
+            <i class="fa-solid fa-cube"></i> Selected Product
+          </div>
+          <small class="text-muted d-none d-md-inline">Add quickly to cart</small>
+        </div>
+
+        <div class="k-card-b">
+          <div id="selectedDetails" class="selected-empty">
+            Pick a product by searching or scanning.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CART -->
+    <div class="col-lg-6">
+      <div class="k-card h-100">
+        <div class="k-card-h">
+          <div class="k-h">
+            <i class="fa-solid fa-basket-shopping"></i> Cart Summary
+            {% if cart_items %}
+              <small class="ms-2">({{ cart_items|length }} item{{ cart_items|length|pluralize }})</small>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="k-card-b">
+          {% if cart_items %}
+            <div class="table-responsive mb-3">
+              <table class="table table-sm align-middle mb-0 k-table">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th class="text-center" style="width:92px;">Qty</th>
+                    <th style="width:190px;">Discount</th>
+                    <th class="text-end" style="width:140px;">Total</th>
+                    <th class="text-end" style="width:110px;">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% for it in cart_items %}
+                  <tr>
+                    <td>
+                      <div class="prod-name">{{ it.product.name }}</div>
+                      <div class="prod-sub">
+                        Unit: Tsh {{ it.product.price|floatformat:0|intcomma }}
+                        {% if it.visible_stock is not None %}
+                          • Stock: <span class="mono">{{ it.visible_stock }}</span>
+                        {% endif %}
+                      </div>
+                    </td>
+
+                    <td class="text-center">
+                      <form method="post" action="{% url 'sales:update_cart_qty' it.product.id %}" class="d-flex flex-column gap-2 align-items-center">
+                        {% csrf_token %}
+                        <input type="number" name="quantity"
+                               value="{{ it.quantity }}" min="1"
+                               class="form-control form-control-sm text-center mono"
+                               style="width:84px; height:40px; border-radius:12px;">
+                    </td>
+
+                    <td>
+                        <div class="position-relative disc-wrap">
+                          <i class="fa-solid fa-tags disc-icon"></i>
+                          <input type="number" name="discount"
+                                 value="{{ it.discount }}" min="0" step="1"
+                                 class="form-control form-control-sm disc-input mono"
+                                 placeholder="0">
+                        </div>
+                        <small class="disc-help">
+                          Per unit (Tsh). Example: discount 500 means -500 each item.
+                        </small>
+                    </td>
+
+                    <td class="text-end">
+                      <div class="fw-bold mono">Tsh {{ it.total_price|intcomma }}</div>
+                    </td>
+
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                          <button class="btn btn-success btn-sm btn-k" style="height:40px;">
+                            <i class="fa-solid fa-rotate"></i>
+                            <span class="d-none d-md-inline">Update</span>
+                          </button>
+                      </form>
+
+                          <form method="post" action="{% url 'sales:remove_from_cart' it.product.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm btn-k" style="height:40px;">
+                              <i class="fa-solid fa-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- SUBMIT -->
+            <form method="post" action="{% url 'sales:submit_sale' %}">
+              {% csrf_token %}
+
+              <div class="d-flex flex-column gap-2">
+
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <div class="flex-grow-1" style="min-width:180px;">
+                    <label class="form-label fw-bold mb-1">Payment</label>
+                    <select name="payment_method" id="paymentMethod" class="form-select" style="height:44px;border-radius:14px;">
+                      <option value="cash">Cash</option>
+                      <option value="bank">Bank</option>
+                      <option value="debt">Debt</option>
+                    </select>
+                  </div>
+
+                  <div class="flex-grow-1" style="min-width:220px;">
+                    <label class="form-label fw-bold mb-1">Customer (Only for debt)</label>
+                    <div id="debtFields" class="d-flex gap-2 align-items-center" style="display:none;">
+                      <input name="customer_name" type="text" class="form-control" style="height:44px;border-radius:14px;" placeholder="Customer Name">
+                      <input name="customer_phone" type="tel" class="form-control mono" style="height:44px;border-radius:14px;" placeholder="Phone">
+                    </div>
+                    <small class="text-muted d-block mt-1">Cash/Bank can be Walk-in (no customer required).</small>
+                  </div>
+
+                  <div class="ms-auto" style="min-width:200px;">
+                    <label class="form-label fw-bold mb-1 d-none d-md-block">&nbsp;</label>
+                    <button class="btn btn-success btn-k w-100">
+                      <i class="fa-solid fa-circle-check"></i> Submit Sale
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </form>
+
+          {% else %}
+            <div class="text-muted">
+              <i class="fa-regular fa-face-smile me-1"></i> Your cart is empty.
+              <div class="small mt-2">Search a product above and add it to cart.</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low-stock Toast -->
+  <div id="lowStockToast" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        ⚠️ <strong>Low stock alert!</strong><br>
+        The following item(s) are low on stock:
+        <ul id="lowStockList" class="mb-0"></ul>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <audio id="notifSound" src="{% static 'sounds/notifications.mp3' %}" preload="auto"></audio>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const products = JSON.parse('{{ products_json|escapejs }}');
+  const catF    = document.getElementById('categoryFilter');
+  const txt     = document.getElementById('textSearch');
+  const bcIn    = document.getElementById('barcodeInput');
+  const results = document.getElementById('searchResults');
+  const details = document.getElementById('selectedDetails');
+
+  const lowToastEl = document.getElementById('lowStockToast');
+  const lowToast   = lowToastEl ? new bootstrap.Toast(lowToastEl) : null;
+  const sound      = document.getElementById('notifSound');
+
+  function filterProducts(){
+    const c = catF.value;
+    const t = txt.value.toUpperCase().trim();
+    return products.filter(p =>
+      (!c || String(p.category) === String(c)) &&
+      p.display.toUpperCase().includes(t)
+    );
+  }
+
+  function showResults(){
+    const matches = filterProducts();
+    results.innerHTML = '';
+
+    if (!txt.value.trim() || !matches.length){
+      results.classList.add('d-none');
+      return;
+    }
+
+    matches.slice(0, 50).forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p.display;
+      li.dataset.id = p.id;
+      li.addEventListener('click', () => selectProduct(p.id));
+      results.append(li);
+    });
+
+    results.classList.remove('d-none');
+  }
+
+  function fmtMoney(x){
+    try{
+      const n = Number(x);
+      return n.toLocaleString();
+    }catch(e){
+      return x;
+    }
+  }
+
+  function selectProduct(id){
+    const p = products.find(x => String(x.id) === String(id));
+    if(!p) return;
+
+    results.classList.add('d-none');
+    txt.value = '';
+
+    const stock = (typeof p.stock !== "undefined") ? p.stock : "";
+    const rl    = (typeof p.reorder_level !== "undefined") ? p.reorder_level : 0;
+
+    details.innerHTML = `
+      <div class="d-flex flex-column gap-2">
+        <div style="font-weight:950;color:#0f172a;font-size:1.05rem;">
+          ${p.display}
+        </div>
+        <div class="sel-row">
+          ${stock !== "" ? `<span class="sel-badge"><i class="fa-solid fa-box"></i><span class="mono">Stock: ${stock}</span></span>` : ``}
+          <span class="sel-badge"><i class="fa-solid fa-triangle-exclamation"></i><span class="mono">Reorder: ${rl}</span></span>
+          <span class="sel-badge"><i class="fa-solid fa-tags"></i> Discount is per unit</span>
+        </div>
+
+        <div class="qtybar mt-2">
+          <input id="qtyInput" type="number" min="1" value="1" class="form-control mono" placeholder="Qty">
+          <button id="addBtn" class="btn btn-success btn-k">
+            <i class="fa-solid fa-plus"></i> Add
+          </button>
+        </div>
+
+        <small class="text-muted">
+          Tip: Use barcode scanner → it will auto select product.
+        </small>
+      </div>
+    `;
+
+    const addBtn = document.getElementById('addBtn');
+    addBtn.onclick = (e) => {
+      e.preventDefault();
+      const qty = Number(document.getElementById('qtyInput').value || 0);
+      if (qty < 1){
+        alert('Enter quantity (min 1)');
+        return;
+      }
+      document.getElementById('addFormProduct').value = p.id;
+      document.getElementById('addFormQty').value = qty;
+      document.getElementById('addForm').submit();
+    };
+  }
+
+  function notifyLowStock(){
+    if(!lowToast) return;
+
+    const low = products.filter(p => Number(p.stock) <= Number(p.reorder_level));
+    if(!low.length) return;
+
+    const list = document.getElementById('lowStockList');
+    list.innerHTML = '';
+    low.slice(0, 10).forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p.display;
+      list.append(li);
+    });
+
+    try{ if(sound) sound.play(); } catch(e) {}
+    lowToast.show();
+  }
+
+  // barcode lookup
+  function lookupBarcode(){
+    const code = bcIn.value.trim();
+    if(!code) return;
+
+    fetch(`{% url 'sales:lookup_product' %}?barcode=${encodeURIComponent(code)}`)
+      .then(r => r.json())
+      .then(data => {
+        if(data.status === 'success'){
+          const pd = data.product;
+
+          let found = products.find(x => String(x.id) === String(pd.id));
+          if(!found){
+            found = {
+              id: pd.id,
+              display: `${pd.name} — Tsh${parseFloat(pd.price).toFixed(2)} (Stock: ${pd.stock})`,
+              category: null,
+              stock: pd.stock,
+              reorder_level: 0
+            };
+            products.push(found);
+          }else{
+            // keep stock fresh
+            found.stock = pd.stock;
+          }
+
+          selectProduct(found.id);
+          bcIn.value = '';
+        }else{
+          alert(data.message || "Product not found");
+        }
+      })
+      .catch(() => alert("Barcode lookup failed"));
+  }
+
+  // Event bindings
+  txt.addEventListener('input', showResults);
+
+  // click outside to close dropdown
+  document.addEventListener('click', (e) => {
+    if(!results.classList.contains('d-none')){
+      const inside = results.contains(e.target) || txt.contains(e.target);
+      if(!inside) results.classList.add('d-none');
+    }
+  });
+
+  bcIn.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      lookupBarcode();
+    }
+  });
+
+  catF.addEventListener('change', () => { txt.value = ''; showResults(); });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    notifyLowStock();
+
+    const pm = document.getElementById('paymentMethod');
+    const df = document.getElementById('debtFields');
+    if (pm && df){
+      const toggle = () => { df.style.display = pm.value === 'debt' ? 'flex' : 'none'; };
+      pm.addEventListener('change', toggle);
+      toggle();
+    }
+  });
+</script>
+
+<!-- Hidden add-to-cart form -->
+<form id="addForm" method="post" action="{% url 'sales:add_selected_product_to_cart' %}" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="product_id" id="addFormProduct">
+  <input type="hidden" name="quantity" id="addFormQty">
+</form>
+{% endblock %}
