@@ -79,5 +79,11 @@ urlpatterns = [
     path("debtors/<int:pk>/", views.debtor_detail, name="debtor_detail"),
     path("debtors/<int:pk>/pay/", views.debtor_add_payment, name="debtor_add_payment"),
     path("debtors/<int:pk>/payments/<int:payment_id>/delete/", views.debtor_delete_payment, name="debtor_delete_payment"),
+     
+    path("returns/new/<int:invoice_id>/", views.sales_return_create, name="sales_return_create"),
+    path("returns/<int:pk>/", views.sales_return_detail, name="sales_return_detail"),
+    path("returns/<int:pk>/post/", views.sales_return_post, name="sales_return_post"),
+    
+    path("returns/", views.sales_return_list, name="sales_return_list"),
 
 ]

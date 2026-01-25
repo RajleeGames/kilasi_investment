@@ -101,3 +101,37 @@ class DebtorPaymentForm(forms.ModelForm):
             ]),
             "note": forms.TextInput(attrs={"class":"form-control", "placeholder":"Note (optional)"}),
         }
+
+
+# sales/forms.py
+from django import forms
+from django.forms import inlineformset_factory
+from .models import SalesReturn, SalesReturnItem
+
+
+class SalesReturnForm(forms.ModelForm):
+    class Meta:
+        model = SalesReturn
+        fields = ["note"]
+        widgets = {
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2, "placeholder": "Reason / note (optional)"}),
+        }
+
+
+class SalesReturnItemForm(forms.ModelForm):
+    class Meta:
+        model = SalesReturnItem
+        fields = ["product", "quantity"]
+        widgets = {
+            "product": forms.Select(attrs={"class": "form-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+        }
+
+
+SalesReturnItemFormSet = inlineformset_factory(
+    SalesReturn,
+    SalesReturnItem,
+    form=SalesReturnItemForm,
+    extra=1,
+    can_delete=True
+)

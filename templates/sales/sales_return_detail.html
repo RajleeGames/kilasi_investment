@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Return #{{ ret.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width:1000px;">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h4 class="mb-0">Return #{{ ret.id }}</h4>
+      <small class="text-muted">
+        Invoice #{{ invoice.id }} • Status:
+        {% if ret.status == "posted" %}
+          <span class="badge bg-success">POSTED</span>
+        {% else %}
+          <span class="badge bg-secondary">DRAFT</span>
+        {% endif %}
+      </small>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{% url 'sales:invoice_detail' invoice.id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Invoice
+      </a>
+
+      {% if ret.status == "draft" %}
+      <form method="post" action="{% url 'sales:sales_return_post' ret.id %}">
+        {% csrf_token %}
+        <button class="btn btn-success btn-sm">
+          <i class="fa-solid fa-check me-1"></i> POST Return
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="mb-2"><b>Total Return:</b> {{ ret.total_amount|intcomma }} TZS</div>
+      {% if ret.note %}<div class="text-muted">{{ ret.note }}</div>{% endif %}
+
+      <hr>
+
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Product</th>
+              <th class="text-end">Qty</th>
+              <th class="text-end">Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in items %}
+            <tr>
+              <td>{{ it.product.name }}</td>
+              <td class="text-end">{{ it.quantity }}</td>
+              <td class="text-end fw-bold">{{ it.line_total|intcomma }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

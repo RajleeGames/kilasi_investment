@@ -297,23 +297,56 @@ def _must_own_invoice_if_seller(request, inv):
     return False
 
 
-# ───────────────────────────────────────────────────────────────
-# BALANCE HELPERS (works for method OR property/int field)
-# ───────────────────────────────────────────────────────────────
+from django.db.models import Sum
+from .models import Payment, SalesReturn  # ✅ ensure SalesReturn imported
+
+
+def _invoice_payments_total(inv) -> int:
+    try:
+        if hasattr(inv, "payments"):
+            return int(inv.payments.aggregate(t=Sum("amount"))["t"] or 0)
+    except Exception:
+        pass
+    return int(Payment.objects.filter(invoice=inv).aggregate(t=Sum("amount"))["t"] or 0)
+
+
+def _invoice_returns_total(inv) -> int:
+    try:
+        if hasattr(inv, "returns"):
+            qs = inv.returns.all()
+
+            # count ONLY posted returns if model has status
+            if hasattr(SalesReturn, "status"):
+                qs = qs.filter(status__in=["posted", "POSTED", "Posted"])
+
+            return int(qs.aggregate(t=Sum("total_amount"))["t"] or 0)
+    except Exception:
+        pass
+
+    qs = SalesReturn.objects.filter(invoice=inv)
+    if hasattr(SalesReturn, "status"):
+        qs = qs.filter(status__in=["posted", "POSTED", "Posted"])
+    return int(qs.aggregate(t=Sum("total_amount"))["t"] or 0)
+
+
 def _invoice_balance(inv) -> int:
     """
-    Supports BOTH styles:
-      - inv.balance()  (method)
-      - inv.balance    (property / int field)
-    Always returns int >= 0
+    ✅ REAL debt balance after returns:
+      balance = max(0, (total_amount - returns_total) - payments_total)
     """
-    b = getattr(inv, "balance", 0)
-    try:
-        value = b() if callable(b) else b
-        value = int(value or 0)
-    except Exception:
-        value = 0
-    return max(0, value)
+    total_amount = int(getattr(inv, "total_amount", 0) or 0)
+    returns_total = _invoice_returns_total(inv)
+    payments_total = _invoice_payments_total(inv)
+
+    effective_total = max(0, total_amount - returns_total)
+    balance = max(0, effective_total - payments_total)
+
+    # only debt invoices use balance
+    if (getattr(inv, "status", "") or "").lower() != "debt":
+        return 0
+
+    return balance
+
 
 
 # ───────────────────────────────────────────────────────────────
@@ -698,26 +731,40 @@ from users.utils import role_required
 from .models import Invoice, InvoiceItem  # adjust names if different
 
 
+
+
+
 def _d(value, default="0.00"):
-    """Safe Decimal"""
     try:
         return Decimal(str(value))
     except Exception:
         return Decimal(default)
 
 
+# sales/views.py
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404, render
+from users.utils import role_required
+
+from .models import Invoice, InvoiceItem, Payment
+
+def _d(value, default="0.00"):
+    try:
+        return Decimal(str(value))
+    except Exception:
+        return Decimal(default)
+
 @login_required
-@role_required(["seller", "admin"])
+@role_required(["seller", "admin", "cashier"])
 def invoice_detail(request, pk=None, invoice_id=None):
-    """
-    Works with URL kwargs pk or invoice_id.
-    Fixes: invoice_detail() got unexpected keyword argument 'pk'
-    Fixes: cannot assign unit_price property
-    """
     inv_id = pk if pk is not None else invoice_id
     invoice = get_object_or_404(Invoice, pk=inv_id)
 
-    # items queryset
+    # -----------------------------
+    # ITEMS (safe computed list)
+    # -----------------------------
     if hasattr(invoice, "items"):
         items_qs = invoice.items.select_related("product").all()
     else:
@@ -726,22 +773,24 @@ def invoice_detail(request, pk=None, invoice_id=None):
     invoice_items = []
     for it in items_qs:
         qty = int(getattr(it, "quantity", 0) or 0)
-        disc = _d(getattr(it, "discount", 0) or 0)  # per unit discount
+        disc = _d(getattr(it, "discount", 0) or 0)
 
-        # unit price (DO NOT set it.unit_price!)
         up = getattr(it, "unit_price", None)
         if up is None:
+            up = getattr(it, "selling_price", None)
+        if up is None:
             prod = getattr(it, "product", None)
-            up = getattr(prod, "selling_price", None)
-            if up is None:
-                up = getattr(prod, "price", 0)  # may not exist in your Product
-        unit_price = _d(up or 0)
+            up = getattr(prod, "selling_price", None) if prod else None
+        if up is None:
+            prod = getattr(it, "product", None)
+            up = getattr(prod, "price", 0) if prod else 0
 
+        unit_price = _d(up or 0)
         effective_price = unit_price - disc
         if effective_price < 0:
             effective_price = Decimal("0.00")
 
-        line_total = effective_price * _d(qty)
+        line_total = (effective_price * _d(qty))
 
         invoice_items.append({
             "product": it.product,
@@ -752,23 +801,58 @@ def invoice_detail(request, pk=None, invoice_id=None):
             "line_total": line_total,
         })
 
-    # balance safe (field/property/method)
-    balance_val = None
-    bal_attr = getattr(invoice, "balance", None)
-    if callable(bal_attr):
-        try:
-            balance_val = bal_attr()
-        except Exception:
-            balance_val = None
+    # -----------------------------
+    # PAYMENTS
+    # -----------------------------
+    if hasattr(invoice, "payments"):
+        payments = invoice.payments.select_related("created_by").order_by("-timestamp")
+        payments_total_int = int(invoice.payments.aggregate(t=Sum("amount"))["t"] or 0)
     else:
-        balance_val = bal_attr
+        payments = Payment.objects.filter(invoice=invoice).select_related("created_by").order_by("-timestamp")
+        payments_total_int = int(Payment.objects.filter(invoice=invoice).aggregate(t=Sum("amount"))["t"] or 0)
 
-    context = {
+    # -----------------------------
+    # RETURNS (safe even if not implemented)
+    # -----------------------------
+    returns = []
+    returns_total = Decimal("0.00")
+    try:
+        if hasattr(invoice, "returns"):
+            returns = invoice.returns.select_related("created_by").order_by("-created_at")
+            returns_total = _d(invoice.returns.aggregate(t=Sum("total_amount"))["t"] or 0)
+    except Exception:
+        returns = []
+        returns_total = Decimal("0.00")
+
+    # -----------------------------
+    # EFFECTIVE TOTAL + BALANCE (after returns)
+    # -----------------------------
+    total_amount = _d(getattr(invoice, "total_amount", 0) or 0)
+    total_effective = total_amount - returns_total
+    if total_effective < 0:
+        total_effective = Decimal("0.00")
+
+    effective_total_int = int(total_effective.to_integral_value())
+    balance_value = max(0, effective_total_int - payments_total_int)
+
+    # only debt uses balance logic
+    if (getattr(invoice, "status", "") or "").lower() != "debt":
+        balance_value = 0
+
+    return render(request, "sales/invoice_detail.html", {
         "invoice": invoice,
+
+        # ✅ use these in template (DO NOT set invoice.returns_total etc)
         "invoice_items": invoice_items,
-        "balance": _d(balance_val or 0),
-    }
-    return render(request, "sales/invoice_detail.html", context)
+        "payments": payments,
+        "returns": returns,
+
+        "returns_total": int(returns_total.to_integral_value()),
+        "total_effective": effective_total_int,
+        "payments_total": payments_total_int,
+        "balance_value": balance_value,
+    })
+
 
 @login_required
 @role_required(["seller", "admin", "cashier"])
@@ -828,17 +912,18 @@ def invoice_receipt(request, pk):
 
 # ───────────────────────────────────────────────────────────────
 # SELLER DEBTS + PAYMENTS
-# ───────────────────────────────────────────────────────────────
 @login_required
 @role_required(["seller", "admin"])
 def outstanding_debts(request):
     q = (request.GET.get("q") or "").strip()
 
-    qs = _invoice_scope_qs(request).filter(status="debt", paid=False)
+    qs = _invoice_scope_qs(request).filter(status="debt")
     if q:
         qs = qs.filter(customer__name__icontains=q)
 
-    debts = list(qs.order_by("-created_at"))
+    # ✅ only show invoices that still have effective balance > 0
+    debts_all = list(qs.order_by("-created_at"))
+    debts = [inv for inv in debts_all if _invoice_balance(inv) > 0]
 
     total_outstanding = sum(_invoice_balance(inv) for inv in debts)
     top_debtor = max(debts, key=_invoice_balance) if debts else None
@@ -917,14 +1002,125 @@ def _product_cost_expr():
     return expr, found[0]
 
 
+from decimal import Decimal
+from django.db.models import Sum
+
+def _dec(v):
+    try:
+        return Decimal(str(v))
+    except Exception:
+        return Decimal("0.00")
+
+
+def _pick_existing_field(model, candidates):
+    fields = {f.name for f in model._meta.get_fields()}
+    for c in candidates:
+        if c in fields:
+            return c
+    return None
+
+
+def compute_debt_stats(inv_qs, selected_branch=None, month=None, year=None):
+    """
+    ✅ Computes real debt after payments + returns
+
+    BALANCE = (invoice.total_amount - returns_total) - payments_total
+
+    Returns:
+      num_debts               => count of invoices with balance > 0
+      total_outstanding_debt  => sum of positive balances
+      total_customer_credit   => sum of negative balances (as positive number)
+    """
+    from .models import Payment, SalesReturn
+
+    debt_qs = inv_qs.filter(status="debt")
+
+    # Optional filter (keep if you really want debt created in that month/year)
+    if month and year:
+        debt_qs = debt_qs.filter(created_at__month=month, created_at__year=year)
+
+    invoice_ids = list(debt_qs.values_list("id", flat=True))
+    if not invoice_ids:
+        return 0, Decimal("0.00"), Decimal("0.00")
+
+    # Invoice totals
+    invoice_totals = {
+        r["id"]: _dec(r["total_amount"])
+        for r in debt_qs.values("id", "total_amount")
+    }
+
+    # Payments
+    payment_map = {i: Decimal("0.00") for i in invoice_ids}
+    pay_rows = Payment.objects.filter(invoice_id__in=invoice_ids).values("invoice_id").annotate(t=Sum("amount"))
+    for r in pay_rows:
+        payment_map[r["invoice_id"]] = _dec(r["t"] or 0)
+
+    # Returns (pick correct field name safely)
+    ret_amount_field = _pick_existing_field(SalesReturn, ["total_amount", "amount", "total", "value"])
+    returns_map = {i: Decimal("0.00") for i in invoice_ids}
+
+    if ret_amount_field:
+        ret_qs = SalesReturn.objects.filter(invoice_id__in=invoice_ids)
+
+        # branch filter
+        if selected_branch:
+            if hasattr(SalesReturn, "branch_id"):
+                ret_qs = ret_qs.filter(branch=selected_branch)
+            else:
+                # if SalesReturn doesn't have branch, filter by invoice branch
+                ret_qs = ret_qs.filter(invoice__branch=selected_branch)
+
+        # posted filter (very flexible)
+        if hasattr(SalesReturn, "status"):
+            ret_qs = ret_qs.filter(status__iexact="posted") | ret_qs.filter(status__iexact="POSTED")
+
+        ret_rows = ret_qs.values("invoice_id").annotate(t=Sum(ret_amount_field))
+        for r in ret_rows:
+            returns_map[r["invoice_id"]] = _dec(r["t"] or 0)
+
+    # Calculate balances
+    num_debts = 0
+    total_outstanding = Decimal("0.00")
+    total_credit = Decimal("0.00")
+
+    for inv_id in invoice_ids:
+        total = invoice_totals.get(inv_id, Decimal("0.00"))
+        paid = payment_map.get(inv_id, Decimal("0.00"))
+        returned = returns_map.get(inv_id, Decimal("0.00"))
+
+        effective_total = total - returned
+        balance = effective_total - paid  # ✅ can be negative
+
+        if balance > 0:
+            num_debts += 1
+            total_outstanding += balance
+        elif balance < 0:
+            total_credit += (-balance)
+
+    return num_debts, total_outstanding, total_credit
+
+
+
+from decimal import Decimal
+from datetime import date
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+from django.shortcuts import render
+from django.utils.timezone import localdate
+
+from users.utils import role_required
+from inventory.models import Product
+from .models import Invoice, InvoiceItem, Payment, Expense
+
+
 @login_required
 @role_required(["admin", "cashier"])
 def admin_dashboard(request):
     today = localdate()
 
-    # ✅ branches dropdown (exclude transport/HQ)
+    # ✅ branches dropdown
     branches_qs = _branches_for_sales_dropdown()
-
     branch_id = (request.GET.get("branch") or "").strip()
     selected_branch = branches_qs.filter(pk=branch_id).first() if branch_id else None
 
@@ -932,7 +1128,7 @@ def admin_dashboard(request):
     pay_qs = Payment.objects.select_related("invoice")
     exp_qs = Expense.objects.all()
 
-    # apply branch filter
+    # ✅ apply branch filter
     if selected_branch:
         if hasattr(Invoice, "branch_id"):
             inv_qs = inv_qs.filter(branch=selected_branch)
@@ -940,7 +1136,7 @@ def admin_dashboard(request):
         if hasattr(Expense, "branch_id"):
             exp_qs = exp_qs.filter(branch=selected_branch)
 
-    # filters month/year (optional)
+    # ✅ month/year filters
     month = _safe_int(request.GET.get("month"))
     year = _safe_int(request.GET.get("year"))
 
@@ -959,36 +1155,26 @@ def admin_dashboard(request):
         inv_qs.filter(created_at__date=today, status="ebt", paid=True)
         .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
     )
-
     total_today_cashflow = total_cash_today + total_bank_today + total_ebt_today
 
     # -----------------------------------------
     # CASHFLOW (overall / selected month-year)
     # -----------------------------------------
     if month and year:
-        cash = (
-            inv_qs.filter(status="cash", paid=True, created_at__month=month, created_at__year=year)
+        cash = inv_qs.filter(status="cash", paid=True, created_at__month=month, created_at__year=year)\
             .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        )
-        bank = (
-            inv_qs.filter(status="bank", paid=True, created_at__month=month, created_at__year=year)
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        )
-        ebt = (
-            inv_qs.filter(status="ebt", paid=True, created_at__month=month, created_at__year=year)
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        )
 
-        # payments received for debt (by payment timestamp)
-        debt_payments = (
-            pay_qs.filter(timestamp__month=month, timestamp__year=year)
-            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-        )
+        bank = inv_qs.filter(status="bank", paid=True, created_at__month=month, created_at__year=year)\
+            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
 
-        expenses_total = (
-            exp_qs.filter(date__month=month, date__year=year)
+        ebt = inv_qs.filter(status="ebt", paid=True, created_at__month=month, created_at__year=year)\
+            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+
+        debt_payments = pay_qs.filter(timestamp__month=month, timestamp__year=year)\
             .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-        )
+
+        expenses_total = exp_qs.filter(date__month=month, date__year=year)\
+            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
     else:
         cash = inv_qs.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
         bank = inv_qs.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
@@ -997,7 +1183,6 @@ def admin_dashboard(request):
         debt_payments = pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
         expenses_total = exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
-    # ✅ include EBT here
     overall_sales_cashflow = cash + bank + ebt + debt_payments
 
     expenses_today = exp_qs.filter(date=today).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
@@ -1005,7 +1190,7 @@ def admin_dashboard(request):
     net_overall_cashflow = overall_sales_cashflow - expenses_total
 
     # -----------------------------------------
-    # ✅ PROFIT (Revenue - COGS - Expenses)
+    # ✅ PROFIT
     # -----------------------------------------
     revenue_field = "subtotal" if hasattr(Invoice, "subtotal") else "total_amount"
 
@@ -1046,9 +1231,15 @@ def admin_dashboard(request):
     net_profit_period = gross_profit_period - expenses_period_for_profit
 
     # -----------------------------------------
+    # ✅ DEBTS (REAL FIX: subtract returns + payments)
+    # -----------------------------------------
+    num_debts, total_outstanding_debt, total_customer_credit = compute_debt_stats(
+        inv_qs, selected_branch=selected_branch, month=month, year=year
+    )
+
+    # -----------------------------------------
     # counts
     # -----------------------------------------
-    num_debts = inv_qs.filter(status="debt", paid=False).count()
     num_cash_sales = inv_qs.filter(status="cash", paid=True).count()
     num_bank_sales = inv_qs.filter(status="bank", paid=True).count()
     num_ebt_sales  = inv_qs.filter(status="ebt",  paid=True).count()
@@ -1101,8 +1292,11 @@ def admin_dashboard(request):
         "gross_profit_period": gross_profit_period,
         "net_profit_period": net_profit_period,
 
-        # counts
+        # ✅ NEW debt stats
         "num_debts": num_debts,
+        "total_outstanding_debt": total_outstanding_debt,
+        "total_customer_credit": total_customer_credit,
+
         "num_cash_sales": num_cash_sales,
         "num_bank_sales": num_bank_sales,
         "num_ebt_sales": num_ebt_sales,
@@ -1113,6 +1307,7 @@ def admin_dashboard(request):
         "years": years,
         "today_str": today.isoformat(),
     })
+
 
 # ───────────────────────────────────────────────────────────────
 # REPORTS (admin/cashier filter branch, seller locked to branch)
@@ -1950,89 +2145,146 @@ from django.utils import timezone
 from .models import Customer, Invoice, Payment
 from users.utils import role_required
 
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+
+from users.utils import role_required
+from .models import Customer, Invoice, Payment, SalesReturn  # ✅ add SalesReturn
+
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+
+from users.utils import role_required
+from .models import Customer, Invoice, Payment, SalesReturn
+
 
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def customer_debt_statement(request, customer_id):
     customer = get_object_or_404(Customer, pk=customer_id)
 
-    # Screen UI invoices (latest first)
     invoices_qs = (
         Invoice.objects
         .filter(customer=customer, status="debt")
-        .prefetch_related("items__product", "payments")
+        .prefetch_related("items__product", "payments", "returns")
         .order_by("-created_at")
     )
 
-    # totals (keep Decimal; Payment is integer TSH so cast to Decimal safely)
     total_debt = invoices_qs.aggregate(t=Sum("total_amount"))["t"] or Decimal("0")
+
     total_paid_int = Payment.objects.filter(
         invoice__customer=customer,
         invoice__status="debt",
     ).aggregate(t=Sum("amount"))["t"] or 0
-
     total_paid = Decimal(total_paid_int)
-    balance = Decimal(total_debt) - total_paid
-    if balance < 0:
-        balance = Decimal("0")
 
-    # paginate screen invoices
+    returns_qs = SalesReturn.objects.filter(
+        invoice__customer=customer,
+        invoice__status="debt",
+    )
+    if hasattr(SalesReturn, "status"):
+        returns_qs = returns_qs.filter(status__in=["posted", "POSTED", "Posted"])
+
+    total_returns = returns_qs.aggregate(t=Sum("total_amount"))["t"] or Decimal("0")
+
+    # ✅ NET DEBT (this is what you expect to "decrease")
+    net_debt = Decimal(total_debt) - Decimal(total_returns)
+
+    # ✅ balance can be negative -> customer credit
+    balance = net_debt - Decimal(total_paid)
+
+    credit_due = Decimal("0")
+    if balance < 0:
+        credit_due = -balance  # shop owes customer
+        # keep balance negative to show it properly
+
     invoices_page = Paginator(invoices_qs, 10).get_page(request.GET.get("page", 1))
 
-    # ------------------------------------------------------------
-    # THERMAL STATEMENT (chronological): invoice=DEBIT, payment=CREDIT
-    # ------------------------------------------------------------
+    # ---------- Statement events ----------
     invoices_for_statement = (
         Invoice.objects
         .filter(customer=customer, status="debt")
-        .prefetch_related("items__product", "payments")
+        .prefetch_related("items__product", "payments", "returns")
         .order_by("created_at")
     )
 
     events = []
+
     for inv in invoices_for_statement:
         items_count = inv.items.all().count()
-
-        # DEBIT: customer took goods (invoice created)
         inv_total = Decimal(inv.total_amount or 0)
+
+        # Dr invoice
         events.append({
             "dt": inv.created_at,
             "ref": f"INV#{inv.id}",
             "desc": f"Goods taken ({items_count} items)",
             "debit": inv_total,
             "credit": Decimal("0"),
+            "kind": "invoice",
         })
 
-        # CREDIT: payments made
-        for p in inv.payments.all():  # Payment.ordering is -timestamp, but we sort later
-            who = f" by {p.created_by.username}" if p.created_by else ""
+        # Cr payments
+        for p in inv.payments.all():
+            who = f" by {p.created_by.username}" if getattr(p, "created_by", None) else ""
             events.append({
                 "dt": p.timestamp,
                 "ref": f"PAY#{p.id}",
                 "desc": f"Payment{who}",
                 "debit": Decimal("0"),
                 "credit": Decimal(p.amount or 0),
+                "kind": "payment",
+            })
+
+        # Cr returns
+        inv_returns = inv.returns.all()
+        if hasattr(SalesReturn, "status"):
+            inv_returns = inv_returns.filter(status__in=["posted", "POSTED", "Posted"])
+
+        for r in inv_returns:
+            who = f" by {r.created_by.username}" if getattr(r, "created_by", None) else ""
+            events.append({
+                "dt": getattr(r, "created_at", None) or timezone.now(),
+                "ref": f"RET#{r.id}",
+                "desc": f"Return{who}",
+                "debit": Decimal("0"),
+                "credit": Decimal(getattr(r, "total_amount", 0) or 0),
+                "kind": "return",
             })
 
     events.sort(key=lambda x: x["dt"] or timezone.now())
 
-    # running balance
+    # ✅ running balance (DON'T clamp to 0)
     running = Decimal("0")
     rows = []
     for e in events:
-        running = running + e["debit"] - e["credit"]
+        running = running + Decimal(e.get("debit") or 0) - Decimal(e.get("credit") or 0)
         e["balance"] = running
         rows.append(e)
 
     return render(request, "sales/customer_debt_statement.html", {
         "customer": customer,
         "invoices": invoices_page,
+
         "total_debt": total_debt,
         "total_paid": total_paid,
-        "balance": balance,
-        "rows": rows,  # <-- for thermal print
-    })
+        "total_returns": total_returns,
 
+        # ✅ NEW
+        "net_debt": net_debt,          # Debt - Returns
+        "balance": balance,            # can be negative
+        "credit_due": credit_due,      # positive number if customer overpaid
+
+        "rows": rows,
+    })
 
 
 # sales/views.py (stock transfer part)
@@ -2447,3 +2699,159 @@ def debtor_delete_payment(request, pk, payment_id):
 
         messages.success(request, "Payment deleted.")
     return redirect("sales:debtor_detail", pk=debtor.id)
+
+
+
+# sales/views.py
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from users.utils import role_required
+
+from .models import Invoice, InvoiceItem, SalesReturn, SalesReturnItem
+from .forms import SalesReturnForm, SalesReturnItemFormSet
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def sales_return_create(request, invoice_id):
+    invoice = get_object_or_404(Invoice, pk=invoice_id)
+
+    # (optional) permissions: seller only own invoice
+    # if you have _must_own_invoice_if_seller(request, invoice): use it.
+
+    # Draft return
+    ret = SalesReturn(invoice=invoice, created_by=request.user)
+
+    if request.method == "POST":
+        form = SalesReturnForm(request.POST, instance=ret)
+        formset = SalesReturnItemFormSet(request.POST, instance=ret)
+
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                ret = form.save(commit=False)
+                # set branch from invoice if exists
+                inv_branch = getattr(invoice, "branch", None)
+                if inv_branch:
+                    ret.branch = inv_branch
+                ret.created_by = request.user
+                ret.save()
+
+                # Save items first
+                items = formset.save(commit=False)
+
+                # Only allow returning products that were on invoice
+                invoice_products = set(
+                    InvoiceItem.objects.filter(invoice=invoice).values_list("product_id", flat=True)
+                )
+
+                for it in items:
+                    if it.product_id not in invoice_products:
+                        raise ValueError("You can only return products from this invoice.")
+
+                    # Pull pricing from invoice item (snapshot)
+                    inv_item = InvoiceItem.objects.filter(invoice=invoice, product_id=it.product_id).first()
+
+                    # unit price
+                    unit_price = getattr(inv_item, "selling_price", None)
+                    if unit_price is None:
+                        unit_price = getattr(inv_item, "unit_price", None) or Decimal("0.00")
+
+                    disc = getattr(inv_item, "discount", 0) or 0
+
+                    it.sales_return = ret
+                    it.unit_price = Decimal(unit_price)
+                    it.discount = Decimal(disc)
+                    it.save()
+
+                # delete removed
+                for obj in formset.deleted_objects:
+                    obj.delete()
+
+                ret.recompute_total()
+
+            messages.success(request, "Return saved as Draft. Now you can POST it.")
+            return redirect("sales:sales_return_detail", ret.id)
+
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = SalesReturnForm(instance=ret)
+        formset = SalesReturnItemFormSet(instance=ret)
+
+    return render(request, "sales/sales_return_form.html", {
+        "invoice": invoice,
+        "form": form,
+        "formset": formset,
+    })
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def sales_return_detail(request, pk):
+    ret = get_object_or_404(SalesReturn, pk=pk)
+    invoice = ret.invoice
+    items = ret.items.select_related("product").all()
+
+    return render(request, "sales/sales_return_detail.html", {
+        "ret": ret,
+        "invoice": invoice,
+        "items": items,
+    })
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def sales_return_post(request, pk):
+    ret = get_object_or_404(SalesReturn, pk=pk)
+
+    if request.method != "POST":
+        return redirect("sales:sales_return_detail", ret.id)
+
+    try:
+        ret.post(request.user)
+        messages.success(request, "Return POSTED. Stock updated. Invoice recalculated.")
+    except Exception as e:
+        messages.error(request, f"Failed to post return: {e}")
+
+    return redirect("sales:sales_return_detail", ret.id)
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def sales_return_list(request):
+    """
+    List of returns:
+    - Admin/Cashier see all (sales branches)
+    - Seller sees only returns from their branch or their invoices
+    """
+    qs = SalesReturn.objects.select_related("invoice", "created_by")
+
+    # filter by branch if your SalesReturn has branch
+    role = _role_lower(request)
+    if role == "seller":
+        b = _get_user_branch(request)
+        if b and hasattr(SalesReturn, "branch_id"):
+            qs = qs.filter(branch=b)
+        else:
+            # fallback: seller sees only their invoices' returns
+            qs = qs.filter(invoice__seller=request.user)
+
+    # optional search
+    q = (request.GET.get("q") or "").strip()
+    if q:
+        qs = qs.filter(
+            Q(invoice__id__icontains=q) |
+            Q(invoice__customer__name__icontains=q)
+        )
+
+    page_obj = Paginator(qs.order_by("-id"), 30).get_page(request.GET.get("page", 1))
+
+    return render(request, "sales/sales_return_list.html", {
+        "returns": page_obj.object_list,
+        "page_obj": page_obj,
+        "is_paginated": page_obj.has_other_pages(),
+        "paginator": page_obj.paginator,
+        "query": q,
+    })

@@ -388,6 +388,11 @@
     <i class="fa-solid fa-clock-rotate-left"></i> <span class="label">Debts</span>
   </a>
 
+           {# ✅ Sales Returns (admin/cashier/seller only) #}
+<a class="sb-link {% if request.resolver_match.url_name in 'sales_return_list sales_return_create sales_return_detail sales_return_post' %}active{% endif %}"
+   href="{% url 'sales:sales_return_list' %}" title="Sales Returns">
+  <i class="fa-solid fa-rotate-left"></i> <span class="label">Sales Returns</span>
+</a>
 
 
             <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsDesk" role="button"
@@ -714,6 +719,13 @@
             <a class="sb-link" href="{% url 'sales:outstanding_debts' %}">
               <i class="fa-solid fa-clock-rotate-left"></i> Debts
             </a>
+
+            {# ✅ Sales Returns (admin/cashier/seller only) #}
+<a class="sb-link {% if request.resolver_match.url_name in 'sales_return_list sales_return_create sales_return_detail sales_return_post' %}active{% endif %}"
+   href="{% url 'sales:sales_return_list' %}">
+  <i class="fa-solid fa-rotate-left"></i> Sales Returns
+</a>
+
 
             <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsMob"
                role="button" aria-expanded="false" aria-controls="sbReportsMob">

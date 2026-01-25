@@ -16,6 +16,7 @@
         Sales • Debts • Payments • Expenses
         {% if selected_branch_obj %} • <strong>{{ selected_branch_obj.name }}</strong>{% endif %}
       </small>
+
       {% if not profit_enabled %}
         <div class="small text-danger mt-1">
           Profit is showing as revenue - 0 because product buying cost field was not found.
@@ -40,7 +41,9 @@
             </option>
           {% endfor %}
         </select>
-        <button class="btn btn-outline-primary" type="submit"><i class="fa-solid fa-filter me-1"></i>Filter</button>
+        <button class="btn btn-outline-primary" type="submit">
+          <i class="fa-solid fa-filter me-1"></i>Filter
+        </button>
       </div>
 
       <div class="input-group input-group-sm" style="width:140px;">
@@ -48,7 +51,9 @@
         <select class="form-select" name="month">
           <option value="">Month</option>
           {% for m in months %}
-            <option value="{{ m }}" {% if selected_month|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>{{ m }}</option>
+            <option value="{{ m }}" {% if selected_month|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>
+              {{ m }}
+            </option>
           {% endfor %}
         </select>
       </div>
@@ -58,7 +63,9 @@
         <select class="form-select" name="year">
           <option value="">Year</option>
           {% for y in years %}
-            <option value="{{ y }}" {% if selected_year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+            <option value="{{ y }}" {% if selected_year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>
+              {{ y }}
+            </option>
           {% endfor %}
         </select>
       </div>
@@ -214,15 +221,20 @@
     </div>
   </div>
 
-  <!-- Count cards -->
+  <!-- ✅ Debt cards (FIXED) -->
   <div class="row g-3 mb-4">
+
+    <!-- ✅ Outstanding Debts (count + amount) -->
     <div class="col-12 col-md-4 col-lg-3">
       <a class="text-decoration-none" href="{% url 'sales:outstanding_debts' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
         <div class="card text-white bg-dark shadow-sm border-0">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">Unpaid Debts</div>
-              <div class="h2 mb-0">{{ num_debts }}</div>
+              <div class="h2 mb-0">{{ num_debts|default:0 }}</div>
+              <div class="small opacity-75">
+                Tsh {{ total_outstanding_debt|default:0|floatformat:0|intcomma }}
+              </div>
             </div>
             <i class="fa-solid fa-hourglass-half fa-2x opacity-75"></i>
           </div>
@@ -230,13 +242,29 @@
       </a>
     </div>
 
+    <!-- ✅ Customer Credit (returns after paid) -->
+    <div class="col-12 col-md-4 col-lg-3">
+      <div class="card text-white bg-warning shadow-sm border-0">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">Customer Credit (We Owe)</div>
+            <div class="h4 mb-0">
+              Tsh {{ total_customer_credit|default:0|floatformat:0|intcomma }}
+            </div>
+          </div>
+          <i class="fa-solid fa-rotate-left fa-2x opacity-75"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash Transactions -->
     <div class="col-12 col-md-4 col-lg-3">
       <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
         <div class="card text-white bg-success shadow-sm border-0">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">Cash Transactions</div>
-              <div class="h2 mb-0">{{ num_cash_sales }}</div>
+              <div class="h2 mb-0">{{ num_cash_sales|default:0 }}</div>
             </div>
             <i class="fa-solid fa-receipt fa-2x opacity-75"></i>
           </div>
@@ -244,13 +272,14 @@
       </a>
     </div>
 
+    <!-- Bank Transactions -->
     <div class="col-12 col-md-4 col-lg-3">
       <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
         <div class="card text-white bg-primary shadow-sm border-0">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">Bank Transactions</div>
-              <div class="h2 mb-0">{{ num_bank_sales }}</div>
+              <div class="h2 mb-0">{{ num_bank_sales|default:0 }}</div>
             </div>
             <i class="fa-solid fa-building-columns fa-2x opacity-75"></i>
           </div>
@@ -258,10 +287,10 @@
       </a>
     </div>
 
-    <!-- EBT Transactions count -->
+    <!-- EBT Transactions -->
     <div class="col-12 col-md-4 col-lg-3">
       <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card text-white" style="background:#212529; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; border:0;">
+        <div class="card text-white" style="background:#212529; box-shadow:0 .125rem .25rem rgba(0,0,0,.075)!important; border:0;">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">EBT Transactions</div>
@@ -273,17 +302,19 @@
       </a>
     </div>
 
+    <!-- All Transactions -->
     <div class="col-12 col-md-6 col-lg-3">
       <div class="card text-white bg-info shadow-sm border-0">
         <div class="card-body d-flex align-items-center justify-content-between">
           <div>
             <div class="small opacity-75">All Transactions</div>
-            <div class="h2 mb-0">{{ total_transactions }}</div>
+            <div class="h2 mb-0">{{ total_transactions|default:0 }}</div>
           </div>
           <i class="fa-solid fa-layer-group fa-2x opacity-75"></i>
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- Recently Added Products -->
@@ -296,7 +327,6 @@
 
   <ul class="list-group shadow-sm mb-2">
     {% for prod in recent_products %}
-      {# ✅ IMPORTANT: DO NOT reference prod.price because your Product has no "price" field #}
       {% with sp=prod.selling_price|default_if_none:0 %}
       {% with st=prod.branch_qty|default_if_none:prod.stock|default_if_none:0 %}
       {% with rl=prod.reorder_level|default_if_none:0 %}

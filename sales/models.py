@@ -75,10 +75,20 @@ class Customer(models.Model):
     def __str__(self):
         return self.name or f"Customer #{self.pk}"
 
+from decimal import Decimal, InvalidOperation
+from django.db import models
+from django.conf import settings
+from django.urls import reverse
+from django.db.models import Sum
 
-# ───────────────────────────────────────────────────────────────
-# Invoice
-# ───────────────────────────────────────────────────────────────
+from inventory.models import Branch
+from .models import Customer  # adjust import if needed
+
+# You already have these helpers somewhere in your file:
+# - to_decimal(x) -> Decimal
+# - to_int_tsh(Decimal) -> int
+# If not, keep your own ones (do NOT duplicate).
+
 class Invoice(models.Model):
     PAYMENT_CASH = "cash"
     PAYMENT_BANK = "bank"
@@ -144,6 +154,38 @@ class Invoice(models.Model):
     def get_absolute_url(self):
         return reverse("sales:invoice_detail", kwargs={"pk": self.pk})
 
+    # ------------------------------------------------------------
+    # ✅ RETURNS (NEW)
+    # ------------------------------------------------------------
+    def returns_total_decimal(self) -> Decimal:
+        """
+        Sum of POSTED returns only.
+        Needs SalesReturn model:
+          invoice = FK(Invoice, related_name="returns")
+          status in ["draft","posted"]
+          total_amount Decimal
+        """
+        try:
+            t = self.returns.filter(status="posted").aggregate(s=Sum("total_amount"))["s"] or Decimal("0.00")
+            return to_decimal(t)
+        except Exception:
+            return Decimal("0.00")
+
+    def total_effective_decimal(self) -> Decimal:
+        """
+        Effective invoice total after returns:
+          effective_total = total_amount - returns_total
+        Never below 0.
+        """
+        base = to_decimal(self.total_amount)
+        eff = base - self.returns_total_decimal()
+        if eff < Decimal("0.00"):
+            eff = Decimal("0.00")
+        return eff
+
+    def total_effective_tsh(self) -> int:
+        return to_int_tsh(self.total_effective_decimal())
+
     # -----------------------------
     # Totals & payments
     # -----------------------------
@@ -161,6 +203,7 @@ class Invoice(models.Model):
         except InvalidOperation:
             self.total_amount = Decimal("0.00")
 
+        # ✅ after recalculating total_amount, update paid status
         self.update_paid_status(save=False)
 
         if save:
@@ -170,8 +213,15 @@ class Invoice(models.Model):
         paid_sum = self.payments.aggregate(t=Sum("amount"))["t"] or 0
         return int(paid_sum)
 
+    # ------------------------------------------------------------
+    # ✅ BALANCE AFTER RETURNS (UPDATED)
+    # ------------------------------------------------------------
     def balance_tsh(self) -> int:
-        total_int = to_int_tsh(self.total_amount)
+        """
+        NEW BALANCE LOGIC:
+          balance = (total_amount - posted_returns_total) - payments_total
+        """
+        total_int = self.total_effective_tsh()
         return max(0, total_int - self.payments_total_tsh())
 
     @property
@@ -182,10 +232,24 @@ class Invoice(models.Model):
     def balance(self) -> int:
         return self.balance_tsh()
 
+    @property
+    def returns_total(self) -> int:
+        """
+        For templates/UI: returns total in int TSH
+        """
+        return to_int_tsh(self.returns_total_decimal())
+
+    @property
+    def total_effective(self) -> int:
+        """
+        For templates/UI: effective total after returns in int TSH
+        """
+        return self.total_effective_tsh()
+
     def update_paid_status(self, save=True):
         """
         cash/bank/ebt -> always paid True
-        debt -> paid True only if balance <= 0
+        debt -> paid True only if balance <= 0 (AFTER RETURNS)
         """
         if self.status in (self.PAYMENT_CASH, self.PAYMENT_BANK, self.PAYMENT_EBT):
             new_paid = True
@@ -196,7 +260,6 @@ class Invoice(models.Model):
             self.paid = new_paid
             if save:
                 self.save(update_fields=["paid"])
-
 
 # ───────────────────────────────────────────────────────────────
 # Invoice Item
@@ -542,3 +605,169 @@ class DebtorPayment(models.Model):
 
     def __str__(self):
         return f"{self.debtor.name} paid {self.amount}"
+
+# sales/models.py
+from decimal import Decimal
+from django.conf import settings
+from django.db import models, transaction
+from django.db.models import Sum
+from django.utils import timezone
+
+from inventory.models import Product, Branch, StockEntry
+from .models import Invoice, InvoiceItem  # if same file, remove and refer directly
+
+
+class SalesReturn(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_POSTED = "posted"
+    STATUS_CHOICES = (
+        (STATUS_DRAFT, "Draft"),
+        (STATUS_POSTED, "Posted"),
+    )
+
+    invoice = models.ForeignKey(
+        "sales.Invoice",
+        on_delete=models.CASCADE,
+        related_name="returns"
+    )
+    branch = models.ForeignKey(
+        "inventory.Branch",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="sales_returns"
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    note = models.TextField(blank=True, default="")
+
+    total_amount = models.DecimalField(max_digits=18, decimal_places=2, default=Decimal("0.00"))
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="returns_created"
+    )
+    posted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="returns_posted"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    posted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def recompute_total(self):
+        t = self.items.aggregate(s=Sum("line_total"))["s"] or Decimal("0.00")
+        self.total_amount = t
+        self.save(update_fields=["total_amount"])
+        return t
+
+    def post(self, user):
+        """
+        Posting does:
+        1) Validate return quantities
+        2) Add stock back to branch using StockEntry (+qty)
+        3) Mark return posted
+        4) Update invoice -> if debt & balance becomes 0 => paid=True
+        """
+        if self.status == self.STATUS_POSTED:
+            raise ValueError("This return is already posted.")
+
+        inv = self.invoice
+
+        # choose branch from invoice if exists
+        inv_branch = getattr(inv, "branch", None)
+        if not self.branch:
+            self.branch = inv_branch
+
+        if not self.branch:
+            raise ValueError("Invoice branch not found. Set return.branch or invoice.branch.")
+
+        with transaction.atomic():
+            # lock invoice rows for safety
+            Invoice.objects.select_for_update().filter(pk=inv.pk).exists()
+
+            # validate items exist
+            rows = list(self.items.select_related("product"))
+            if not rows:
+                raise ValueError("Add at least one return item.")
+
+            # For each item: ensure we do NOT return more than sold minus already returned
+            for r in rows:
+                sold_qty = (
+                    InvoiceItem.objects
+                    .filter(invoice=inv, product=r.product)
+                    .aggregate(s=Sum("quantity"))["s"] or 0
+                )
+
+                already_returned = (
+                    SalesReturnItem.objects
+                    .filter(
+                        sales_return__invoice=inv,
+                        sales_return__status=SalesReturn.STATUS_POSTED,
+                        product=r.product
+                    )
+                    .aggregate(s=Sum("quantity"))["s"] or 0
+                )
+
+                available = int(sold_qty) - int(already_returned)
+                if r.quantity <= 0:
+                    raise ValueError(f"Invalid qty for {r.product.name}.")
+                if r.quantity > available:
+                    raise ValueError(
+                        f"Return qty too high for '{r.product.name}'. "
+                        f"Sold: {sold_qty}, Already returned: {already_returned}, Available to return: {available}"
+                    )
+
+                # Add stock back
+                StockEntry.objects.create(
+                    product=r.product,
+                    branch=self.branch,
+                    change=+int(r.quantity),
+                    note=f"Return #{self.id} for Invoice #{inv.id}"
+                )
+
+            # set totals & mark posted
+            self.recompute_total()
+            self.status = self.STATUS_POSTED
+            self.posted_by = user
+            self.posted_at = timezone.now()
+            self.save(update_fields=["status", "posted_by", "posted_at", "branch", "total_amount"])
+
+            # update invoice closed status if debt
+            if (inv.status or "").lower() == "debt":
+                # we will use invoice.balance_effective() below (STEP 2)
+                if hasattr(inv, "balance_effective"):
+                    if inv.balance_effective() <= Decimal("0.00"):
+                        inv.paid = True
+                        inv.save(update_fields=["paid"])
+
+
+class SalesReturnItem(models.Model):
+    sales_return = models.ForeignKey(
+        SalesReturn,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField(default=1)
+
+    # store pricing snapshot from invoice at time of return
+    unit_price = models.DecimalField(max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    discount = models.DecimalField(max_digits=18, decimal_places=2, default=Decimal("0.00"))
+    line_total = models.DecimalField(max_digits=18, decimal_places=2, default=Decimal("0.00"))
+
+    def save(self, *args, **kwargs):
+        # compute line_total = (unit_price - discount) * quantity
+        price = (self.unit_price or Decimal("0.00")) - (self.discount or Decimal("0.00"))
+        if price < 0:
+            price = Decimal("0.00")
+        self.line_total = (price * Decimal(int(self.quantity or 0))).quantize(Decimal("0.01"))
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ["id"]

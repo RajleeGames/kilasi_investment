@@ -5,6 +5,51 @@
 
 {% block content %}
 <style>
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f8fafc;
+    --card:#ffffff; --dark:#0b1220;
+    --green:#16a34a; --red:#dc2626; --blue:#2563eb; --amber:#d97706; --purple:#7c3aed;
+  }
+
+  /* ----- Screen styles ----- */
+  .wrap{max-width:1100px;margin:0 auto;padding:12px 10px;}
+  .topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  .title h4{margin:0;font-weight:950;color:var(--ink);}
+  .title small{color:var(--muted);}
+
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+  @media (max-width: 992px){.summary{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width: 520px){.summary{grid-template-columns:1fr}}
+
+  .sum-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.05);padding:12px 14px;}
+  .sum-card .k{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .sum-card .v{font-size:1.25rem;font-weight:950;margin-top:6px;color:var(--ink);}
+  .sum-card .v.red{color:var(--red)}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:900;border:1px solid transparent;}
+  .c-inv{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
+  .c-pay{background:#dcfce7;color:#166534;border-color:#86efac}
+  .c-ret{background:#ede9fe;color:#5b21b6;border-color:#ddd6fe}
+
+  .cardx{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.05);overflow:hidden;}
+  .cardx .head{padding:12px 14px;background:linear-gradient(180deg, rgba(248,250,252,.95), rgba(248,250,252,.75));border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  }
+  .cardx .head h6{margin:0;font-weight:950;color:var(--ink);}
+  .cardx .body{padding:12px 14px;}
+
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;}
+  .tbl th{font-size:.83rem;color:#fff;background:var(--dark);padding:10px 10px;white-space:nowrap;}
+  .tbl td{padding:10px 10px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink);}
+  .tbl tr:hover td{background:#f8fafc;}
+  .tbl .mono{font-variant-numeric:tabular-nums;}
+  .tbl .muted{color:var(--muted);font-size:.85rem;}
+  .tbl .right{text-align:right;}
+  .tbl .center{text-align:center;}
+
+  .pill-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn-pill{border-radius:12px;font-weight:850;padding:7px 12px;}
+  .no-print{ }
+
   /* ----- Print 80mm thermal only ----- */
   #print-area { display: none; }
 
@@ -21,6 +66,7 @@
       font-size: 11px;
       line-height: 1.25;
       color: #000;
+      background: #fff;
     }
     .no-print { display: none !important; }
   }
@@ -42,110 +88,177 @@
 </style>
 
 <script>
-  function printDebtStatement() {
-    window.print();
-  }
+  function printDebtStatement() { window.print(); }
 </script>
 
-<div class="container-fluid py-3">
+<div class="wrap">
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 no-print">
-    <div>
-      <h4 class="mb-0">Debt Statement</h4>
-      <small class="text-muted">
+  <!-- TOP -->
+  <div class="topbar no-print">
+    <div class="title">
+      <h4>Debt Statement</h4>
+      <small>
         {{ customer.name }}{% if customer.phone %} • {{ customer.phone }}{% endif %}
       </small>
     </div>
 
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-dark btn-sm" onclick="printDebtStatement()">
+    <div class="pill-actions">
+      <button type="button" class="btn btn-dark btn-sm btn-pill" onclick="printDebtStatement()">
         <i class="fa-solid fa-print me-1"></i> Print (80mm)
       </button>
 
-      <a href="{% url 'sales:outstanding_debts' %}" class="btn btn-outline-secondary btn-sm">
+      <a href="{% url 'sales:outstanding_debts' %}" class="btn btn-outline-secondary btn-sm btn-pill">
         <i class="fa-solid fa-arrow-left me-1"></i> Back
       </a>
     </div>
   </div>
 
-  <!-- Summary (screen) -->
-  <div class="row g-3 mb-3 no-print">
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Total Debt</div>
-          <div class="h4 mb-0">Tsh {{ total_debt|floatformat:0|intcomma }}</div>
-        </div>
-      </div>
+  <!-- SUMMARY -->
+  <div class="summary no-print">
+    <div class="sum-card">
+      <div class="k"><i class="fa-solid fa-file-invoice-dollar"></i> Total Debt</div>
+      <div class="v mono">Tsh {{ total_debt|floatformat:0|intcomma }}</div>
     </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Total Paid</div>
-          <div class="h4 mb-0">Tsh {{ total_paid|floatformat:0|intcomma }}</div>
-        </div>
-      </div>
+    <div class="sum-card">
+      <div class="k"><i class="fa-solid fa-coins"></i> Total Paid</div>
+      <div class="v mono">Tsh {{ total_paid|floatformat:0|intcomma }}</div>
     </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Balance</div>
-          <div class="h4 mb-0 text-danger">Tsh {{ balance|floatformat:0|intcomma }}</div>
-        </div>
-      </div>
+    <div class="sum-card">
+      <div class="k"><i class="fa-solid fa-rotate-left"></i> Total Returns</div>
+      <div class="v mono">Tsh {{ total_returns|default:0|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="sum-card">
+      <div class="k"><i class="fa-solid fa-scale-balanced"></i> Balance</div>
+      <div class="v mono red">Tsh {{ balance|floatformat:0|intcomma }}</div>
     </div>
   </div>
 
-  <!-- Screen invoices list (keep simple) -->
-  <div class="card border-0 shadow-sm no-print">
-    <div class="card-header bg-transparent">
-      <h6 class="mb-0">Debt Invoices History</h6>
+  <!-- STEP-BY-STEP TABLE (SCREEN) -->
+  <div class="cardx no-print">
+    <div class="head">
+      <h6>Statement (Step by step)</h6>
+      <div class="muted">
+        Dr = Invoice (adds debt) • Cr = Payment/Return (reduces debt) • Bal = Running balance
+      </div>
     </div>
 
-    <div class="card-body">
-      {% for inv in invoices %}
-        <div class="border rounded p-3 mb-3">
-          <div class="d-flex flex-wrap justify-content-between gap-2">
-            <div>
-              <div class="fw-bold">Invoice #{{ inv.id }}</div>
-              <div class="text-muted small">{{ inv.created_at|date:"Y-m-d H:i" }}</div>
-            </div>
+    <div class="body">
 
-            <div class="text-end">
-              <div class="fw-bold">Total: Tsh {{ inv.total_amount|floatformat:0|intcomma }}</div>
-              <div class="small">
-                Paid: Tsh {{ inv.payments_total|floatformat:0|intcomma }} •
-                Balance: <span class="text-danger fw-bold">Tsh {{ inv.balance|floatformat:0|intcomma }}</span>
+      <div class="table-responsive">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:150px;">Date</th>
+              <th>Reference</th>
+              <th>Details</th>
+              <th class="right" style="width:120px;">Dr</th>
+              <th class="right" style="width:120px;">Cr</th>
+              <th class="right" style="width:140px;">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr>
+                <td class="mono">
+                  {{ r.dt|date:"Y-m-d" }}<div class="muted">{{ r.dt|date:"H:i" }}</div>
+                </td>
+
+                <td>
+                  <div class="mono fw-bold">{{ r.ref }}</div>
+                  <div class="muted">
+                    {% if r.kind == "invoice" %}
+                      <span class="chip c-inv"><i class="fa-solid fa-file-invoice"></i> INVOICE</span>
+                    {% elif r.kind == "payment" %}
+                      <span class="chip c-pay"><i class="fa-solid fa-coins"></i> PAYMENT</span>
+                    {% elif r.kind == "return" %}
+                      <span class="chip c-ret"><i class="fa-solid fa-rotate-left"></i> RETURN</span>
+                    {% else %}
+                      <span class="muted">{{ r.kind|default:"-"|upper }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+
+                <td>
+                  <div class="fw-bold">{{ r.desc }}</div>
+                </td>
+
+                <td class="right mono">
+                  {% if r.debit and r.debit > 0 %}
+                    {{ r.debit|floatformat:0|intcomma }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+
+                <td class="right mono">
+                  {% if r.credit and r.credit > 0 %}
+                    {{ r.credit|floatformat:0|intcomma }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+
+                <td class="right mono fw-bold">
+                  {{ r.balance|floatformat:0|intcomma }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="center muted" style="padding:16px;">No transactions found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Invoices list (extra, optional) -->
+      <div class="mt-3">
+        <div class="muted mb-2">Debt invoices summary</div>
+
+        {% for inv in invoices %}
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="d-flex flex-wrap justify-content-between gap-2">
+              <div>
+                <div class="fw-bold">Invoice #{{ inv.id }}</div>
+                <div class="text-muted small">{{ inv.created_at|date:"Y-m-d H:i" }}</div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold">Total: Tsh {{ inv.total_amount|floatformat:0|intcomma }}</div>
+                <div class="small text-muted">
+                  Paid: Tsh {{ inv.payments_total|default:0|floatformat:0|intcomma }} •
+                  Returns: Tsh {{ inv.returns_total|default:0|floatformat:0|intcomma }} •
+                  Balance: <span class="text-danger fw-bold">Tsh {{ inv.balance|default:0|floatformat:0|intcomma }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      {% empty %}
-        <div class="text-muted">No debt invoices for this customer.</div>
-      {% endfor %}
+        {% empty %}
+          <div class="text-muted">No debt invoices for this customer.</div>
+        {% endfor %}
 
-      {% if invoices.has_other_pages %}
-        <nav class="mt-3">
-          <ul class="pagination justify-content-center">
-            {% if invoices.has_previous %}
-              <li class="page-item"><a class="page-link" href="?page={{ invoices.previous_page_number }}">Prev</a></li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link">Prev</span></li>
-            {% endif %}
+        {% if invoices.has_other_pages %}
+          <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+              {% if invoices.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ invoices.previous_page_number }}">Prev</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Prev</span></li>
+              {% endif %}
 
-            <li class="page-item disabled"><span class="page-link">{{ invoices.number }} / {{ invoices.paginator.num_pages }}</span></li>
+              <li class="page-item disabled"><span class="page-link">{{ invoices.number }} / {{ invoices.paginator.num_pages }}</span></li>
 
-            {% if invoices.has_next %}
-              <li class="page-item"><a class="page-link" href="?page={{ invoices.next_page_number }}">Next</a></li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link">Next</span></li>
-            {% endif %}
-          </ul>
-        </nav>
-      {% endif %}
+              {% if invoices.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ invoices.next_page_number }}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </div>
+
     </div>
   </div>
-
 </div>
 
 <!-- ===================== -->
@@ -160,17 +273,17 @@
   <div class="t-hr"></div>
 
   <div class="t-small">
-    <div class="t-row">
-      <span>Total Debt</span>
-      <span class="t-right t-bold">Tsh {{ total_debt|floatformat:0|intcomma }}</span>
+    <div style="display:flex;justify-content:space-between;">
+      <span>Total Debt</span><span class="t-right t-bold">Tsh {{ total_debt|floatformat:0|intcomma }}</span>
     </div>
-    <div class="t-row">
-      <span>Total Paid</span>
-      <span class="t-right t-bold">Tsh {{ total_paid|floatformat:0|intcomma }}</span>
+    <div style="display:flex;justify-content:space-between;">
+      <span>Total Paid</span><span class="t-right t-bold">Tsh {{ total_paid|floatformat:0|intcomma }}</span>
     </div>
-    <div class="t-row">
-      <span>Balance</span>
-      <span class="t-right t-bold">Tsh {{ balance|floatformat:0|intcomma }}</span>
+    <div style="display:flex;justify-content:space-between;">
+      <span>Total Returns</span><span class="t-right t-bold">Tsh {{ total_returns|default:0|floatformat:0|intcomma }}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;">
+      <span>Balance</span><span class="t-right t-bold">Tsh {{ balance|floatformat:0|intcomma }}</span>
     </div>
   </div>
 
@@ -195,8 +308,8 @@
             <div class="t-bold">{{ r.ref }}</div>
             <div class="t-muted">{{ r.desc }}</div>
           </td>
-          <td class="col-dr">{% if r.debit > 0 %}{{ r.debit|floatformat:0|intcomma }}{% else %}-{% endif %}</td>
-          <td class="col-cr">{% if r.credit > 0 %}{{ r.credit|floatformat:0|intcomma }}{% else %}-{% endif %}</td>
+          <td class="col-dr">{% if r.debit and r.debit > 0 %}{{ r.debit|floatformat:0|intcomma }}{% else %}-{% endif %}</td>
+          <td class="col-cr">{% if r.credit and r.credit > 0 %}{{ r.credit|floatformat:0|intcomma }}{% else %}-{% endif %}</td>
           <td class="col-bal">{{ r.balance|floatformat:0|intcomma }}</td>
         </tr>
       {% empty %}

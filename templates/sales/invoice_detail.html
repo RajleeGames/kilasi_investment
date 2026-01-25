@@ -6,41 +6,39 @@
 {% block extra_css %}
 <style>
   :root{
-    --ink:#0f172a;
-    --muted:#64748b;
-    --line:#e2e8f0;
-    --soft:#f8fafc;
-    --card:#ffffff;
-    --dark:#0b1220;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f8fafc;
+    --card:#ffffff; --dark:#0b1220;
   }
 
-  .receipt-wrap{max-width:920px;margin:1.75rem auto;padding:0 1rem;}
+  .receipt-wrap{max-width:980px;margin:1.5rem auto;padding:0 1rem;}
   .receipt-card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);overflow:hidden;}
   .receipt-top{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
     background:radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
                radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
                linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.80));
   }
+
   .brand{display:flex;gap:12px;align-items:flex-start;}
   .brand .logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
     background:linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));
     border:1px solid rgba(15,23,42,.08);color:#0b1220;flex:0 0 auto;
   }
-  .brand h1{margin:0;font-size:1.2rem;letter-spacing:.3px;color:var(--ink);font-weight:900;line-height:1.15;}
-  .brand .sub{margin-top:4px;line-height:1.35;font-size:.92rem;color:var(--muted);}
+  .brand h1{margin:0;font-size:1.15rem;letter-spacing:.3px;color:var(--ink);font-weight:950;line-height:1.15;}
+  .brand .sub{margin-top:4px;line-height:1.35;font-size:.9rem;color:var(--muted);}
   .brand .sub span{display:inline-block;margin-right:10px;}
+  .mono{font-variant-numeric:tabular-nums;}
 
   .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
   .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);
     background:rgba(255,255,255,.85);color:var(--ink);font-size:.85rem;white-space:nowrap;
   }
-  .pill b{font-weight:900;}
-  .btn-print{border-radius:12px;font-weight:800;padding:7px 12px;}
+  .pill b{font-weight:950;}
+  .btn-print{border-radius:12px;font-weight:850;padding:7px 12px;}
 
   .kbadge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.82rem;font-weight:900;border:1px solid transparent;}
   .b-cash{background:#dcfce7;color:#166534;border-color:#86efac}
   .b-bank{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
-  .b-ebt {background:#e0e7ff;color:#3730a3;border-color:#c7d2fe}  /* ✅ NEW */
+  .b-ebt {background:#e0e7ff;color:#3730a3;border-color:#c7d2fe}
   .b-debt{background:#fee2e2;color:#991b1b;border-color:#fecaca}
   .b-paid{background:#dcfce7;color:#166534;border-color:#86efac}
   .b-unpaid{background:#fee2e2;color:#991b1b;border-color:#fecaca}
@@ -50,26 +48,40 @@
   @media (max-width:720px){.meta-grid{grid-template-columns:1fr}}
 
   .meta-box{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px;}
-  .meta-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed rgba(148,163,184,.45);}
+  .meta-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed rgba(148,163,184,.45);}
   .meta-row:last-child{border-bottom:none}
   .meta-row .k{color:var(--muted);font-size:.9rem}
-  .meta-row .v{color:var(--ink);font-weight:800;text-align:right}
+  .meta-row .v{color:var(--ink);font-weight:850;text-align:right}
 
   .table-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px;}
   table.items{width:100%;border-collapse:collapse;background:#fff;}
-  table.items thead th{background:var(--dark);color:#fff;font-weight:900;font-size:.9rem;padding:10px 12px;border:none;white-space:nowrap;}
-  table.items tbody td{padding:10px 12px;border-top:1px solid var(--line);font-size:.95rem;color:var(--ink);}
+  table.items thead th{background:var(--dark);color:#fff;font-weight:950;font-size:.9rem;padding:10px 12px;border:none;white-space:nowrap;}
+  table.items tbody td{padding:10px 12px;border-top:1px solid var(--line);font-size:.95rem;color:var(--ink);vertical-align:top;}
   table.items tbody tr:hover{background:#f1f5f9}
 
   .t-right{text-align:right}
   .t-center{text-align:center}
   .muted{color:var(--muted)}
-  .mono{font-variant-numeric:tabular-nums;}
 
   .totals{display:flex;justify-content:flex-end;margin-top:14px;}
-  .totals-box{min-width:330px;background:var(--dark);color:#fff;border-radius:14px;padding:14px 14px 12px;}
-  .totals-box .rowx{display:flex;justify-content:space-between;margin:6px 0;font-size:.95rem;opacity:.95;}
-  .totals-box .grand{margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.18);font-size:1.05rem;font-weight:950;}
+  .totals-box{min-width:320px;background:var(--dark);color:#fff;border-radius:14px;padding:14px 14px 12px;}
+  .totals-box .rowx{display:flex;justify-content:space-between;margin:6px 0;font-size:.95rem;opacity:.96;}
+  .totals-box .grand{margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.18);font-size:1.05rem;font-weight:980;}
+
+  .history-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+  @media (max-width:720px){.history-grid{grid-template-columns:1fr}}
+  .hist-card{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;}
+  .hist-head{padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .hist-head b{font-weight:950;color:var(--ink)}
+  .hist-body{padding:10px 12px;}
+  .hist-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed rgba(148,163,184,.45);}
+  .hist-item:last-child{border-bottom:none}
+  .hist-left{min-width:0}
+  .hist-left .t{font-weight:850;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hist-left .s{font-size:.86rem;color:var(--muted)}
+  .hist-right{text-align:right}
+  .hist-right .amt{font-weight:950}
+  .hist-right .dt{font-size:.82rem;color:var(--muted)}
 
   .foot{margin-top:14px;text-align:center;color:var(--muted);font-size:.92rem;}
   .foot strong{color:var(--ink);}
@@ -88,6 +100,7 @@
 <div class="receipt-wrap">
   <div class="receipt-card">
 
+    <!-- TOP -->
     <div class="receipt-top">
       <div class="brand">
         <div class="logo"><i class="fa-solid fa-building"></i></div>
@@ -116,20 +129,28 @@
           </a>
         {% endif %}
 
+        {% if invoice.status == "debt" %}
+          <a class="btn btn-outline-danger btn-sm btn-print"
+             href="{% url 'sales:sales_return_create' invoice.id %}">
+            <i class="fa-solid fa-rotate-left me-1"></i> Return
+          </a>
+        {% endif %}
+
         <button type="button" class="btn btn-primary btn-sm btn-print" onclick="window.print()">
           <i class="fa-solid fa-print me-1"></i> Print
         </button>
       </div>
     </div>
 
+    <!-- BODY -->
     <div class="receipt-body">
 
       <div class="meta-grid">
+        <!-- LEFT META -->
         <div class="meta-box">
           <div class="meta-row"><div class="k">Date</div><div class="v mono">{{ invoice.created_at|date:"D, d M Y H:i" }}</div></div>
           <div class="meta-row"><div class="k">Seller</div><div class="v">{{ invoice.seller.username }}</div></div>
 
-          <!-- ✅ FIXED: show correct badge for CASH/BANK/EBT/DEBT -->
           <div class="meta-row">
             <div class="k">Payment Method</div>
             <div class="v">
@@ -156,6 +177,7 @@
           </div>
         </div>
 
+        <!-- RIGHT META -->
         <div class="meta-box">
           <div class="meta-row">
             <div class="k">Customer</div>
@@ -167,22 +189,38 @@
             <div class="v">{% if invoice.customer and invoice.customer.phone %}{{ invoice.customer.phone }}{% else %}—{% endif %}</div>
           </div>
 
-          {# ✅ ONLY show Paid/Balance box when status is debt #}
+          <div class="meta-row"><div class="k">Items</div><div class="v mono">{{ invoice_items|length }}</div></div>
+
           {% if invoice.status == "debt" %}
             <div class="meta-row">
-              <div class="k">Paid</div>
-              <div class="v mono">Tsh {{ invoice.payments_total|default:0|intcomma }}</div>
+              <div class="k">Grand Total</div>
+              <div class="v mono">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</div>
             </div>
+
+            <div class="meta-row">
+              <div class="k">Returns (Posted)</div>
+              <div class="v mono">- Tsh {{ returns_total|default:0|intcomma }}</div>
+            </div>
+
+            <div class="meta-row">
+              <div class="k">Effective Total</div>
+              <div class="v mono">Tsh {{ total_effective|default:0|intcomma }}</div>
+            </div>
+
+            <div class="meta-row">
+              <div class="k">Paid</div>
+              <div class="v mono">Tsh {{ payments_total|default:0|intcomma }}</div>
+            </div>
+
             <div class="meta-row">
               <div class="k">Balance</div>
-              <div class="v mono">Tsh {{ invoice.balance|default:0|intcomma }}</div>
+              <div class="v mono">Tsh {{ balance_value|default:0|intcomma }}</div>
             </div>
           {% endif %}
-
-          <div class="meta-row"><div class="k">Items</div><div class="v mono">{{ invoice.items.count }}</div></div>
         </div>
       </div>
 
+      <!-- ITEMS TABLE -->
       <div class="table-wrap">
         <div class="table-responsive">
           <table class="items">
@@ -197,11 +235,11 @@
               </tr>
             </thead>
             <tbody>
-              {% for item in invoice.items.all %}
+              {% for item in invoice_items %}
               <tr>
                 <td class="t-center muted mono">{{ forloop.counter }}</td>
                 <td>
-                  <div style="font-weight:900">{{ item.product.name }}</div>
+                  <div style="font-weight:950">{{ item.product.name }}</div>
                   <div class="muted" style="font-size:.85rem">
                     Effective: Tsh {{ item.effective_price|floatformat:0|intcomma }}
                   </div>
@@ -210,12 +248,12 @@
                 <td class="t-right mono">{{ item.unit_price|floatformat:0|intcomma }}</td>
                 <td class="t-right mono">
                   {% if item.discount and item.discount > 0 %}
-                    {{ item.discount|intcomma }}
+                    {{ item.discount|floatformat:0|intcomma }}
                   {% else %}
                     —
                   {% endif %}
                 </td>
-                <td class="t-right mono" style="font-weight:950">
+                <td class="t-right mono" style="font-weight:980">
                   {{ item.line_total|floatformat:0|intcomma }}
                 </td>
               </tr>
@@ -229,6 +267,7 @@
         </div>
       </div>
 
+      <!-- TOTALS (normal invoice totals) -->
       <div class="totals">
         <div class="totals-box">
           <div class="rowx"><span>Subtotal</span><b class="mono">Tsh {{ invoice.subtotal|default:0|floatformat:0|intcomma }}</b></div>
@@ -238,20 +277,83 @@
         </div>
       </div>
 
-      {# ✅ ONLY show record-payment button when status=debt and unpaid #}
-      {% if invoice.status == "debt" and not invoice.paid %}
-        <div class="foot no-print" style="margin-top:18px;">
+      {% if invoice.status == "debt" and balance_value > 0 %}
+        <div class="no-print" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
           <a class="btn btn-outline-primary btn-print" href="{% url 'sales:record_payment' invoice.id %}">
             <i class="fa-solid fa-hand-holding-dollar me-1"></i> Record Payment
           </a>
 
+          <a class="btn btn-outline-danger btn-print" href="{% url 'sales:sales_return_create' invoice.id %}">
+            <i class="fa-solid fa-rotate-left me-1"></i> Add Return
+          </a>
+
           {% if invoice.customer %}
-            <a class="btn btn-outline-dark btn-print ms-2"
+            <a class="btn btn-outline-dark btn-print"
                href="{% url 'sales:customer_debt_statement' invoice.customer.id %}">
               <i class="fa-solid fa-clock-rotate-left me-1"></i> View Full History
             </a>
           {% endif %}
         </div>
+      {% endif %}
+
+      {% if invoice.status == "debt" %}
+      <div class="history-grid">
+        <div class="hist-card">
+          <div class="hist-head">
+            <b><i class="fa-solid fa-coins me-1"></i> Payments</b>
+            <span class="pill">Tsh <b class="mono">{{ payments_total|default:0|intcomma }}</b></span>
+          </div>
+          <div class="hist-body">
+            {% if payments %}
+              {% for p in payments %}
+                <div class="hist-item">
+                  <div class="hist-left">
+                    <div class="t">Payment #{{ p.id }}</div>
+                    <div class="s">
+                      {% if p.created_by %}By {{ p.created_by.username }} • {% endif %}
+                      {{ p.timestamp|date:"d M Y, H:i" }}
+                    </div>
+                  </div>
+                  <div class="hist-right">
+                    <div class="amt mono">Tsh {{ p.amount|intcomma }}</div>
+                    <div class="dt">Paid</div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-muted">No payments recorded.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="hist-card">
+          <div class="hist-head">
+            <b><i class="fa-solid fa-rotate-left me-1"></i> Returns</b>
+            <span class="pill">Tsh <b class="mono">{{ returns_total|default:0|intcomma }}</b></span>
+          </div>
+          <div class="hist-body">
+            {% if returns %}
+              {% for r in returns %}
+                <div class="hist-item">
+                  <div class="hist-left">
+                    <div class="t">Return #{{ r.id }} {% if r.status %}({{ r.status|upper }}){% endif %}</div>
+                    <div class="s">
+                      {% if r.created_by %}By {{ r.created_by.username }} • {% endif %}
+                      {{ r.created_at|date:"d M Y, H:i" }}
+                    </div>
+                  </div>
+                  <div class="hist-right">
+                    <div class="amt mono">Tsh {{ r.total_amount|floatformat:0|intcomma }}</div>
+                    <div class="dt">Returned</div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-muted">No returns yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
       {% endif %}
 
       <div class="foot">
