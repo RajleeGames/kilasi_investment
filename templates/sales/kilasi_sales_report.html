@@ -17,12 +17,14 @@
   </div>
 
   <div class="d-flex gap-2">
+    {# ✅ keep branch + (optional) status #}
     <a class="btn btn-outline-secondary btn-sm"
-       href="?date={{ prev_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+       href="?date={{ prev_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
       <i class="fa-solid fa-chevron-left me-1"></i>{{ prev_date }}
     </a>
+
     <a class="btn btn-outline-secondary btn-sm"
-       href="?date={{ next_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+       href="?date={{ next_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
       {{ next_date }}<i class="fa-solid fa-chevron-right ms-1"></i>
     </a>
   </div>
@@ -52,10 +54,17 @@
         <input type="date" name="date" class="form-control" value="{{ selected_date }}" required>
       </div>
 
+      {# ✅ keep status if it exists (cash/bank filter links from dashboard) #}
+      {% if request.GET.status %}
+        <input type="hidden" name="status" value="{{ request.GET.status }}">
+      {% endif %}
+
       <div class="col-md-4 d-flex gap-2">
         <button class="btn btn-primary w-100" style="border-radius:12px;">
           <i class="fa-solid fa-filter me-1"></i>Apply
         </button>
+
+        {# ✅ Reset: keep branch if selected (optional), drop date/status/pages #}
         <a class="btn btn-outline-secondary w-100" style="border-radius:12px;"
            href="{% url 'sales:kilasi_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
           Reset
@@ -115,6 +124,7 @@
   <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
     <h6 class="mb-0"><i class="fa-solid fa-cart-shopping me-2"></i>Sales Records</h6>
   </div>
+
   <div class="card-body px-4 pb-4">
     <div class="table-responsive">
       <table class="table table-hover align-middle">
@@ -133,7 +143,7 @@
               <td class="fw-semibold">#{{ inv.id }}</td>
               <td>{{ inv.created_at|date:"Y-m-d H:i" }}</td>
               <td>{{ inv.customer|default:"Walk-in" }}</td>
-              <td>{{ inv.seller.username }}</td>
+              <td>{{ inv.seller.username|default:"—" }}</td>
               <td class="text-end fw-bold">Tsh {{ inv.total_amount|floatformat:0|intcomma }}</td>
             </tr>
           {% empty %}
@@ -151,7 +161,7 @@
           {% if sales_page.has_previous %}
             <li class="page-item">
               <a class="page-link"
-                 href="?date={{ selected_date }}&sales_page={{ sales_page.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                 href="?date={{ selected_date }}&sales_page={{ sales_page.previous_page_number }}&exp_page={{ exp_page.number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                 ‹ Prev
               </a>
             </li>
@@ -166,7 +176,7 @@
           {% if sales_page.has_next %}
             <li class="page-item">
               <a class="page-link"
-                 href="?date={{ selected_date }}&sales_page={{ sales_page.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                 href="?date={{ selected_date }}&sales_page={{ sales_page.next_page_number }}&exp_page={{ exp_page.number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                 Next ›
               </a>
             </li>
@@ -225,7 +235,7 @@
           {% if exp_page.has_previous %}
             <li class="page-item">
               <a class="page-link"
-                 href="?date={{ selected_date }}&exp_page={{ exp_page.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                 href="?date={{ selected_date }}&exp_page={{ exp_page.previous_page_number }}&sales_page={{ sales_page.number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                 ‹ Prev
               </a>
             </li>
@@ -240,7 +250,7 @@
           {% if exp_page.has_next %}
             <li class="page-item">
               <a class="page-link"
-                 href="?date={{ selected_date }}&exp_page={{ exp_page.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                 href="?date={{ selected_date }}&exp_page={{ exp_page.next_page_number }}&sales_page={{ sales_page.number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                 Next ›
               </a>
             </li>

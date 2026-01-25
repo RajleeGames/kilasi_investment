@@ -1,3 +1,4 @@
+{# templates/sales/enhanced_sales_report.html #}
 {% extends "base.html" %}
 {% load humanize %}
 {% block title %}Enhanced Sales Report{% endblock %}
@@ -17,7 +18,9 @@
   </div>
 
   <div class="d-flex gap-2">
-    <a href="{% url 'sales:enhanced_sales_report' %}" class="btn btn-outline-secondary btn-sm">
+    {# ✅ Reset ALL filters (go clean) #}
+    <a href="{% url 'sales:enhanced_sales_report' %}"
+       class="btn btn-outline-secondary btn-sm">
       <i class="fa-solid fa-rotate me-1"></i>Reset
     </a>
   </div>
@@ -27,8 +30,8 @@
 <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
   <div class="card-body">
     <form method="get" class="row g-2 align-items-end">
-
-      {% if branches and not is_seller %}
+      {# ✅ Seller will NOT see this because views pass branches=[] for seller #}
+      {% if branches %}
       <div class="col-md-3">
         <label class="form-label fw-semibold">Branch</label>
         <select name="branch" class="form-select">
@@ -53,7 +56,9 @@
         <select name="month" class="form-select">
           <option value="">All Months</option>
           {% for m, label in month_choices %}
-            <option value="{{ m }}" {% if month_filter|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ m }}" {% if month_filter|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>
+              {{ label }}
+            </option>
           {% endfor %}
         </select>
       </div>
@@ -63,7 +68,9 @@
         <select name="year" class="form-select">
           <option value="">All Years</option>
           {% for y in year_choices %}
-            <option value="{{ y }}" {% if year_filter|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+            <option value="{{ y }}" {% if year_filter|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>
+              {{ y }}
+            </option>
           {% endfor %}
         </select>
       </div>
@@ -72,7 +79,10 @@
         <button class="btn btn-primary" style="border-radius:12px;">
           <i class="fa-solid fa-filter me-1"></i>Apply
         </button>
-        <a href="{% url 'sales:enhanced_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}" class="btn btn-outline-secondary" style="border-radius:12px;">
+
+        {# ✅ Reset charts but keep branch (if chosen) #}
+        <a href="{% url 'sales:enhanced_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+           class="btn btn-outline-secondary" style="border-radius:12px;">
           Reset Charts
         </a>
       </div>
@@ -144,20 +154,22 @@
       </small>
     </div>
 
+    {# ✅ Keep ALL other filters when applying doughnut filters #}
     <form method="get" class="d-flex gap-2">
-      {% if selected_branch %}
-        <input type="hidden" name="branch" value="{{ selected_branch }}">
-      {% endif %}
+      {% if selected_branch %}<input type="hidden" name="branch" value="{{ selected_branch }}">{% endif %}
+      {% if date_filter %}<input type="hidden" name="date" value="{{ date_filter }}">{% endif %}
+      {% if month_filter %}<input type="hidden" name="month" value="{{ month_filter }}">{% endif %}
+      {% if year_filter %}<input type="hidden" name="year" value="{{ year_filter }}">{% endif %}
 
       <select name="doughnut_month" class="form-select form-select-sm" style="min-width:160px;">
         {% for m, label in month_choices %}
-          <option value="{{ m }}" {% if doughnut_month == m %}selected{% endif %}>{{ label }}</option>
+          <option value="{{ m }}" {% if doughnut_month|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
 
       <select name="doughnut_year" class="form-select form-select-sm" style="min-width:120px;">
         {% for y in year_choices %}
-          <option value="{{ y }}" {% if doughnut_year == y %}selected{% endif %}>{{ y }}</option>
+          <option value="{{ y }}" {% if doughnut_year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
         {% endfor %}
       </select>
 
@@ -182,7 +194,10 @@
           <hr>
           <div class="d-flex justify-content-between">
             <span class="text-muted">Net</span>
-            <strong>Tsh {{ doughnut_net_profit|floatformat:0|intcomma }}</strong>
+            <strong>
+              Tsh {{ doughnut_net_profit|floatformat:0|intcomma }}
+              {% if profit_is_negative %}<span class="ms-1 text-danger">(Loss)</span>{% endif %}
+            </strong>
           </div>
         </div>
       </div>
@@ -193,35 +208,79 @@
   </div>
 </div>
 
-<!-- JSON Data -->
-<script id="daily-sales-data"   type="application/json">{{ daily_sales_json|safe }}</script>
-<script id="weekly-sales-data"  type="application/json">{{ weekly_sales_json|safe }}</script>
-<script id="monthly-sales-data" type="application/json">{{ monthly_sales_json|safe }}</script>
-<script id="yearly-sales-data"  type="application/json">{{ yearly_sales_json|safe }}</script>
-
-<script>
-  const doughnutIncome  = parseFloat("{{ doughnut_sales_total }}");
-  const doughnutExpense = parseFloat("{{ doughnut_total_expenses }}");
-  const doughnutProfit  = parseFloat("{{ doughnut_profit_for_chart }}");
-</script>
+<!-- ✅ JSON Data (safe) -->
+<script id="daily-sales-data"   type="application/json">{{ daily_sales_json|escapejs }}</script>
+<script id="weekly-sales-data"  type="application/json">{{ weekly_sales_json|escapejs }}</script>
+<script id="monthly-sales-data" type="application/json">{{ monthly_sales_json|escapejs }}</script>
+<script id="yearly-sales-data"  type="application/json">{{ yearly_sales_json|escapejs }}</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const dailyData   = JSON.parse(document.getElementById('daily-sales-data').textContent);
-  const weeklyData  = JSON.parse(document.getElementById('weekly-sales-data').textContent);
-  const monthlyData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
-  const yearlyData  = JSON.parse(document.getElementById('yearly-sales-data').textContent);
+  // ---------- Helpers ----------
+  function safeJSON(id){
+    try {
+      const el = document.getElementById(id);
+      const raw = (el && el.textContent) ? el.textContent : "[]";
+      // because we used escapejs, we need to unescape common sequences safely:
+      const cleaned = raw
+        .replace(/\u0022/g, '"')
+        .replace(/\\u0022/g, '"')
+        .replace(/\\n/g, '')
+        .replace(/\\t/g, '')
+        .replace(/\\r/g, '');
+      return JSON.parse(cleaned || "[]");
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function nf(v){
+    try { return Number(v || 0).toLocaleString(); }
+    catch(e){ return v; }
+  }
+
+  // ---------- Data ----------
+  const dailyData   = safeJSON('daily-sales-data');
+  const weeklyData  = safeJSON('weekly-sales-data');
+  const monthlyData = safeJSON('monthly-sales-data');
+  const yearlyData  = safeJSON('yearly-sales-data');
+
+  // your view already passes floats
+  const doughnutIncome  = Number("{{ doughnut_sales_total|default:0 }}") || 0;
+  const doughnutExpense = Number("{{ doughnut_total_expenses|default:0 }}") || 0;
+  const doughnutNet     = Number("{{ doughnut_net_profit|default:0 }}") || 0;
+
+  const isLoss = ("{{ profit_is_negative|yesno:'true,false' }}" === "true");
+  const netAbs = Math.abs(doughnutNet);
+
+  // ---------- Chart options ----------
+  const commonOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const val = (ctx.parsed && typeof ctx.parsed === "object") ? (ctx.parsed.y ?? 0) : (ctx.parsed ?? 0);
+            return `${ctx.dataset.label || 'Value'}: Tsh ${nf(val)}`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: (value) => nf(value) }
+      }
+    }
+  };
 
   function makeLine(ctx, labels, data, label){
     return new Chart(ctx, {
       type: 'line',
-      data: { labels, datasets: [{ label, data, tension: .35, fill: true }]},
-      options: {
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{ legend:{ display:false }},
-        scales:{ y:{ beginAtZero:true } }
-      }
+      data: { labels, datasets: [{ label, data, tension: 0.35, fill: true }]},
+      options: commonOpts
     });
   }
 
@@ -229,54 +288,52 @@
     return new Chart(ctx, {
       type: 'bar',
       data: { labels, datasets: [{ label, data }]},
-      options: {
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{ legend:{ display:false }},
-        scales:{ y:{ beginAtZero:true } }
-      }
+      options: commonOpts
     });
   }
 
-  makeLine(
-    document.getElementById('dailySalesChart').getContext('2d'),
-    dailyData.map(i => i.day),
-    dailyData.map(i => i.total),
-    'Sales'
-  );
+  // ---------- Render charts ----------
+  const dailyLabels  = dailyData.map(i => i.day);
+  const dailyTotals  = dailyData.map(i => Number(i.total || 0));
+  if (document.getElementById('dailySalesChart')) {
+    makeLine(document.getElementById('dailySalesChart').getContext('2d'), dailyLabels, dailyTotals, 'Sales');
+  }
 
-  makeBar(
-    document.getElementById('weeklySalesChart').getContext('2d'),
-    weeklyData.map(i => i.week),
-    weeklyData.map(i => i.total),
-    'Sales'
-  );
+  const weeklyLabels = weeklyData.map(i => i.week);
+  const weeklyTotals = weeklyData.map(i => Number(i.total || 0));
+  if (document.getElementById('weeklySalesChart')) {
+    makeBar(document.getElementById('weeklySalesChart').getContext('2d'), weeklyLabels, weeklyTotals, 'Sales');
+  }
 
-  makeLine(
-    document.getElementById('monthlySalesChart').getContext('2d'),
-    monthlyData.map(i => `${i.month}/${i.year}`),
-    monthlyData.map(i => i.total),
-    'Sales'
-  );
+  const monthlyLabels = monthlyData.map(i => `${i.month}/${i.year}`);
+  const monthlyTotals = monthlyData.map(i => Number(i.total || 0));
+  if (document.getElementById('monthlySalesChart')) {
+    makeLine(document.getElementById('monthlySalesChart').getContext('2d'), monthlyLabels, monthlyTotals, 'Sales');
+  }
 
-  makeBar(
-    document.getElementById('yearlySalesChart').getContext('2d'),
-    yearlyData.map(i => i.year),
-    yearlyData.map(i => i.total),
-    'Sales'
-  );
+  const yearlyLabels = yearlyData.map(i => String(i.year));
+  const yearlyTotals = yearlyData.map(i => Number(i.total || 0));
+  if (document.getElementById('yearlySalesChart')) {
+    makeBar(document.getElementById('yearlySalesChart').getContext('2d'), yearlyLabels, yearlyTotals, 'Sales');
+  }
 
-  new Chart(document.getElementById('profitExpensesChart').getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Income','Expenses','Profit'],
-      datasets: [{ data: [doughnutIncome, doughnutExpense, doughnutProfit] }]
-    },
-    options: {
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ position:'bottom' } }
-    }
-  });
+  // ---------- Doughnut ----------
+  const doughnutLabels = isLoss ? ['Income','Expenses','Loss'] : ['Income','Expenses','Profit'];
+  const doughnutData   = [doughnutIncome, doughnutExpense, netAbs];
+
+  if (document.getElementById('profitExpensesChart')) {
+    new Chart(document.getElementById('profitExpensesChart').getContext('2d'), {
+      type: 'doughnut',
+      data: { labels: doughnutLabels, datasets: [{ data: doughnutData }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: Tsh ${nf(ctx.parsed)}` } }
+        }
+      }
+    });
+  }
 </script>
 {% endblock %}

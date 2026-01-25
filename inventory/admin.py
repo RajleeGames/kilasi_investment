@@ -1,37 +1,91 @@
-# inventory/admin.py
 from django.contrib import admin
-from .models import Category, Supplier, Product, ProductStock, StockEntry, Branch
+from django.utils.html import format_html
+
+from .models import Branch, Category, Supplier, Product, ProductStock, StockEntry
+
 
 @admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'is_active')
-    search_fields = ('name', 'code')
+    list_display = ("name", "code", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "code")
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
+    search_fields = ("name",)
+
 
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
-    list_display = ('name', 'contact')
-    search_fields = ('name', 'contact')
+    list_display = ("name", "contact")
+    search_fields = ("name", "contact")
+
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'supplier', 'price', 'stock', 'reorder_level')
-    list_filter = ('category', 'supplier')
-    search_fields = ('name', 'barcode', 'supplier__name', 'category__name')
+    """
+    ✅ Uses selling_price + buying_price (NOT price)
+    ✅ stock is auto (read-only)
+    """
+    list_display = (
+        "id",
+        "name",
+        "category",
+        "supplier",
+        "buying_price",
+        "selling_price",
+        "profit_per_unit",
+        "stock",
+        "reorder_level",
+        "barcode",
+    )
+    list_filter = ("category", "supplier")
+    search_fields = ("name", "barcode")
+    readonly_fields = ("stock", "barcode")
+
+    fieldsets = (
+        ("Basic Info", {
+            "fields": ("name", "category", "supplier", "barcode")
+        }),
+        ("Pricing", {
+            "fields": ("buying_price", "selling_price", "reorder_level")
+        }),
+        ("Stock (Auto)", {
+            "fields": ("stock",)
+        }),
+    )
+
+    def profit_per_unit(self, obj):
+        try:
+            return obj.profit_per_unit()
+        except Exception:
+            return 0
+    profit_per_unit.short_description = "Profit/Unit"
+
 
 @admin.register(ProductStock)
 class ProductStockAdmin(admin.ModelAdmin):
-    list_display = ('product', 'branch', 'quantity')
-    list_filter = ('branch', 'product__category')
-    search_fields = ('product__name', 'branch__name')
+    list_display = ("product", "branch", "quantity")
+    list_filter = ("branch",)
+    search_fields = ("product__name", "branch__name")
+    autocomplete_fields = ("product", "branch")
+
 
 @admin.register(StockEntry)
 class StockEntryAdmin(admin.ModelAdmin):
-    list_display = ('product', 'branch', 'change', 'timestamp', 'note')
-    list_filter = ('branch', 'product')
-    search_fields = ('product__name', 'note')
-    date_hierarchy = 'timestamp'
+    """
+    History log for stock movements.
+    """
+    list_display = ("timestamp", "product", "branch", "change", "note")
+    list_filter = ("branch", "timestamp")
+    search_fields = ("product__name", "note", "branch__name")
+    autocomplete_fields = ("product", "branch")
+    readonly_fields = ("timestamp",)
+
+    # Prevent edits that can break stock (extra safety)
+    def has_change_permission(self, request, obj=None):
+        # allow editing only note if you want, but safest is disable edits completely:
+        if obj is not None:
+            return False
+        return True

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Stock Transfers{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h4 class="mb-0">Stock Transfers</h4>
+      <small class="text-muted">History of transfers between branches (who, when, from → to).</small>
+    </div>
+    <a href="{% url 'sales:stock_transfer_create' %}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus me-1"></i> New Transfer
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-5">
+          <label class="form-label fw-semibold mb-1">Branch (from or to)</label>
+          <select class="form-select" name="branch">
+            <option value="">All</option>
+            {% for b in branches %}
+              <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                {{ b.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold mb-1">Status</label>
+          <select class="form-select" name="status">
+            <option value="">All</option>
+            <option value="draft" {% if selected_status == "draft" %}selected{% endif %}>Draft</option>
+            <option value="posted" {% if selected_status == "posted" %}selected{% endif %}>Posted</option>
+            <option value="cancelled" {% if selected_status == "cancelled" %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i> Filter</button>
+          <a class="btn btn-outline-secondary w-100" href="{% url 'sales:stock_transfer_list' %}">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>From → To</th>
+            <th>Status</th>
+            <th class="text-end">Items</th>
+            <th>Created</th>
+            <th>Posted</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transfers %}
+          <tr>
+            <td class="fw-bold">#{{ t.id }}</td>
+            <td>
+              <div class="fw-semibold">{{ t.from_branch.name }} → {{ t.to_branch.name }}</div>
+              <div class="text-muted small">By: {{ t.created_by.username }}</div>
+            </td>
+            <td>
+              {% if t.status == "draft" %}
+                <span class="badge bg-secondary">Draft</span>
+              {% elif t.status == "posted" %}
+                <span class="badge bg-success">Posted</span>
+              {% else %}
+                <span class="badge bg-dark">Cancelled</span>
+              {% endif %}
+            </td>
+            <td class="text-end fw-bold">{{ t.items_count|intcomma }}</td>
+            <td class="text-muted small">
+              {{ t.created_at|date:"Y-m-d H:i" }}
+            </td>
+            <td class="text-muted small">
+              {% if t.posted_at %}{{ t.posted_at|date:"Y-m-d H:i" }} ({{ t.posted_by.username }}){% else %}—{% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'sales:stock_transfer_detail' t.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-eye me-1"></i> View
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">No transfers found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

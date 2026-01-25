@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Receipt #{{ invoice.id }}</title>
   <style>
-    /* ====== THERMAL 80mm (ZKP8008) ====== */
     :root { --w: 80mm; }
     *{ box-sizing:border-box; }
     body{
@@ -40,7 +39,6 @@
     .item{ margin: 8px 0; }
     .item .name{ font-size: 12px; font-weight: 700; }
     .item .meta{ display:flex; justify-content:space-between; font-size: 12px; }
-    .right{ text-align:right; }
     .bold{ font-weight: 800; }
     @media print{
       body{ background:#fff; }
@@ -51,72 +49,149 @@
 <body>
   <div class="paper">
 
+    <!-- HEADER -->
     <div class="center">
-      <div class="big">{{ company.name }}</div>
-      <div class="sm muted">{{ company.location }}</div>
-      <div class="sm muted">{{ company.phone }}</div>
-      <div class="sm bold">{{ company.tin }}</div>
+      <div class="big">{% if company.name %}{{ company.name }}{% else %}KILASI INVESTMENT{% endif %}</div>
+
+      {% if company.location %}
+        <div class="sm muted">{{ company.location }}</div>
+      {% else %}
+        <div class="sm muted">Moshi, Tanzania</div>
+      {% endif %}
+
+      {# ✅ FORCE PHONE + TIN (your required values) #}
+      <div class="sm muted">Tel: 0713288162</div>
+      <div class="sm bold">TIN: 155-581-522</div>
     </div>
 
     <div class="hr"></div>
 
+    <!-- META -->
     <div class="row"><span>Receipt</span><span class="bold">#{{ invoice.id }}</span></div>
     <div class="row"><span>Date</span><span>{{ invoice.created_at|date:"Y-m-d H:i" }}</span></div>
     <div class="row"><span>Seller</span><span>{{ invoice.seller.username }}</span></div>
     {% if invoice.branch %}
       <div class="row"><span>Branch</span><span>{{ invoice.branch.name }}</span></div>
     {% endif %}
-    <div class="row"><span>Customer</span><span>{{ invoice.customer|default:"Walk-in" }}</span></div>
-    <div class="row"><span>Payment</span><span class="bold">{{ invoice.get_status_display }}</span></div>
+    <div class="row"><span>Customer</span><span>{{ customer_label|default:"Walk-in" }}</span></div>
+    <div class="row"><span>Payment</span><span class="bold">{{ status_label|default:invoice.status }}</span></div>
 
     <div class="hr"></div>
 
+    <!-- ITEMS (ROBUST LOOP) -->
     <div class="items">
-      {% for it in invoice.items.all %}
-        <div class="item">
-          <div class="name">{{ it.product.name }}</div>
-          <div class="meta">
-            <span>{{ it.quantity }} x {{ it.effective_price|floatformat:0|intcomma }}</span>
-            <span class="bold">Tsh {{ it.line_total|floatformat:0|intcomma }}</span>
+
+      {# Prefer invoice.items.all if exists, else fallback to invoice.invoiceitem_set.all #}
+      {% if invoice.items.all %}
+        {% for it in invoice.items.all %}
+          <div class="item">
+            <div class="name">{{ it.product.name }}</div>
+
+            {# ✅ build safe unit price & line total (works even if effective_price/line_total not stored) #}
+            {% with unit=it.effective_price|default:it.selling_price|default:it.unit_price %}
+              <div class="meta">
+                <span>{{ it.quantity }} x {{ unit|default:0|floatformat:0|intcomma }}</span>
+                <span class="bold">
+                  Tsh
+                  {% if it.line_total %}
+                    {{ it.line_total|floatformat:0|intcomma }}
+                  {% else %}
+                    {% if it.total %}
+                      {{ it.total|floatformat:0|intcomma }}
+                    {% else %}
+                      {{ it.get_total|default:0|floatformat:0|intcomma }}
+                    {% endif %}
+                  {% endif %}
+                </span>
+              </div>
+            {% endwith %}
+
+            {% if it.discount and it.discount > 0 %}
+              <div class="xs muted">Discount/unit: Tsh {{ it.discount|intcomma }}</div>
+            {% endif %}
           </div>
-          {% if it.discount and it.discount > 0 %}
-            <div class="xs muted">Discount/unit: Tsh {{ it.discount|intcomma }}</div>
-          {% endif %}
-        </div>
-      {% endfor %}
+        {% empty %}
+          <div class="xs muted center">No items.</div>
+        {% endfor %}
+
+      {% else %}
+        {# fallback relation name #}
+        {% for it in invoice.invoiceitem_set.all %}
+          <div class="item">
+            <div class="name">{{ it.product.name }}</div>
+
+            {% with unit=it.effective_price|default:it.selling_price|default:it.unit_price %}
+              <div class="meta">
+                <span>{{ it.quantity }} x {{ unit|default:0|floatformat:0|intcomma }}</span>
+                <span class="bold">
+                  Tsh
+                  {% if it.line_total %}
+                    {{ it.line_total|floatformat:0|intcomma }}
+                  {% else %}
+                    {% if it.total %}
+                      {{ it.total|floatformat:0|intcomma }}
+                    {% else %}
+                      {{ it.get_total|default:0|floatformat:0|intcomma }}
+                    {% endif %}
+                  {% endif %}
+                </span>
+              </div>
+            {% endwith %}
+
+            {% if it.discount and it.discount > 0 %}
+              <div class="xs muted">Discount/unit: Tsh {{ it.discount|intcomma }}</div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <div class="xs muted center">No items.</div>
+        {% endfor %}
+      {% endif %}
+
     </div>
 
     <div class="hr"></div>
 
-    <div class="row"><span>Subtotal</span><span class="bold">Tsh {{ invoice.subtotal|floatformat:0|intcomma }}</span></div>
-    <div class="row"><span>Tax</span><span class="bold">Tsh {{ invoice.tax|floatformat:0|intcomma }}</span></div>
-    <div class="row"><span>Shipping</span><span class="bold">Tsh {{ invoice.shipping_fee|floatformat:0|intcomma }}</span></div>
+    <!-- TOTALS (SAFE DEFAULTS) -->
+    <div class="row">
+      <span>Subtotal</span>
+      <span class="bold">Tsh {{ invoice.subtotal|default:invoice.total_amount|default:0|floatformat:0|intcomma }}</span>
+    </div>
+
+    <div class="row">
+      <span>Tax</span>
+      <span class="bold">Tsh {{ invoice.tax|default:0|floatformat:0|intcomma }}</span>
+    </div>
+
+    <div class="row">
+      <span>Shipping</span>
+      <span class="bold">Tsh {{ invoice.shipping_fee|default:0|floatformat:0|intcomma }}</span>
+    </div>
 
     <div class="hr"></div>
 
     <div class="row" style="font-size:14px;">
       <span class="bold">TOTAL</span>
-      <span class="bold">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</span>
+      <span class="bold">Tsh {{ invoice.total_amount|default:0|floatformat:0|intcomma }}</span>
     </div>
 
     {% if invoice.status == "debt" %}
       <div class="hr"></div>
-      <div class="row"><span>Paid</span><span class="bold">Tsh {{ invoice.payments_total|intcomma }}</span></div>
-      <div class="row"><span>Balance</span><span class="bold">Tsh {{ invoice.balance|intcomma }}</span></div>
+      <div class="row"><span>Paid</span><span class="bold">Tsh {{ payments_total|default:0|intcomma }}</span></div>
+      <div class="row"><span>Balance</span><span class="bold">Tsh {{ balance_value|default:0|intcomma }}</span></div>
     {% endif %}
 
     <div class="hr"></div>
 
-    <div class="center sm bold">{{ company.footer }}</div>
+    <div class="center sm bold">
+      {% if company.footer %}{{ company.footer }}{% else %}THANK YOU FOR BUYING WITH US{% endif %}
+    </div>
     <div class="center xs muted">Karibu tena • Powered by KILASI POS</div>
 
   </div>
 
   {% if autoprint %}
   <script>
-    window.addEventListener("load", () => {
-      window.print();
-    });
+    window.addEventListener("load", () => window.print());
   </script>
   {% endif %}
 </body>

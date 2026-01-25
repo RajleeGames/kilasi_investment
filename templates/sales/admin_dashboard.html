@@ -16,6 +16,16 @@
         Sales • Debts • Payments • Expenses
         {% if selected_branch_obj %} • <strong>{{ selected_branch_obj.name }}</strong>{% endif %}
       </small>
+      {% if not profit_enabled %}
+        <div class="small text-danger mt-1">
+          Profit is showing as revenue - 0 because product buying cost field was not found.
+          Add a cost field like <b>buying_price</b> in Product to get true profit.
+        </div>
+      {% else %}
+        <div class="small text-muted mt-1">
+          Profit uses Product.<b>{{ profit_cost_field }}</b> as buying cost (COGS).
+        </div>
+      {% endif %}
     </div>
 
     <!-- Filters -->
@@ -53,15 +63,16 @@
         </select>
       </div>
 
-      <a class="btn btn-sm btn-outline-secondary"
-         href="{% url 'sales:admin_dashboard' %}">
-         <i class="fa-solid fa-rotate"></i>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'sales:admin_dashboard' %}">
+        <i class="fa-solid fa-rotate"></i>
       </a>
     </form>
   </div>
 
   <!-- Top stats -->
   <div class="row g-3 mb-3">
+
+    <!-- Cash Today -->
     <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
       <div class="card shadow-sm border-0">
         <div class="card-body d-flex align-items-center">
@@ -80,6 +91,7 @@
       </div>
     </div>
 
+    <!-- Bank Today -->
     <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
       <div class="card shadow-sm border-0">
         <div class="card-body d-flex align-items-center">
@@ -98,21 +110,42 @@
       </div>
     </div>
 
+    <!-- EBT Today -->
     <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
       <div class="card shadow-sm border-0">
         <div class="card-body d-flex align-items-center">
-          <i class="fa-solid fa-chart-line fa-2x text-info me-3"></i>
+          <i class="fa-solid fa-credit-card fa-2x text-dark me-3"></i>
           <div>
-            <div class="fw-semibold">Total Sales Today</div>
-            <div class="h4 mb-0">Tsh {{ total_today|floatformat:0|intcomma }}</div>
+            <div class="fw-semibold">EBT Today (Mobile/Transfer)</div>
+            <div class="h4 mb-0">Tsh {{ total_ebt_today|default:0|floatformat:0|intcomma }}</div>
           </div>
         </div>
         <div class="card-footer bg-transparent border-0 pt-0">
-          <span class="small text-muted">Net today shown below</span>
+          <a class="small text-decoration-none"
+             href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=ebt{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+             View details →
+          </a>
         </div>
       </div>
     </div>
 
+    <!-- Total sales today -->
+    <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card shadow-sm border-0">
+        <div class="card-body d-flex align-items-center">
+          <i class="fa-solid fa-chart-line fa-2x text-info me-3"></i>
+          <div>
+            <div class="fw-semibold">Total Sales Today (Cash+Bank+EBT)</div>
+            <div class="h4 mb-0">Tsh {{ total_today|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <span class="small text-muted">Cashflow (doesn’t include debt invoices)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debt payments -->
     <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
       <div class="card shadow-sm border-0">
         <div class="card-body d-flex align-items-center">
@@ -130,6 +163,7 @@
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- Profit cards -->
@@ -151,15 +185,30 @@
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card border-0 shadow-sm">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
-            <div class="text-muted small">Net Today</div>
-            <div class="h4 mb-0">Tsh {{ net_today|floatformat:0|intcomma }}</div>
-            <div class="small text-muted">Overall Net: Tsh {{ net_overall|floatformat:0|intcomma }}</div>
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small">Profit Today (Selling - Buying - Expenses)</div>
+              <div class="h4 mb-0">Tsh {{ net_profit_today|floatformat:0|intcomma }}</div>
+              <div class="small text-muted">
+                Revenue: Tsh {{ revenue_today|floatformat:0|intcomma }}
+                • COGS: Tsh {{ cogs_today|floatformat:0|intcomma }}
+                • Gross: Tsh {{ gross_profit_today|floatformat:0|intcomma }}
+              </div>
+              <div class="small text-muted mt-1">
+                Period Net Profit: Tsh {{ net_profit_period|floatformat:0|intcomma }}
+              </div>
+            </div>
+            <i class="fa-solid fa-chart-pie fa-2x text-dark"></i>
           </div>
-          <i class="fa-solid fa-chart-pie fa-2x text-dark"></i>
+          <hr class="my-2">
+          <div class="small text-muted">
+            Cashflow Net Today (Cash+Bank+EBT - Expenses): <b>Tsh {{ net_today_cashflow|floatformat:0|intcomma }}</b><br>
+            Cashflow Overall Net: <b>Tsh {{ net_overall_cashflow|floatformat:0|intcomma }}</b>
+          </div>
         </div>
       </div>
     </div>
@@ -209,6 +258,21 @@
       </a>
     </div>
 
+    <!-- EBT Transactions count -->
+    <div class="col-12 col-md-4 col-lg-3">
+      <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+        <div class="card text-white" style="background:#212529; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; border:0;">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="small opacity-75">EBT Transactions</div>
+              <div class="h2 mb-0">{{ num_ebt_sales|default:0 }}</div>
+            </div>
+            <i class="fa-solid fa-credit-card fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </a>
+    </div>
+
     <div class="col-12 col-md-6 col-lg-3">
       <div class="card text-white bg-info shadow-sm border-0">
         <div class="card-body d-flex align-items-center justify-content-between">
@@ -232,6 +296,11 @@
 
   <ul class="list-group shadow-sm mb-2">
     {% for prod in recent_products %}
+      {# ✅ IMPORTANT: DO NOT reference prod.price because your Product has no "price" field #}
+      {% with sp=prod.selling_price|default_if_none:0 %}
+      {% with st=prod.branch_qty|default_if_none:prod.stock|default_if_none:0 %}
+      {% with rl=prod.reorder_level|default_if_none:0 %}
+
       <li class="list-group-item d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
           <i class="fa-solid fa-box text-primary"></i>
@@ -239,16 +308,22 @@
             <a href="{% url 'sales:product_detail' prod.pk %}" class="text-decoration-none fw-semibold">
               {{ prod.name }}
             </a>
-            <div class="text-muted small">{{ prod.category.name }}</div>
+            <div class="text-muted small">
+              {% if prod.category %}{{ prod.category.name }}{% else %}—{% endif %}
+            </div>
           </div>
         </div>
         <div class="text-end">
-          <div>Tsh {{ prod.price|intcomma }}</div>
-          <span class="badge {% if prod.stock > prod.reorder_level %}bg-success{% else %}bg-danger{% endif %}">
-            {{ prod.stock }}
+          <div>Tsh {{ sp|floatformat:0|intcomma }}</div>
+          <span class="badge {% if st|add:0 > rl|add:0 %}bg-success{% else %}bg-danger{% endif %}">
+            {{ st|default:0 }}
           </span>
         </div>
       </li>
+
+      {% endwith %}
+      {% endwith %}
+      {% endwith %}
     {% empty %}
       <li class="list-group-item text-center text-muted">No recently added products.</li>
     {% endfor %}

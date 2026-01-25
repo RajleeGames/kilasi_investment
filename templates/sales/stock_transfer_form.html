@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}New Stock Transfer{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ✅ IMPORTANT:
+     Do NOT use :root here (it affects sidebar/base theme).
+     Scope all variables to this page only.
+  */
+  .st-page{
+    --st-ink:#0f172a;
+    --st-muted:#64748b;
+    --st-line:rgba(15,23,42,.10);
+    --st-card:#fff;
+    --st-soft:#f8fafc;
+    --st-radius:18px;
+    --st-shadow: 0 12px 30px rgba(2,6,23,.08);
+  }
+
+  .st-page .wrap{max-width:1100px;margin:1.25rem auto 2rem;padding:0 1rem;}
+
+  .st-page .hero{
+    border:1px solid var(--st-line);
+    border-radius: var(--st-radius);
+    box-shadow: var(--st-shadow);
+    padding: 14px;
+    background:
+      radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
+      radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
+      linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+  }
+  @media(min-width:768px){ .st-page .hero{padding:18px;} }
+
+  .st-page .cardx{
+    border:1px solid var(--st-line);
+    border-radius: var(--st-radius);
+    box-shadow: var(--st-shadow);
+    background: var(--st-card);
+    overflow:hidden;
+  }
+  .st-page .cardx-h{
+    padding: 14px 16px;
+    border-bottom:1px solid rgba(15,23,42,.07);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background: rgba(255,255,255,.7);
+  }
+  .st-page .cardx-b{padding: 14px 16px;}
+  @media(min-width:768px){
+    .st-page .cardx-h{padding:16px 18px}
+    .st-page .cardx-b{padding:16px 18px}
+  }
+
+  .st-page .title{font-weight:950;color:var(--st-ink);margin:0;letter-spacing:.2px;}
+  .st-page .sub{color:var(--st-muted);font-size:.92rem;margin-top:4px;}
+
+  .st-page .btn-k{
+    border-radius: 14px;
+    height: 44px;
+    font-weight: 900;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    white-space:nowrap;
+  }
+
+  .st-page .grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media(min-width: 992px){
+    .st-page .grid{grid-template-columns: 1fr 1fr;}
+  }
+
+  .st-page .label{font-weight:900;color:var(--st-ink);margin-bottom:6px;}
+
+  /* ✅ Also scoped so it won’t affect all .form-control globally */
+  .st-page .form-control,
+  .st-page .form-select{
+    border-radius: 14px;
+    height: 44px;
+    border:1px solid rgba(15,23,42,.12);
+  }
+  .st-page textarea.form-control{height:auto;border-radius:14px;}
+
+  /* Items list (mobile friendly cards) */
+  .st-page .items{display:flex;flex-direction:column;gap:10px;}
+  .st-page .rowcard{
+    border:1px solid rgba(15,23,42,.10);
+    border-radius: 16px;
+    padding: 12px;
+    background: var(--st-soft);
+  }
+  .st-page .rowtop{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .st-page .rowtop .idx{font-weight:950;color:var(--st-ink);}
+
+  .st-page .stockpill{
+    display:inline-flex;align-items:center;gap:8px;
+    padding: .35rem .6rem;border-radius:999px;
+    border:1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.85);
+    font-weight:900;color:var(--st-ink);
+    font-size:.85rem;
+    white-space:nowrap;
+  }
+  .st-page .stockpill small{font-weight:800;color:var(--st-muted);}
+
+  .st-page .rowgrid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media(min-width: 768px){
+    .st-page .rowgrid{grid-template-columns: 2fr 1fr;}
+  }
+
+  /* Search dropdown */
+  .st-page .searchWrap{position:relative;}
+  .st-page .searchInput{
+    height:44px;border-radius:14px;border:1px solid rgba(15,23,42,.12);
+    padding-left:44px;
+  }
+  .st-page .searchIcon{
+    position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    color:#94a3b8;
+  }
+  .st-page .drop{
+    position:absolute;left:0;right:0;top:100%;
+    background:#fff;border:1px solid rgba(15,23,42,.12);border-top:none;
+    max-height:260px;overflow:auto;z-index:2000;
+    border-bottom-left-radius:14px;border-bottom-right-radius:14px;
+    box-shadow:0 12px 30px rgba(2,6,23,.10);
+    display:none;
+  }
+  .st-page .drop button{
+    width:100%;text-align:left;padding:.6rem .9rem;border:none;background:#fff;
+    border-top:1px solid rgba(15,23,42,.06);
+  }
+  .st-page .drop button:hover{background:#f1f5f9;}
+  .st-page .smallmuted{color:var(--st-muted);font-size:.85rem;}
+
+  .st-page .danger-note{
+    border:1px dashed rgba(220,38,38,.35);
+    background: rgba(254,242,242,.8);
+    color:#991b1b;
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-weight:800;
+    font-size:.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="st-page">
+  <div class="wrap">
+
+    <div class="hero mb-3">
+      <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+        <div>
+          <h3 class="title mb-1">Create Stock Transfer</h3>
+          <div class="sub">Transfer stock between branches (Arusha → Moshi etc.). Add multiple items easily.</div>
+        </div>
+        <a href="{% url 'sales:stock_transfer_list' %}" class="btn btn-outline-secondary btn-k">
+          <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+      </div>
+    </div>
+
+    <div class="cardx">
+      <div class="cardx-h">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fa-solid fa-truck-ramp-box"></i>
+          <div style="font-weight:950;color:var(--st-ink)">Transfer Details</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" id="addRowBtn" class="btn btn-outline-primary btn-k">
+            <i class="fa-solid fa-plus"></i> Add Item
+          </button>
+        </div>
+      </div>
+
+      <div class="cardx-b">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="danger-note mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="grid mb-2">
+            <div>
+              <div class="label">From Branch</div>
+              {{ form.from_branch }}
+              {% if form.from_branch.errors %}<div class="text-danger small mt-1">{{ form.from_branch.errors }}</div>{% endif %}
+            </div>
+            <div>
+              <div class="label">To Branch</div>
+              {{ form.to_branch }}
+              {% if form.to_branch.errors %}<div class="text-danger small mt-1">{{ form.to_branch.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="label">Note (optional)</div>
+            {{ form.note }}
+            {% if form.note.errors %}<div class="text-danger small mt-1">{{ form.note.errors }}</div>{% endif %}
+          </div>
+
+          <hr class="my-3">
+
+          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+            <div>
+              <div class="title" style="font-size:1.05rem;">Items</div>
+              <div class="sub">Search product name, set qty, and see available stock from the selected “From Branch”.</div>
+            </div>
+          </div>
+
+          {{ formset.management_form }}
+
+          <div id="itemsWrap" class="items">
+            {% for f in formset %}
+              <div class="rowcard form-row" data-form-index="{{ forloop.counter0 }}">
+                <div class="rowtop">
+                  <div class="idx">Item #{{ forloop.counter }}</div>
+
+                  <span class="stockpill">
+                    <i class="fa-solid fa-box"></i>
+                    <span>Available:</span>
+                    <span class="mono" data-stock-label>—</span>
+                    <small>from branch</small>
+                  </span>
+                </div>
+
+                <div class="d-none">
+                  {{ f.id }}
+                  {{ f.DELETE }}
+                </div>
+
+                <div class="rowgrid">
+                  <div class="searchWrap">
+                    <i class="fa-solid fa-magnifying-glass searchIcon"></i>
+                    <input type="text" class="form-control searchInput"
+                           placeholder="Search product name…"
+                           data-search-input>
+
+                    <div class="d-none">
+                      {{ f.product }}
+                    </div>
+
+                    <div class="drop" data-drop></div>
+                    {% if f.product.errors %}<div class="text-danger small mt-1">{{ f.product.errors }}</div>{% endif %}
+                    <div class="smallmuted mt-1">Tip: type at least 2 letters then pick from list.</div>
+                  </div>
+
+                  <div>
+                    <div class="label">Quantity</div>
+                    {{ f.quantity }}
+                    {% if f.quantity.errors %}<div class="text-danger small mt-1">{{ f.quantity.errors }}</div>{% endif %}
+
+                    <button type="button" class="btn btn-outline-danger btn-k w-100 mt-2" data-remove-btn>
+                      <i class="fa-solid fa-trash"></i> Remove Item
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <template id="emptyFormTpl">
+            <div class="rowcard form-row" data-form-index="__prefix__">
+              <div class="rowtop">
+                <div class="idx">Item #__num__</div>
+
+                <span class="stockpill">
+                  <i class="fa-solid fa-box"></i>
+                  <span>Available:</span>
+                  <span class="mono" data-stock-label>—</span>
+                  <small>from branch</small>
+                </span>
+              </div>
+
+              <div class="d-none">
+                {{ formset.empty_form.id }}
+                {{ formset.empty_form.DELETE }}
+              </div>
+
+              <div class="rowgrid">
+                <div class="searchWrap">
+                  <i class="fa-solid fa-magnifying-glass searchIcon"></i>
+                  <input type="text" class="form-control searchInput"
+                         placeholder="Search product name…"
+                         data-search-input>
+
+                  <div class="d-none">
+                    {{ formset.empty_form.product }}
+                  </div>
+
+                  <div class="drop" data-drop></div>
+                  <div class="smallmuted mt-1">Tip: type at least 2 letters then pick from list.</div>
+                </div>
+
+                <div>
+                  <div class="label">Quantity</div>
+                  {{ formset.empty_form.quantity }}
+
+                  <button type="button" class="btn btn-outline-danger btn-k w-100 mt-2" data-remove-btn>
+                    <i class="fa-solid fa-trash"></i> Remove Item
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <hr class="my-3">
+
+          <div class="d-flex justify-content-end gap-2 flex-wrap">
+            <button class="btn btn-primary btn-k">
+              <i class="fa-solid fa-floppy-disk"></i> Save Transfer (Draft)
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PRODUCTS = JSON.parse('{{ products_json|escapejs }}');
+
+  const itemsWrap = document.getElementById('itemsWrap');
+  const addRowBtn = document.getElementById('addRowBtn');
+  const emptyTpl  = document.getElementById('emptyFormTpl');
+
+  const totalFormsInput = document.querySelector('#id_stocktransferitem_set-TOTAL_FORMS');
+  const fromBranchSelect = document.getElementById('id_from_branch');
+
+  function getFromBranchId(){
+    return fromBranchSelect ? fromBranchSelect.value : "";
+  }
+
+  function apiStock(branchId, productId){
+    if(!branchId || !productId) return Promise.resolve(0);
+    const url = `{% url 'sales:api_branch_stock' %}?branch=${encodeURIComponent(branchId)}&product=${encodeURIComponent(productId)}`;
+    return fetch(url)
+      .then(r => r.json())
+      .then(d => (d && d.ok) ? Number(d.qty || 0) : 0)
+      .catch(() => 0);
+  }
+
+  function wireRow(row){
+    const searchInput = row.querySelector('[data-search-input]');
+    const drop = row.querySelector('[data-drop]');
+    const stockLabel = row.querySelector('[data-stock-label]');
+    const removeBtn = row.querySelector('[data-remove-btn]');
+
+    const select = row.querySelector('select.product-select') || row.querySelector('select');
+    if(!select) return;
+
+    if(select.value){
+      const p = PRODUCTS.find(x => String(x.id) === String(select.value));
+      if(p) searchInput.value = p.name;
+      refreshStockForRow();
+    }
+
+    function showDrop(list){
+      drop.innerHTML = "";
+      list.slice(0, 25).forEach(p => {
+        const btn = document.createElement('button');
+        btn.type = "button";
+        btn.textContent = p.name;
+        btn.onclick = () => {
+          select.value = String(p.id);
+          searchInput.value = p.name;
+          drop.style.display = "none";
+          refreshStockForRow();
+        };
+        drop.appendChild(btn);
+      });
+      drop.style.display = list.length ? "block" : "none";
+    }
+
+    searchInput.addEventListener("input", () => {
+      const q = (searchInput.value || "").trim().toLowerCase();
+      if(q.length < 2){
+        drop.style.display = "none";
+        return;
+      }
+      const matches = PRODUCTS.filter(p => (p.name || "").toLowerCase().includes(q));
+      showDrop(matches);
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!row.contains(e.target)) drop.style.display = "none";
+    });
+
+    removeBtn.addEventListener("click", () => {
+      const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      if(del) del.checked = true;
+      row.style.display = "none";
+    });
+
+    if(fromBranchSelect){
+      fromBranchSelect.addEventListener("change", refreshStockForRow);
+    }
+
+    async function refreshStockForRow(){
+      const productId = select.value;
+      const branchId = getFromBranchId();
+      stockLabel.textContent = "…";
+
+      if(!branchId){ stockLabel.textContent = "Select branch"; return; }
+      if(!productId){ stockLabel.textContent = "—"; return; }
+
+      const qty = await apiStock(branchId, productId);
+      stockLabel.textContent = qty;
+    }
+
+    row._refreshStock = refreshStockForRow;
+  }
+
+  function renumberCards(){
+    const visible = Array.from(itemsWrap.querySelectorAll('.form-row'))
+      .filter(r => r.style.display !== "none");
+    visible.forEach((r, i) => {
+      const idxEl = r.querySelector('.idx');
+      if(idxEl) idxEl.textContent = `Item #${i+1}`;
+    });
+  }
+
+  function addRow(){
+    const total = parseInt(totalFormsInput.value, 10);
+    const html = emptyTpl.innerHTML
+      .replaceAll('__prefix__', String(total))
+      .replaceAll('__num__', String(total + 1));
+
+    const temp = document.createElement('div');
+    temp.innerHTML = html.trim();
+    const row = temp.firstElementChild;
+
+    itemsWrap.appendChild(row);
+    totalFormsInput.value = total + 1;
+
+    wireRow(row);
+    renumberCards();
+  }
+
+  Array.from(itemsWrap.querySelectorAll('.form-row')).forEach(wireRow);
+  addRowBtn.addEventListener("click", addRow);
+
+  window.addEventListener("DOMContentLoaded", () => {
+    renumberCards();
+    Array.from(itemsWrap.querySelectorAll('.form-row')).forEach(r => {
+      if(typeof r._refreshStock === "function") r._refreshStock();
+    });
+  });
+</script>
+{% endblock %}

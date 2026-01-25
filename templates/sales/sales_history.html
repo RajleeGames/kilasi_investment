@@ -111,7 +111,7 @@
         {% endif %}
       </div>
       <div class="text-muted small mt-2">
-        All invoices (Cash • Bank • Debt). Use “Receipt” to print thermal invoice.
+        All invoices (Cash • Bank • EBT • Debt). Use “Receipt” to print thermal invoice.
       </div>
     </div>
 
@@ -216,17 +216,24 @@
               </td>
 
               <td>
+                {# ✅ FIXED: show correct status for CASH / BANK / EBT / DEBT #}
                 {% if inv.status == "cash" %}
                   <span class="badge bg-success">Cash</span>
                 {% elif inv.status == "bank" %}
                   <span class="badge bg-primary">Bank</span>
-                {% else %}
+                {% elif inv.status == "ebt" %}
+                  <span class="badge" style="background:#4f46e5;">EBT</span>
+                {% elif inv.status == "debt" %}
                   <span class="badge bg-warning text-dark">Debt</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ inv.status|upper }}</span>
                 {% endif %}
 
+                {# ✅ PAID badge can show for all statuses if you want #}
                 {% if inv.paid %}
                   <span class="badge bg-dark ms-1">Paid</span>
                 {% else %}
+                  {# ✅ UNPAID only makes sense for debt invoices #}
                   {% if inv.status == "debt" %}
                     <span class="badge bg-danger ms-1">Unpaid</span>
                   {% endif %}

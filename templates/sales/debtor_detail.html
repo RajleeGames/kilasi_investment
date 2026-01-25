@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Debtor Detail{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width:1100px;">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h4 class="mb-0">{{ debtor.name }}</h4>
+      <small class="text-muted">
+        {% if debtor.phone %}{{ debtor.phone }}{% endif %}
+        {% if debtor.location %} • {{ debtor.location }}{% endif %}
+      </small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'sales:debtor_list' %}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back
+      </a>
+      <a href="{% url 'sales:debtor_update' debtor.id %}" class="btn btn-outline-primary">
+        <i class="fa-solid fa-pen me-1"></i> Edit
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Total Owed</div>
+          <div class="h4 mb-0 fw-bold">{{ debtor.amount_owed|floatformat:2 }} TZS</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Total Paid</div>
+          <div class="h4 mb-0 fw-bold">{{ total_paid|floatformat:2 }} TZS</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Balance</div>
+          <div class="h4 mb-0 fw-bold">{{ balance|floatformat:2 }} TZS</div>
+          {% if debtor.is_active %}
+            <span class="badge bg-success mt-2">ACTIVE</span>
+          {% else %}
+            <span class="badge bg-secondary mt-2">CLOSED</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if debtor.note %}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+      <div class="text-muted small mb-1">Note</div>
+      <div>{{ debtor.note }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Add Payment -->
+  {% if debtor.is_active and balance > 0 %}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white fw-bold">Record Payment</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'sales:debtor_add_payment' debtor.id %}">
+        {% csrf_token %}
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="fw-semibold mb-1">Amount</label>
+            {{ pay_form.amount }}
+          </div>
+          <div class="col-md-4">
+            <label class="fw-semibold mb-1">Method</label>
+            {{ pay_form.method }}
+          </div>
+          <div class="col-md-4">
+            <label class="fw-semibold mb-1">Note</label>
+            {{ pay_form.note }}
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <button class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Save Payment
+          </button>
+        </div>
+      </form>
+      <div class="small text-muted mt-2">When balance becomes 0, this debtor will auto change to CLOSED.</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Payments history -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-bold">Payment History</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Method</th>
+            <th>Note</th>
+            <th class="text-end">Amount</th>
+            <th style="width:140px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td>{{ p.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ p.method|default:"—" }}</td>
+            <td>{{ p.note|default:"—" }}</td>
+            <td class="text-end fw-bold">{{ p.amount|floatformat:2 }}</td>
+            <td>
+              <form method="post" action="{% url 'sales:debtor_delete_payment' debtor.id p.id %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger" type="submit">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No payments yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Edit Debtor{% else %}Add Debtor{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width:900px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      {% if is_edit %}Edit Debtor{% else %}Add Debtor{% endif %}
+    </h4>
+    <a href="{% url 'sales:debtor_list' %}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left me-1"></i> Back
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="fw-semibold mb-1">Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="fw-semibold mb-1">Phone</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="fw-semibold mb-1">Location</label>
+            {{ form.location }}
+          </div>
+
+          <div class="col-md-6">
+            <label class="fw-semibold mb-1">Amount Owed (TZS)</label>
+            {{ form.amount_owed }}
+            {% if form.amount_owed.errors %}<div class="text-danger small">{{ form.amount_owed.errors }}</div>{% endif %}
+          </div>
+
+          <div class="col-12">
+            <label class="fw-semibold mb-1">Note</label>
+            {{ form.note }}
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              {{ form.is_active }}
+              <label class="form-check-label">Active (still owes)</label>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <button class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk me-1"></i>
+          {% if is_edit %}Save Changes{% else %}Save Debtor{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

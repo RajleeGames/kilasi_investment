@@ -1,46 +1,70 @@
-# sales/models.py
 from decimal import Decimal, InvalidOperation
-from django.db import models
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.db.models import Sum
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
-from inventory.models import Product, Branch
-
-User = get_user_model()
+from inventory.models import Product, Branch, ProductStock  # ✅ use inventory stock table
 
 
-# -----------------------------
-# Money helpers
-# -----------------------------
-def to_decimal(value) -> Decimal:
-    """
-    Convert int/str/Decimal -> Decimal safely.
-    Always returns a Decimal (never raises).
-    """
+# ───────────────────────────────────────────────────────────────
+# Helpers (safe decimal + integer TSH)
+# ───────────────────────────────────────────────────────────────
+def to_decimal(value, default=Decimal("0.00")) -> Decimal:
     try:
         if value is None:
-            return Decimal("0.00")
+            return default
+        if isinstance(value, Decimal):
+            return value
         return Decimal(str(value))
-    except (TypeError, InvalidOperation, ValueError):
-        return Decimal("0.00")
+    except (InvalidOperation, ValueError, TypeError):
+        return default
 
 
 def to_int_tsh(value) -> int:
-    """
-    Convert Decimal/str/int -> int TSH (floor by int()) safely.
-    Your system mostly treats TSH as integer on receipts.
-    """
+    d = to_decimal(value, default=Decimal("0.00"))
     try:
-        return int(to_decimal(value))
+        return int(d)
     except Exception:
         return 0
 
 
-# -----------------------------
-# Core models
-# -----------------------------
+# ───────────────────────────────────────────────────────────────
+# ✅ Branch stock helpers (SOURCE OF TRUTH = inventory.ProductStock)
+# ───────────────────────────────────────────────────────────────
+def get_branch_qty(product_id: int, branch_id: int) -> int:
+    """
+    Returns branch qty from inventory.ProductStock
+    """
+    obj = ProductStock.objects.filter(product_id=product_id, branch_id=branch_id).first()
+    return int(getattr(obj, "quantity", 0) or 0)
+
+
+def set_branch_qty(product_id: int, branch_id: int, new_qty: int):
+    """
+    Sets branch qty in inventory.ProductStock
+    """
+    new_qty = max(0, int(new_qty or 0))
+    obj, _ = ProductStock.objects.get_or_create(product_id=product_id, branch_id=branch_id)
+    obj.quantity = new_qty
+    obj.save(update_fields=["quantity"])
+
+
+def add_branch_qty(product_id: int, branch_id: int, delta: int):
+    """
+    Adds/subtracts branch qty safely in inventory.ProductStock
+    """
+    obj, _ = ProductStock.objects.get_or_create(product_id=product_id, branch_id=branch_id)
+    obj.quantity = max(0, int(obj.quantity or 0) + int(delta or 0))
+    obj.save(update_fields=["quantity"])
+
+
+# ───────────────────────────────────────────────────────────────
+# Customer
+# ───────────────────────────────────────────────────────────────
 class Customer(models.Model):
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, blank=True)
@@ -52,21 +76,28 @@ class Customer(models.Model):
         return self.name or f"Customer #{self.pk}"
 
 
+# ───────────────────────────────────────────────────────────────
+# Invoice
+# ───────────────────────────────────────────────────────────────
 class Invoice(models.Model):
+    PAYMENT_CASH = "cash"
+    PAYMENT_BANK = "bank"
+    PAYMENT_EBT  = "ebt"
+    PAYMENT_DEBT = "debt"
+
     PAYMENT_CHOICES = [
-        ("cash", "Cash"),
-        ("debt", "Debt"),
-        ("bank", "Bank"),
+        (PAYMENT_CASH, "Cash"),
+        (PAYMENT_BANK, "Bank"),
+        (PAYMENT_EBT,  "EBT"),
+        (PAYMENT_DEBT, "Debt"),
     ]
 
-    # Branch-aware sales invoices (transport has its own app)
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="sales_invoices",
-        help_text="Sales branch where this invoice was created",
         db_index=True,
     )
 
@@ -79,7 +110,7 @@ class Invoice(models.Model):
     )
 
     seller = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="sold_invoices",
     )
@@ -87,17 +118,13 @@ class Invoice(models.Model):
     status = models.CharField(
         max_length=10,
         choices=PAYMENT_CHOICES,
-        default="debt",
+        default=PAYMENT_DEBT,
         db_index=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    # ✅ For cash/bank you set paid=True during sale.
-    # ✅ For debt it becomes True when balance becomes 0.
     paid = models.BooleanField(default=False, db_index=True)
 
-    # Totals stored as Decimal
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     tax = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     shipping_fee = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
@@ -121,11 +148,6 @@ class Invoice(models.Model):
     # Totals & payments
     # -----------------------------
     def calculate_totals(self, save=True):
-        """
-        Recompute:
-         - subtotal = sum(items.line_total)
-         - total_amount = subtotal + tax + shipping_fee
-        """
         total = Decimal("0.00")
         for item in self.items.all():
             total += to_decimal(item.line_total)
@@ -139,27 +161,19 @@ class Invoice(models.Model):
         except InvalidOperation:
             self.total_amount = Decimal("0.00")
 
-        # keep "paid" consistent especially for debt invoices
         self.update_paid_status(save=False)
 
         if save:
             self.save(update_fields=["subtotal", "tax", "shipping_fee", "total_amount", "paid"])
 
     def payments_total_tsh(self) -> int:
-        """
-        Total payments received so far (int TSH).
-        """
         paid_sum = self.payments.aggregate(t=Sum("amount"))["t"] or 0
         return int(paid_sum)
 
     def balance_tsh(self) -> int:
-        """
-        Remaining balance (int TSH).
-        """
         total_int = to_int_tsh(self.total_amount)
         return max(0, total_int - self.payments_total_tsh())
 
-    # ✅ Nice for templates (no confusion invoice.balance vs invoice.balance())
     @property
     def payments_total(self) -> int:
         return self.payments_total_tsh()
@@ -170,13 +184,10 @@ class Invoice(models.Model):
 
     def update_paid_status(self, save=True):
         """
-        Rules:
-          - cash/bank -> usually paid=True (unless you explicitly want unpaid cash/bank)
-          - debt -> paid=True only when balance == 0
+        cash/bank/ebt -> always paid True
+        debt -> paid True only if balance <= 0
         """
-        if self.status in ("cash", "bank"):
-            # cash/bank should be paid if you use immediate payment.
-            # If you ever want unpaid cash/bank, remove this.
+        if self.status in (self.PAYMENT_CASH, self.PAYMENT_BANK, self.PAYMENT_EBT):
             new_paid = True
         else:
             new_paid = (self.balance_tsh() <= 0)
@@ -187,58 +198,87 @@ class Invoice(models.Model):
                 self.save(update_fields=["paid"])
 
 
+# ───────────────────────────────────────────────────────────────
+# Invoice Item
+# ───────────────────────────────────────────────────────────────
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(
         Invoice,
         on_delete=models.CASCADE,
         related_name="items",
     )
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
-    quantity = models.PositiveIntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    # snapshot at sale time
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    buying_cost = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
     discount = models.PositiveIntegerField(
         default=0,
         help_text="Flat amount (integer TSH) to subtract per unit",
     )
 
+    # cached for fast profit reports
+    line_cost_cache = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+
     class Meta:
-        verbose_name = "Invoice Item"
-        verbose_name_plural = "Invoice Items"
         indexes = [
             models.Index(fields=["product"]),
             models.Index(fields=["invoice", "product"]),
         ]
 
     def __str__(self):
-        return f"{self.quantity}×{self.product.name}"
+        return f"{self.quantity}×{self.product}"
+
+    @property
+    def unit_price(self) -> Decimal:
+        return to_decimal(self.selling_price)
 
     @property
     def effective_price(self) -> Decimal:
-        base = to_decimal(self.unit_price)
+        base = to_decimal(self.selling_price)
         disc = to_decimal(self.discount)
         eff = base - disc
         return eff if eff >= 0 else Decimal("0.00")
 
     @property
     def line_total(self) -> Decimal:
-        return self.effective_price * int(self.quantity or 0)
+        return to_decimal(self.effective_price) * int(self.quantity or 0)
+
+    @property
+    def line_cost(self) -> Decimal:
+        return to_decimal(self.buying_cost) * int(self.quantity or 0)
 
     def save(self, *args, **kwargs):
-        self.unit_price = to_decimal(self.unit_price)
+        # fill snapshot values if missing
+        if not self.selling_price or to_decimal(self.selling_price) <= 0:
+            self.selling_price = to_decimal(getattr(self.product, "selling_price", 0) or 0)
+
+        if not self.buying_cost or to_decimal(self.buying_cost) <= 0:
+            self.buying_cost = to_decimal(getattr(self.product, "buying_price", 0) or 0)
+
+        self.selling_price = to_decimal(self.selling_price)
+        self.buying_cost = to_decimal(self.buying_cost)
+
+        self.line_cost_cache = to_decimal(self.buying_cost) * int(self.quantity or 0)
+
         super().save(*args, **kwargs)
-        # Recalculate invoice totals after saving this item
+
         if self.invoice_id:
-            self.invoice.calculate_totals()
+            self.invoice.calculate_totals(save=True)
 
     def delete(self, *args, **kwargs):
         inv = self.invoice
         super().delete(*args, **kwargs)
         if inv:
-            inv.calculate_totals()
+            inv.calculate_totals(save=True)
 
 
+# ───────────────────────────────────────────────────────────────
+# Payment (supports partial payments for debt)
+# ───────────────────────────────────────────────────────────────
 class Payment(models.Model):
     invoice = models.ForeignKey(
         Invoice,
@@ -247,14 +287,13 @@ class Payment(models.Model):
     )
 
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="recorded_payments",
     )
 
-    # integer TSH
     amount = models.PositiveIntegerField(help_text="Amount paid (integer TSH)")
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
 
@@ -270,10 +309,8 @@ class Payment(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # update invoice paid status after payment
-        inv = self.invoice
-        if inv:
-            inv.update_paid_status(save=True)
+        if self.invoice_id:
+            self.invoice.update_paid_status(save=True)
 
     def delete(self, *args, **kwargs):
         inv = self.invoice
@@ -282,11 +319,10 @@ class Payment(models.Model):
             inv.update_paid_status(save=True)
 
 
+# ───────────────────────────────────────────────────────────────
+# Expense
+# ───────────────────────────────────────────────────────────────
 class Expense(models.Model):
-    """
-    Sales expenses (transport expenses are in transport app).
-    """
-
     date = models.DateField(default=timezone.localdate, db_index=True)
 
     branch = models.ForeignKey(
@@ -299,16 +335,15 @@ class Expense(models.Model):
     )
 
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    category = models.CharField(max_length=50, help_text="e.g. Labor, Rent, Supplies, etc.")
+    category = models.CharField(max_length=50)
     description = models.CharField(max_length=255, blank=True)
 
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="expenses",
-        help_text="Who recorded this expense",
     )
 
     class Meta:
@@ -321,12 +356,189 @@ class Expense(models.Model):
         return f"{self.date}: {self.category} – Tsh {to_decimal(self.amount):.2f}"
 
 
-class Sale(models.Model):
-    """
-    (Optional/legacy) Keep only if your project still uses it.
-    """
-    date = models.DateField(default=timezone.localdate, db_index=True)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+# ───────────────────────────────────────────────────────────────
+# ✅ STOCK TRANSFER (Branch → Branch) using inventory.ProductStock
+# ───────────────────────────────────────────────────────────────
+class StockTransfer(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_POSTED = "posted"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, "Draft"),
+        (STATUS_POSTED, "Posted"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+
+    from_branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="stock_transfers_out",
+        db_index=True,
+    )
+    to_branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="stock_transfers_in",
+        db_index=True,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="stock_transfers_created",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    posted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_transfers_posted",
+    )
+    posted_at = models.DateTimeField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        db_index=True,
+    )
+
+    note = models.TextField(blank=True, default="")
 
     class Meta:
-        ordering = ["-date", "-id"]
+        ordering = ["-id"]
+        indexes = [
+            models.Index(fields=["from_branch", "created_at"]),
+            models.Index(fields=["to_branch", "created_at"]),
+            models.Index(fields=["status", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Transfer #{self.id} {self.from_branch} → {self.to_branch}"
+
+    def clean(self):
+        if self.from_branch_id and self.to_branch_id and self.from_branch_id == self.to_branch_id:
+            raise ValidationError("From branch and To branch must be different.")
+
+    @property
+    def items_total_qty(self) -> int:
+        return int(self.items.aggregate(s=Sum("quantity"))["s"] or 0)
+
+    def post(self, user):
+        """
+        Finalize transfer (atomic):
+          - Decrease stock from from_branch (inventory.ProductStock)
+          - Increase stock to to_branch (inventory.ProductStock)
+        """
+        if self.status != self.STATUS_DRAFT:
+            raise ValidationError("Only draft transfers can be posted.")
+
+        if self.from_branch_id == self.to_branch_id:
+            raise ValidationError("From branch and To branch must be different.")
+
+        items = list(self.items.select_related("product").all())
+        if not items:
+            raise ValidationError("Add at least one item to transfer.")
+
+        with transaction.atomic():
+            # validate enough stock in from_branch
+            for it in items:
+                if it.quantity <= 0:
+                    raise ValidationError("Invalid item quantity.")
+                available = get_branch_qty(it.product_id, self.from_branch_id)
+                if available < it.quantity:
+                    raise ValidationError(
+                        f"Not enough stock for {it.product.name}. Available {available}, requested {it.quantity}"
+                    )
+
+            # apply movements
+            for it in items:
+                add_branch_qty(it.product_id, self.from_branch_id, -it.quantity)
+                add_branch_qty(it.product_id, self.to_branch_id, +it.quantity)
+
+            self.status = self.STATUS_POSTED
+            self.posted_by = user
+            self.posted_at = timezone.now()
+            self.save(update_fields=["status", "posted_by", "posted_at"])
+
+
+class StockTransferItem(models.Model):
+    transfer = models.ForeignKey(
+        StockTransfer,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = ("transfer", "product")
+        indexes = [
+            models.Index(fields=["transfer", "product"]),
+        ]
+
+    def __str__(self):
+        return f"{self.product} x {self.quantity}"
+
+
+# sales/models.py
+from django.db import models
+from django.conf import settings
+from django.db.models import Sum
+from decimal import Decimal
+
+class Debtor(models.Model):
+    name = models.CharField(max_length=120)
+    phone = models.CharField(max_length=50, blank=True, null=True)
+    location = models.CharField(max_length=120, blank=True, null=True)
+
+    amount_owed = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    note = models.TextField(blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)  # Active = still owes
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="created_debtors"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return self.name
+
+    def total_paid(self):
+        total = self.payments.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        return Decimal(total)
+
+    def balance(self):
+        bal = Decimal(self.amount_owed or 0) - self.total_paid()
+        return bal if bal > 0 else Decimal("0.00")
+
+
+class DebtorPayment(models.Model):
+    debtor = models.ForeignKey(Debtor, related_name="payments", on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    method = models.CharField(max_length=20, blank=True, null=True)  # cash / bank / ebt etc optional
+    note = models.CharField(max_length=255, blank=True, null=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"{self.debtor.name} paid {self.amount}"

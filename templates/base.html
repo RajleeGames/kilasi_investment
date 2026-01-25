@@ -473,6 +473,20 @@
             </a>
           {% endif %}
 
+          {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
+  <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
+     href="{% url 'sales:debtor_list' %}">
+    <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
+  </a>
+{% endif %}
+
+
+          {# ✅ Stock Transfers (Admin can see) #}
+          <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
+             href="{% url 'sales:stock_transfer_list' %}" title="Stock Transfers">
+            <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
+          </a>
+
           {% if request.user.is_authenticated and request.user.profile %}
   {% with role=request.user.profile.role %}
     {% if role != 'transport' %}
@@ -643,17 +657,14 @@
 
   <div class="offcanvas-header py-3 px-3"
        style="border-bottom: 1px solid rgba(255,255,255,.10);">
-       
+
     <h5 class="offcanvas-title m-0" id="mobileSidebarLabel">
-      <div class="d-flex align-items-center gap-2"
-           style="color:#e6eef6;">
-           
+      <div class="d-flex align-items-center gap-2" style="color:#e6eef6;">
+
         <span class="d-inline-flex align-items-center justify-content-center"
-              style="
-                width:42px;height:42px;border-radius:14px;
-                background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));
-                border: 1px solid rgba(255,255,255,.12);
-              ">
+              style="width:42px;height:42px;border-radius:14px;
+                     background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));
+                     border: 1px solid rgba(255,255,255,.12);">
           <i class="fa-solid fa-building"></i>
         </span>
 
@@ -667,108 +678,166 @@
       </div>
     </h5>
 
-    <button type="button"
-            class="btn-close btn-close-white"
-            data-bs-dismiss="offcanvas"
-            aria-label="Close"></button>
+    <button type="button" class="btn-close btn-close-white"
+            data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-
 
   <div class="offcanvas-body">
     <nav>
+
       {% if request.user.is_authenticated and request.user.profile %}
         {% with role=request.user.profile.role %}
 
+          {# ---------------- MAIN ---------------- #}
           {% if role == 'admin' or role == 'cashier' %}
-            <a class="sb-link" href="{% url 'sales:admin_dashboard' %}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+            <a class="sb-link" href="{% url 'sales:admin_dashboard' %}">
+              <i class="fa-solid fa-gauge-high"></i> Dashboard
+            </a>
           {% endif %}
 
           {% if role == 'seller' %}
-            <a class="sb-link" href="{% url 'sales:seller_dashboard' %}"><i class="fa-solid fa-store"></i> POS (Sell)</a>
+            <a class="sb-link" href="{% url 'sales:seller_dashboard' %}">
+              <i class="fa-solid fa-store"></i> POS (Sell)
+            </a>
           {% endif %}
 
-            {# ✅ Sales-only menus: hide from transport #}
-{% if role == 'admin' or role == 'cashier' or role == 'seller' %}
-  <a class="sb-link" href="{% url 'sales:product_list' %}">
-    <i class="fa-solid fa-boxes-stacked"></i> Products
-  </a>
-  <a class="sb-link" href="{% url 'sales:top_selling_products' %}">
-    <i class="fa-solid fa-ranking-star"></i> Top Selling
-  </a>
-{% endif %}
-
-           {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
-  <a class="sb-link" href="{% url 'sales:outstanding_debts' %}">
-    <i class="fa-solid fa-clock-rotate-left"></i> Debts
-  </a>
-
-
-
-            <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsMob" role="button" aria-expanded="false" aria-controls="sbReportsMob">
-              <i class="fa-solid fa-chart-line"></i> Reports <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+          {# ---------------- SALES (all non-transport roles) ---------------- #}
+          {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+            <a class="sb-link" href="{% url 'sales:product_list' %}">
+              <i class="fa-solid fa-boxes-stacked"></i> Products
             </a>
+
+            <a class="sb-link" href="{% url 'sales:top_selling_products' %}">
+              <i class="fa-solid fa-ranking-star"></i> Top Selling
+            </a>
+
+            <a class="sb-link" href="{% url 'sales:outstanding_debts' %}">
+              <i class="fa-solid fa-clock-rotate-left"></i> Debts
+            </a>
+
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsMob"
+               role="button" aria-expanded="false" aria-controls="sbReportsMob">
+              <i class="fa-solid fa-chart-line"></i> Reports
+              <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            </a>
+
             <div class="collapse" id="sbReportsMob">
               <div class="sb-sub">
-                <a class="sb-link" href="{% url 'sales:kilasi_sales_history' %}"><i class="fa-regular fa-clock"></i> History</a>
-                <a class="sb-link" href="{% url 'sales:kilasi_sales_report' %}"><i class="fa-solid fa-calendar-day"></i> Daily</a>
-                <a class="sb-link" href="{% url 'sales:enhanced_sales_report' %}"><i class="fa-solid fa-chart-simple"></i> Enhanced</a>
-                <a class="sb-link" href="{% url 'sales:expense_overview' %}"><i class="fa-solid fa-receipt"></i> Expenses</a>
+                <a class="sb-link" href="{% url 'sales:kilasi_sales_history' %}">
+                  <i class="fa-regular fa-clock"></i> History
+                </a>
+                <a class="sb-link" href="{% url 'sales:kilasi_sales_report' %}">
+                  <i class="fa-solid fa-calendar-day"></i> Daily
+                </a>
+                <a class="sb-link" href="{% url 'sales:enhanced_sales_report' %}">
+                  <i class="fa-solid fa-chart-simple"></i> Enhanced
+                </a>
+                <a class="sb-link" href="{% url 'sales:expense_overview' %}">
+                  <i class="fa-solid fa-receipt"></i> Expenses
+                </a>
               </div>
             </div>
           {% endif %}
 
-          {# TRANSPORT DROPDOWN (mobile) #}
+          {# ---------------- TRANSPORT (mobile) ---------------- #}
           {% if role == 'admin' or role == 'cashier' or role == 'transport' %}
-            <a class="sb-link" data-bs-toggle="collapse" href="#sbTransportMob" role="button" aria-expanded="false" aria-controls="sbTransportMob">
-              <i class="fa-solid fa-truck-moving"></i> Transport <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbTransportMob"
+               role="button" aria-expanded="false" aria-controls="sbTransportMob">
+              <i class="fa-solid fa-truck-moving"></i> Transport
+              <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
             </a>
+
             <div class="collapse" id="sbTransportMob">
               <div class="sb-sub">
-                <a class="sb-link" href="{% url 'transport:index' %}"><i class="fa-solid fa-grid-2"></i> Dashboard</a>
-                <a class="sb-link" href="{% url 'transport:trip_list' %}"><i class="fa-solid fa-route"></i> Trips</a>
-                <a class="sb-link" href="{% url 'transport:vehicle_list' %}"><i class="fa-solid fa-truck"></i> Vehicles</a>
-                <a class="sb-link" href="{% url 'transport:driver_list' %}"><i class="fa-solid fa-id-card"></i> Drivers</a>
-                <a class="sb-link" href="{% url 'transport:expense_list' %}"><i class="fa-solid fa-gas-pump"></i> Expenses</a>
+                <a class="sb-link" href="{% url 'transport:index' %}">
+                  <i class="fa-solid fa-grid-2"></i> Dashboard
+                </a>
+                <a class="sb-link" href="{% url 'transport:trip_list' %}">
+                  <i class="fa-solid fa-route"></i> Trips
+                </a>
+                <a class="sb-link" href="{% url 'transport:vehicle_list' %}">
+                  <i class="fa-solid fa-truck"></i> Vehicles
+                </a>
+                <a class="sb-link" href="{% url 'transport:driver_list' %}">
+                  <i class="fa-solid fa-id-card"></i> Drivers
+                </a>
+                <a class="sb-link" href="{% url 'transport:expense_list' %}">
+                  <i class="fa-solid fa-gas-pump"></i> Expenses
+                </a>
               </div>
             </div>
           {% endif %}
 
+          {# ---------------- ADMIN / STOCK AREA ---------------- #}
           {% if role == 'admin' %}
             <hr style="border-color: rgba(255,255,255,.10);">
-            <a class="sb-link" href="{% url 'sales:stock_management' %}"><i class="fa-solid fa-boxes-packing"></i> Stock</a>
-            <a class="sb-link" href="{% url 'sales:customer_list' %}"><i class="fa-solid fa-users"></i> Customers</a>
-            <a class="sb-link" href="{% url 'sales:supplier_list' %}"><i class="fa-solid fa-truck-field"></i> Suppliers</a>
 
+            <a class="sb-link" href="{% url 'sales:stock_management' %}">
+              <i class="fa-solid fa-boxes-packing"></i> Stock
+            </a>
+
+            {# ✅ Stock Transfers (ADMIN can see) #}
+            <a class="sb-link" href="{% url 'sales:stock_transfer_list' %}">
+              <i class="fa-solid fa-right-left"></i> Stock Transfers
+            </a>
+
+            <a class="sb-link" href="{% url 'sales:customer_list' %}">
+              <i class="fa-solid fa-users"></i> Customers
+            </a>
+
+            <a class="sb-link" href="{% url 'sales:supplier_list' %}">
+              <i class="fa-solid fa-truck-field"></i> Suppliers
+            </a>
           {% endif %}
 
-          {% if request.user.is_authenticated and request.user.profile %}
-  {% with role=request.user.profile.role %}
-    {% if role != 'transport' %}
-      <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
-         href="{% url 'contacts:contact_list' %}">
-        <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
-      </a>
-    {% endif %}
-  {% endwith %}
+          {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
+  <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
+     href="{% url 'sales:debtor_list' %}">
+    <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
+  </a>
 {% endif %}
 
 
+          {# ✅ Stock Transfers for SELLER too (even if not admin) #}
+          {% if role == 'seller' %}
+            <a class="sb-link" href="{% url 'sales:stock_transfer_list' %}">
+              <i class="fa-solid fa-right-left"></i> Stock Transfers
+            </a>
+          {% endif %}
+
+          {# ---------------- CONTACTS (hide for transport) ---------------- #}
+          {% if role != 'transport' %}
+            <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
+               href="{% url 'contacts:contact_list' %}">
+              <i class="fa-solid fa-address-book"></i> Contacts
+            </a>
+          {% endif %}
+
           <hr style="border-color: rgba(255,255,255,.10);">
-          <a class="sb-link" href="{% url 'users:profile_update' %}"><i class="fa-solid fa-user-pen"></i> Profile</a>
+
+          <a class="sb-link" href="{% url 'users:profile_update' %}">
+            <i class="fa-solid fa-user-pen"></i> Profile
+          </a>
+
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button type="submit" class="sb-link w-100 text-start" style="background:transparent;border:0;">
+            <button type="submit" class="sb-link w-100 text-start"
+                    style="background:transparent;border:0;">
               <i class="fa-solid fa-right-from-bracket"></i> Logout
             </button>
           </form>
 
         {% endwith %}
       {% else %}
-        <a class="sb-link" href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <a class="sb-link" href="{% url 'login' %}">
+          <i class="fa-solid fa-right-to-bracket"></i> Login
+        </a>
       {% endif %}
+
     </nav>
   </div>
 </div>
+
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>

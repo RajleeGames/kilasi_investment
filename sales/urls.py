@@ -7,7 +7,9 @@ app_name = "sales"
 urlpatterns = [
     # Seller POS (home for this app)
     path("", views.seller_dashboard, name="seller_dashboard"),
-
+    
+    
+     path("debts/customer/<int:customer_id>/", views.customer_debt_statement, name="customer_debt_statement"),
     # POS actions
     path("lookup/", views.lookup_product, name="lookup_product"),
     path("add/<int:product_id>/", views.add_to_cart, name="add_to_cart"),
@@ -57,4 +59,25 @@ urlpatterns = [
     path("payments/", views.all_payments, name="all_payments"),
     path("stock/", views.stock_management, name="stock_management"),
     path("stock/search/", views.stock_search_products, name="stock_search_products"),
+    
+    
+    
+    path("stock/transfers/", views.stock_transfer_list, name="stock_transfer_list"),
+    path("stock/transfers/new/", views.stock_transfer_create, name="stock_transfer_create"),
+    path("stock/transfers/<int:pk>/", views.stock_transfer_detail, name="stock_transfer_detail"),
+    path("stock/transfers/<int:pk>/post/", views.stock_transfer_post, name="stock_transfer_post"),
+    path("stock-transfers/new/", views.stock_transfer_create, name="stock_transfer_create"),
+    path("api/branch-stock/", views.api_branch_stock, name="api_branch_stock"),
+    
+    
+    
+    path("debtors/", views.debtor_list, name="debtor_list"),
+    path("debtors/add/", views.debtor_create, name="debtor_create"),
+    path("debtors/<int:pk>/edit/", views.debtor_update, name="debtor_update"),
+    path("debtors/<int:pk>/delete/", views.debtor_delete, name="debtor_delete"),
+    
+    path("debtors/<int:pk>/", views.debtor_detail, name="debtor_detail"),
+    path("debtors/<int:pk>/pay/", views.debtor_add_payment, name="debtor_add_payment"),
+    path("debtors/<int:pk>/payments/<int:payment_id>/delete/", views.debtor_delete_payment, name="debtor_delete_payment"),
+
 ]
