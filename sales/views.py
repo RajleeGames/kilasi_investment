@@ -1487,49 +1487,60 @@ def sales_report(request):
     prev_date = (report_date - timedelta(days=1)).isoformat()
     next_date = (report_date + timedelta(days=1)).isoformat()
 
+    # branch filter: seller locked, admin/cashier optional
     selected = _selected_branch(request)
 
+    # base scopes (respect role permissions)
     inv_qs = _invoice_scope_qs(request)
     exp_qs = _expense_scope_qs(request)
+    pay_qs = _payment_scope_qs(request)  # ✅ IMPORTANT: scope payments too (seller => branch)
 
-    if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
-        inv_qs = inv_qs.filter(branch=selected)
-    if selected and hasattr(Expense, "branch_id") and _can_filter_branch(request):
-        exp_qs = exp_qs.filter(branch=selected)
+    # Optional status filter (if dashboard passes ?status=cash/bank/ebt/debt)
+    status_filter = (request.GET.get("status") or "").strip().lower()
+    if status_filter:
+        inv_qs = inv_qs.filter(status__iexact=status_filter)
 
-    # invoices and expenses of that date
+    # Apply branch filter for admin/cashier only
+    # (seller already locked by _invoice_scope_qs/_payment_scope_qs/_expense_scope_qs)
+    if selected and _can_filter_branch(request):
+        if hasattr(Invoice, "branch_id"):
+            inv_qs = inv_qs.filter(branch=selected)
+
+        if hasattr(Expense, "branch_id"):
+            exp_qs = exp_qs.filter(branch=selected)
+
+        # ✅ payments must follow the same selected branch
+        if hasattr(Invoice, "branch_id"):
+            pay_qs = pay_qs.filter(invoice__branch=selected)
+
+    # ----------------------------
+    # DAILY DATA
+    # ----------------------------
     sales_qs = inv_qs.filter(created_at__date=report_date).order_by("-created_at")
     expenses_qs = exp_qs.filter(date=report_date).order_by("-date", "-id")
 
-    # ✅ Income received that day:
-    # cash + bank + ebt invoices that are paid
+    # ✅ Income received that day: paid cash/bank/ebt invoices
     income_sales = _dec(
         sales_qs.filter(status__in=["cash", "bank", "ebt"], paid=True)
         .aggregate(t=Sum("total_amount"))["t"] or 0
     )
 
-    # debt payments received that day
-    income_debt_qs = Payment.objects.filter(timestamp__date=report_date)
-    if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
-        income_debt_qs = income_debt_qs.filter(invoice__branch=selected)
+    # ✅ Debt payments received that day (scoped properly)
+    income_debt = _dec(
+        pay_qs.filter(timestamp__date=report_date)
+        .aggregate(t=Sum("amount"))["t"] or 0
+    )
 
-    income_debt = _dec(income_debt_qs.aggregate(t=Sum("amount"))["t"] or 0)
-
+    # ✅ Total revenue received
     revenue_received = income_sales + income_debt
 
-    # ✅ Total expenses that day
-    total_expenses = _dec(expenses_qs.aggregate(total=Sum("amount"))["total"] or 0)
-
-    # ✅ NET = Income - Expenses
+    # ✅ expenses and net
+    total_expenses = _dec(expenses_qs.aggregate(t=Sum("amount"))["t"] or 0)
     net_income = revenue_received - total_expenses
 
     # Pagination
     sales_page = Paginator(sales_qs, 20).get_page(request.GET.get("sales_page", 1))
     exp_page = Paginator(expenses_qs, 20).get_page(request.GET.get("exp_page", 1))
-
-    # Keep old keys for templates
-    total_sales = revenue_received
-    net_sales = net_income
 
     return _render(
         request,
@@ -1539,10 +1550,12 @@ def sales_report(request):
             "prev_date": prev_date,
             "next_date": next_date,
 
-            "total_sales": total_sales,           # Income received
-            "total_expenses": total_expenses,     # Expenses
-            "net_sales": net_sales,               # Net = income - expenses
+            # template top cards
+            "total_sales": revenue_received,
+            "total_expenses": total_expenses,
+            "net_sales": net_income,
 
+            # ✅ breakdown block
             "revenue_received": revenue_received,
             "income_sales": income_sales,
             "income_debt": income_debt,
