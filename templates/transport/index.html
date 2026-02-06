@@ -46,7 +46,7 @@
 .grid{margin-top:10px;display:grid;grid-template-columns:1fr;gap:10px;}
 @media(min-width:992px){.grid{grid-template-columns:1.55fr .95fr;}}
 .card{background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;}
-.chead{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;}
+.chead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px;}
 .chead .h{font-weight:950;font-size:.98rem;}
 .chead .n{color:var(--muted);font-weight:750;font-size:.84rem;}
 
@@ -60,12 +60,75 @@
 
 .debug{margin-top:8px;font-weight:900;font-size:.85rem;color:#334155;}
 .debug span{padding:2px 8px;border-radius:999px;border:1px solid rgba(15,23,42,.12);background:rgba(2,6,23,.02);}
+
+/* ✅ Date filter UI */
+.filterbar{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  padding:10px;
+  background:rgba(255,255,255,.9);
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:14px;
+}
+.filter-left{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.fchip{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding:.35rem .6rem;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.10);
+  background:rgba(2,6,23,.02);
+  font-weight:900;
+  color:#334155;
+  font-size:.82rem;
+}
+.fchip i{ opacity:.85; }
+
+.datebox{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid rgba(15,23,42,.10);
+  background:#fff;
+  box-shadow:0 8px 18px rgba(2,6,23,.05);
+}
+.datebox label{
+  font-weight:900;
+  font-size:.82rem;
+  color:#334155;
+  margin:0;
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.datebox input[type="date"]{
+  border:none;
+  outline:none;
+  font-weight:900;
+  font-size:.9rem;
+  background:transparent;
+}
+.fbtns{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.fbtns .btn{ border-radius:12px; font-weight:900; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dash">
   <div class="hero">
+
     <div class="top">
       <div class="h1">
         <div class="ico"><i class="fa-solid fa-truck-fast"></i></div>
@@ -74,11 +137,55 @@
           <div class="sub">Trips, income, expenses, profit & loss</div>
         </div>
       </div>
+
       <div class="actions">
-        <a href="{% url 'transport:trip_create' %}" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-route me-2"></i>Trip</a>
-        <a href="{% url 'transport:expense_create' %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-receipt me-2"></i>Expense</a>
+        <a href="{% url 'transport:trip_create' %}" class="btn btn-outline-primary btn-sm">
+          <i class="fa-solid fa-route me-2"></i>Trip
+        </a>
+        <a href="{% url 'transport:expense_create' %}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-receipt me-2"></i>Expense
+        </a>
       </div>
     </div>
+
+    <!-- ✅ DATE FILTER (GET ?date=YYYY-MM-DD) -->
+    <form method="get" class="filterbar" aria-label="Filter dashboard by date">
+      <div class="filter-left">
+        <span class="fchip" title="Filter mode">
+          <i class="fa-solid fa-calendar-day"></i>
+          {% if selected_date %}
+            Showing: {{ selected_date|date:"d M Y" }}
+          {% else %}
+            Showing: Last 30 days
+          {% endif %}
+        </span>
+
+        <div class="datebox">
+          <label for="dashDate">
+            <i class="fa-regular fa-calendar"></i> Date
+          </label>
+          <input
+            id="dashDate"
+            type="date"
+            name="date"
+            value="{{ selected_date }}"
+            aria-label="Select date"
+          />
+        </div>
+      </div>
+
+      <div class="fbtns">
+        <button class="btn btn-outline-primary btn-sm" type="submit">
+          <i class="fa-solid fa-filter me-1"></i> Apply
+        </button>
+
+        {% if selected_date %}
+          <a class="btn btn-light btn-sm" href="{% url 'transport:index' %}">
+            <i class="fa-solid fa-rotate-left me-1"></i> Clear
+          </a>
+        {% endif %}
+      </div>
+    </form>
 
     <div class="kpis">
       <div class="kpi">
@@ -90,7 +197,7 @@
               <div class="k-v">{{ trips_count|default:"0" }}</div>
             </div>
           </div>
-          <div class="k-r">All time</div>
+          <div class="k-r">{% if selected_date %}Selected day{% else %}All time{% endif %}</div>
         </div>
       </div>
 
@@ -150,14 +257,27 @@
     <div class="card">
       <div class="chead">
         <div>
-          <div class="h">Activity (Last 30 Days)</div>
+          <div class="h">
+            Activity
+            {% if selected_date %}
+              ({{ selected_date|date:"d M Y" }})
+            {% else %}
+              (Last 30 Days)
+            {% endif %}
+          </div>
           <div class="n">Income vs Expenses</div>
         </div>
       </div>
 
       <div class="chart-wrap">
         <canvas id="activityChart"></canvas>
-        <div id="lineNoData" class="no-data">No activity data for last 30 days.</div>
+        <div id="lineNoData" class="no-data">
+          {% if selected_date %}
+            No activity data for selected date.
+          {% else %}
+            No activity data for last 30 days.
+          {% endif %}
+        </div>
       </div>
 
       {{ trips_chart_labels|json_script:"chart-labels" }}
@@ -223,7 +343,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const expArr = readJSON('chart-expenses', []);
 
   const hasLineData = (incomeArr||[]).some(v => toNum(v) > 0) || (expArr||[]).some(v => toNum(v) > 0);
-  if (!hasLineData) document.getElementById('lineNoData').style.display = 'grid';
+  const noDataEl = document.getElementById('lineNoData');
+  if (!hasLineData && noDataEl) noDataEl.style.display = 'grid';
 
   const canvas = document.getElementById('activityChart');
   if (canvas && hasLineData) {
@@ -254,7 +375,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const lossValue = toNum(readJSON('loss-value', 0));
 
   const pie1Has = (incomeTotal > 0 || expenseTotal > 0);
-  if (!pie1Has) document.getElementById('pie1NoData').style.display = 'grid';
+  const pie1No = document.getElementById('pie1NoData');
+  if (!pie1Has && pie1No) pie1No.style.display = 'grid';
   if (pie1Has) {
     new Chart(document.getElementById('incomeExpensePie').getContext('2d'), {
       type:'doughnut',
@@ -264,7 +386,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   const pie2Has = (profitValue > 0 || lossValue > 0);
-  if (!pie2Has) document.getElementById('pie2NoData').style.display = 'grid';
+  const pie2No = document.getElementById('pie2NoData');
+  if (!pie2Has && pie2No) pie2No.style.display = 'grid';
   if (pie2Has) {
     new Chart(document.getElementById('profitLossPie').getContext('2d'), {
       type:'doughnut',
@@ -272,6 +395,18 @@ document.addEventListener('DOMContentLoaded', function () {
       options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{position:'bottom'} } }
     });
   }
+});
+</script>
+
+<!-- ✅ auto-submit when date changes (optional). Remove if you don't want this. -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const dateInput = document.getElementById('dashDate');
+  if (!dateInput) return;
+  dateInput.addEventListener('change', function () {
+    const form = this.closest('form');
+    if (form) form.submit();
+  });
 });
 </script>
 {% endblock %}

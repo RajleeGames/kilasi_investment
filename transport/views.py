@@ -1,14 +1,16 @@
-# transport/views.py
+# transport/views.py  ✅ FULL COMPLETE FILE (with DATE FILTERS added)
+from datetime import datetime, timedelta
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncDate
 from django.utils import timezone
-from datetime import timedelta
 
 from .models import Vehicle, Driver, Trip, TransportExpense
 from .forms import VehicleForm, DriverForm, TripForm, TransportExpenseForm
+
 
 # Try to import role_required helper; if not present create simple fallback.
 try:
@@ -30,6 +32,32 @@ except Exception:
         return decorator
 
 
+# -------------------------
+# Helpers (role + branch)
+# -------------------------
+def _role(request):
+    profile = getattr(request.user, "profile", None)
+    return (getattr(profile, "role", "") or "").lower()
+
+
+def _branch(request):
+    profile = getattr(request.user, "profile", None)
+    return getattr(profile, "branch", None)
+
+
+def _parse_date(date_str: str):
+    """
+    Parse YYYY-MM-DD into date.
+    Returns date object or None if invalid/empty.
+    """
+    if not date_str:
+        return None
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
 # ---------- Dashboard / Index ----------
 @login_required
 @role_required(['admin', 'cashier', 'transport'])
@@ -40,7 +68,9 @@ def index(request):
      - net_total (income - expenses)
      - profit_value / loss_value (for pie charts)
      - recent_trips, recent_expenses
-     - chart arrays (last 30 days): trips_chart_labels, trips_chart_values, expenses_chart_values
+     - chart arrays:
+         - if no date filter => last 30 days
+         - if date filter => selected day only
     """
 
     profile = getattr(request.user, "profile", None)
@@ -50,18 +80,25 @@ def index(request):
     if role in ['admin', 'cashier']:
         trips_qs = Trip.objects.select_related('vehicle', 'driver', 'branch').all()
         expenses_qs = TransportExpense.objects.select_related('vehicle', 'branch', 'recorded_by').all()
-    else:  # transport role: limit to user's branch (if any)
+    else:
         branch = getattr(profile, 'branch', None)
         trips_qs = Trip.objects.select_related('vehicle', 'driver', 'branch').filter(branch=branch)
         expenses_qs = TransportExpense.objects.select_related('vehicle', 'branch', 'recorded_by').filter(branch=branch)
 
-    # Totals and counts (use aggregate; fallback to 0)
+    # ✅ Date filter for dashboard (GET param: ?date=YYYY-MM-DD)
+    selected_date_str = request.GET.get("date", "").strip()
+    filter_date = _parse_date(selected_date_str)
+
+    if filter_date:
+        trips_qs = trips_qs.filter(trip_date__date=filter_date)
+        expenses_qs = expenses_qs.filter(expense_date__date=filter_date)
+
+    # Totals and counts
     trips_total = trips_qs.aggregate(total=Sum('amount_charged')).get('total') or 0
     trips_count = trips_qs.count()
-
     expenses_total = expenses_qs.aggregate(total=Sum('amount')).get('total') or 0
 
-    # Net (profit = income - expenses) - keep Decimal if possible
+    # Net (profit = income - expenses)
     try:
         net_total = (trips_total or 0) - (expenses_total or 0)
     except Exception:
@@ -76,16 +113,19 @@ def index(request):
     profit_value = net_float if net_float > 0 else 0.0
     loss_value = abs(net_float) if net_float < 0 else 0.0
 
-    # Recent items for lists
+    # Recent items (will reflect filter if date is selected)
     recent_trips = trips_qs.order_by('-trip_date')[:6]
     recent_expenses = expenses_qs.order_by('-expense_date')[:6]
 
-    # Chart: last N days (labels + sums)
-    days = 30
-    today = timezone.localtime(timezone.now()).date()
-    start_date = today - timedelta(days=days - 1)  # include today
+    # ✅ Chart: last 30 days OR single day if filter_date set
+    if filter_date:
+        days = 1
+        start_date = filter_date
+    else:
+        days = 30
+        today = timezone.localtime(timezone.now()).date()
+        start_date = today - timedelta(days=days - 1)
 
-    # Aggregate trips per day
     trips_by_day_qs = (
         trips_qs
         .filter(trip_date__date__gte=start_date)
@@ -95,7 +135,6 @@ def index(request):
         .order_by('day')
     )
 
-    # Aggregate expenses per day
     expenses_by_day_qs = (
         expenses_qs
         .filter(expense_date__date__gte=start_date)
@@ -109,35 +148,35 @@ def index(request):
     trips_map = {entry['day'].isoformat(): float(entry['total'] or 0) for entry in trips_by_day_qs}
     expenses_map = {entry['day'].isoformat(): float(entry['total'] or 0) for entry in expenses_by_day_qs}
 
-    # Build labels & values arrays for chart, in chronological order
+    # Build labels & values arrays for chart
     labels = []
     trips_values = []
     expenses_values = []
     for i in range(days):
         d = start_date + timedelta(days=i)
-        labels.append(d.strftime('%d %b'))  # e.g., "22 Jan"
+        labels.append(d.strftime('%d %b'))
         key = d.isoformat()
         trips_values.append(trips_map.get(key, 0.0))
         expenses_values.append(expenses_map.get(key, 0.0))
 
-    # NOTE: Keep arrays as Python lists, because template uses json_script safely
     context = {
         'trips_total': trips_total,
         'trips_count': trips_count,
         'expenses_total': expenses_total,
         'net_total': net_total,
 
-        # profit/loss for pie chart
         'profit_value': profit_value,
         'loss_value': loss_value,
 
         'recent_trips': recent_trips,
         'recent_expenses': recent_expenses,
 
-        # chart payloads
         'trips_chart_labels': labels,
         'trips_chart_values': trips_values,
         'expenses_chart_values': expenses_values,
+
+        # ✅ for <input type="date" value="...">
+        'selected_date': filter_date.isoformat() if filter_date else "",
     }
 
     return render(request, 'transport/index.html', context)
@@ -195,11 +234,24 @@ def driver_create(request):
 @role_required(['admin', 'cashier', 'transport'])
 def trip_list(request):
     profile = request.user.profile
+
     if profile.role in ['admin', 'cashier']:
         trips = Trip.objects.select_related('vehicle', 'driver', 'branch').all()
     else:
         trips = Trip.objects.select_related('vehicle', 'driver', 'branch').filter(branch=profile.branch)
-    return render(request, 'transport/trip_list.html', {'trips': trips})
+
+    # ✅ Date filter for trip list (GET param: ?date=YYYY-MM-DD)
+    selected_date_str = request.GET.get("date", "").strip()
+    filter_date = _parse_date(selected_date_str)
+    if filter_date:
+        trips = trips.filter(trip_date__date=filter_date)
+
+    trips = trips.order_by('-trip_date', '-id')
+
+    return render(request, 'transport/trip_list.html', {
+        'trips': trips,
+        'selected_date': filter_date.isoformat() if filter_date else "",
+    })
 
 
 @login_required
@@ -219,20 +271,8 @@ def trip_create(request):
         form = TripForm(user=request.user)
     return render(request, 'transport/trip_form.html', {'form': form})
 
-# transport/views.py
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from users.utils import role_required
-from .models import TransportExpense
 
-def _role(request):
-    profile = getattr(request.user, "profile", None)
-    return (getattr(profile, "role", "") or "").lower()
-
-def _branch(request):
-    profile = getattr(request.user, "profile", None)
-    return getattr(profile, "branch", None)
-
+# ---------- Expenses ----------
 @login_required
 @role_required(['admin', 'transport', 'cashier'])
 def expense_list(request):
@@ -243,7 +283,7 @@ def expense_list(request):
         'vehicle', 'branch', 'recorded_by'
     ).order_by('-expense_date', '-id')
 
-    # ✅ Your requirement:
+    # ✅ Role scope:
     # - Cashier: view ALL expenses
     # - Admin: view ALL expenses
     # - Transport: view their branch only
@@ -251,17 +291,23 @@ def expense_list(request):
         if branch:
             qs = qs.filter(branch=branch)
         else:
-            qs = qs.none()  # transport must have branch
+            qs = qs.none()
 
-    # admin/cashier => no filter (see all)
+    # ✅ Date filter for expense list (GET param: ?date=YYYY-MM-DD)
+    selected_date_str = request.GET.get("date", "").strip()
+    filter_date = _parse_date(selected_date_str)
+    if filter_date:
+        qs = qs.filter(expense_date__date=filter_date)
 
     return render(request, 'transport/expense_list.html', {
         'expenses': qs,
         'role': role,
+        'selected_date': filter_date.isoformat() if filter_date else "",
         'is_cashier': role == "cashier",
         'is_admin': role == "admin",
         'is_transport': role == "transport",
     })
+
 
 @login_required
 @role_required(['admin', 'transport'])

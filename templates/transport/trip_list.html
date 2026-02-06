@@ -65,6 +65,71 @@
   justify-content:flex-end;
 }
 
+/* ✅ filter bar */
+.trip-filterbar{
+  width: 100%;
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: 0 8px 18px rgba(2,6,23,.05);
+}
+.trip-filter-left{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.trip-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  font-size: .86rem;
+  user-select:none;
+}
+.trip-chip strong{
+  color: var(--text);
+  font-weight: 900;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.trip-datebox{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:#fff;
+}
+.trip-datebox label{
+  margin:0;
+  font-weight: 900;
+  font-size: .82rem;
+  color:#334155;
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.trip-datebox input[type="date"]{
+  border:none;
+  outline:none;
+  background:transparent;
+  font-weight: 900;
+  font-size:.92rem;
+}
+
 .trip-search{
   display:flex;
   align-items:center;
@@ -85,25 +150,6 @@
   background: transparent;
 }
 .trip-search input::placeholder{ color:#94a3b8; }
-
-.trip-chip{
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  color: var(--muted);
-  font-size: .86rem;
-  user-select:none;
-}
-.trip-chip strong{
-  color: var(--text);
-  font-weight: 900;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-}
 
 /* -------- Table -------- */
 .trip-table-wrap{ padding-top: 6px; }
@@ -202,6 +248,10 @@
   .trip-actions{ justify-content:flex-start; width:100%; }
   .trip-search{ min-width: 100%; }
 
+  .trip-filterbar{ justify-content:flex-start; }
+  .trip-datebox{ width:100%; justify-content:space-between; }
+  .trip-datebox input[type="date"]{ width: 100%; max-width: 220px; }
+
   .trip-table thead{ display:none; }
   .trip-row{ display:block; padding: .65rem .75rem; }
   .trip-table td{
@@ -237,7 +287,7 @@
         <i class="fa-solid fa-road"></i>
         Trips
       </h1>
-      <div class="trip-sub">All recorded trips — search fast and open by clicking a row.</div>
+      <div class="trip-sub">Filter by date, search fast, and open by clicking a row.</div>
     </div>
 
     <div class="trip-actions">
@@ -255,6 +305,39 @@
       </a>
     </div>
   </div>
+
+  <!-- ✅ DATE FILTER (GET ?date=YYYY-MM-DD) -->
+  <form method="get" class="trip-filterbar" aria-label="Filter trips by date">
+    <div class="trip-filter-left">
+      <span class="trip-chip" title="Current filter">
+        <i class="fa-regular fa-calendar"></i>
+        {% if selected_date %}
+          Date: <strong>{{ selected_date|date:"d M Y" }}</strong>
+        {% else %}
+          Date: <strong>All</strong>
+        {% endif %}
+      </span>
+
+      <div class="trip-datebox">
+        <label for="tripDate">
+          <i class="fa-solid fa-calendar-day"></i> Choose
+        </label>
+        <input id="tripDate" type="date" name="date" value="{{ selected_date }}" aria-label="Select date">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-outline-primary btn-sm" type="submit">
+        <i class="fa-solid fa-filter me-1"></i> Apply
+      </button>
+
+      {% if selected_date %}
+        <a class="btn btn-light btn-sm" href="{% url 'transport:trip_list' %}">
+          <i class="fa-solid fa-rotate-left me-1"></i> Clear
+        </a>
+      {% endif %}
+    </div>
+  </form>
 
   {% if trips %}
     <div class="table-responsive trip-table-wrap" role="region" aria-label="Trips list">
@@ -321,7 +404,11 @@
     </div>
   {% else %}
     <div class="trip-empty">
-      No trips recorded. Click <a href="{% url 'transport:trip_create' %}">Record Trip</a> to add one.
+      {% if selected_date %}
+        No trips found for <strong>{{ selected_date|date:"d M Y" }}</strong>.
+      {% else %}
+        No trips recorded. Click <a href="{% url 'transport:trip_create' %}">Record Trip</a> to add one.
+      {% endif %}
     </div>
   {% endif %}
 </div>
@@ -359,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Search filter
+  // Search filter (client-side)
   const search = document.getElementById('tripSearch');
   function applyFilter(){
     if (!table) return;
@@ -384,6 +471,15 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   updateCounts();
+
+  // ✅ auto-submit when date changes (optional)
+  const dateInput = document.getElementById('tripDate');
+  if (dateInput) {
+    dateInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
 });
 </script>
 {% endblock %}

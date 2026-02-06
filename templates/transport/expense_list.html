@@ -81,9 +81,7 @@
   min-width: 280px;
   box-shadow: 0 6px 18px rgba(2,6,23,.04);
 }
-
 .exp-search i{ color: var(--muted); }
-
 .exp-search input{
   border: none;
   outline: none;
@@ -91,7 +89,6 @@
   font-size: .95rem;
   background: transparent;
 }
-
 .exp-search input::placeholder{ color: #94a3b8; }
 
 .exp-chip{
@@ -106,12 +103,58 @@
   font-size: .86rem;
   user-select:none;
 }
-
 .exp-chip strong{
   color: var(--text);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   font-family: var(--mono);
+}
+
+/* ✅ filter bar */
+.exp-filterbar{
+  width: 100%;
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: 0 8px 18px rgba(2,6,23,.05);
+  margin-top: 6px;
+}
+.exp-filter-left{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.exp-datebox{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:#fff;
+}
+.exp-datebox label{
+  margin:0;
+  font-weight: 900;
+  font-size: .82rem;
+  color:#334155;
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.exp-datebox input[type="date"]{
+  border:none;
+  outline:none;
+  background:transparent;
+  font-weight: 900;
+  font-size:.92rem;
 }
 
 /* Table */
@@ -122,7 +165,6 @@
   border-collapse: separate;
   border-spacing: 0 10px;
 }
-
 .exp-table thead th{
   padding: .65rem .85rem;
   font-size: .78rem;
@@ -141,7 +183,6 @@
   border-radius: 12px;
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
-
 .exp-row:hover{
   transform: translateY(-1px);
   box-shadow: 0 14px 26px rgba(2,6,23,.10);
@@ -161,7 +202,6 @@
 }
 
 .exp-muted{ color: var(--muted); }
-
 .exp-date{
   font-family: var(--mono);
   font-size: .88rem;
@@ -174,7 +214,6 @@
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
 }
-
 .amount-pill{
   display:inline-flex;
   align-items:center;
@@ -185,17 +224,13 @@
   background: rgba(16,185,129,.08);
   color: #065f46;
 }
-
 .amount-pill .tzs{
   font-weight: 800;
   opacity: .9;
   font-size: .82rem;
 }
 
-.exp-clickable{
-  cursor: pointer;
-}
-
+.exp-clickable{ cursor: pointer; }
 .exp-clickable:focus,
 .exp-clickable:focus-within{
   outline: 3px solid var(--focus);
@@ -219,6 +254,10 @@
   .exp-top{ flex-direction: column; align-items: flex-start; }
   .exp-actions{ justify-content:flex-start; width: 100%; }
   .exp-search{ min-width: 100%; }
+
+  .exp-filterbar{ justify-content:flex-start; }
+  .exp-datebox{ width:100%; justify-content:space-between; }
+  .exp-datebox input[type="date"]{ width: 100%; max-width: 220px; }
 
   .exp-table thead{ display:none; }
   .exp-row{ display:block; padding: .65rem .75rem; }
@@ -255,7 +294,7 @@
         <i class="fa-solid fa-truck-moving"></i>
         Transport Expenses
       </h2>
-      <div class="exp-sub">Track vehicle costs, filter fast, and open a record by clicking a row.</div>
+      <div class="exp-sub">Filter by date, search fast, and open a record by clicking a row.</div>
     </div>
 
     <div class="exp-actions">
@@ -273,6 +312,39 @@
       </a>
     </div>
   </div>
+
+  <!-- ✅ DATE FILTER (GET ?date=YYYY-MM-DD) -->
+  <form method="get" class="exp-filterbar" aria-label="Filter expenses by date">
+    <div class="exp-filter-left">
+      <span class="exp-chip" title="Current filter">
+        <i class="fa-regular fa-calendar"></i>
+        {% if selected_date %}
+          Date: <strong>{{ selected_date|date:"d M Y" }}</strong>
+        {% else %}
+          Date: <strong>All</strong>
+        {% endif %}
+      </span>
+
+      <div class="exp-datebox">
+        <label for="expDate">
+          <i class="fa-solid fa-calendar-day"></i> Choose
+        </label>
+        <input id="expDate" type="date" name="date" value="{{ selected_date }}" aria-label="Select date">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-outline-primary btn-sm" type="submit">
+        <i class="fa-solid fa-filter me-1"></i> Apply
+      </button>
+
+      {% if selected_date %}
+        <a class="btn btn-light btn-sm" href="{% url 'transport:expense_list' %}">
+          <i class="fa-solid fa-rotate-left me-1"></i> Clear
+        </a>
+      {% endif %}
+    </div>
+  </form>
 
   <div class="exp-table-wrap">
     {% if expenses %}
@@ -340,7 +412,11 @@
       </div>
     {% else %}
       <div class="exp-empty">
-        No expenses recorded yet. Click <a href="{% url 'transport:expense_create' %}">Add Expense</a> to start.
+        {% if selected_date %}
+          No expenses found for <strong>{{ selected_date|date:"d M Y" }}</strong>.
+        {% else %}
+          No expenses recorded yet. Click <a href="{% url 'transport:expense_create' %}">Add Expense</a> to start.
+        {% endif %}
       </div>
     {% endif %}
   </div>
@@ -381,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function () {
     visibleEl && (visibleEl.textContent = visibleRows.length);
   }
 
-  // Search filter
+  // Search filter (client-side)
   const searchInput = document.getElementById('expenseSearch');
   function applyFilter() {
     if (!table) return;
@@ -413,8 +489,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Initial counts
   updateCounts();
+
+  // ✅ auto-submit when date changes (optional)
+  const dateInput = document.getElementById('expDate');
+  if (dateInput) {
+    dateInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
 });
 </script>
 {% endblock %}
