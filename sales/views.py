@@ -1454,7 +1454,7 @@ def expense_history(request):
 
     total_amount = qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
-    return _render(request, ["sales/expense_history.html", "expense_history.html"], {
+    return _render(request, ["sales/kilasi_expense_history.html", "kilasi_expense_history.html"], {
         "expenses": page_obj.object_list,
         "page_obj": page_obj,
         "is_paginated": page_obj.has_other_pages(),
