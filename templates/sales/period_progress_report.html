@@ -1,0 +1,697 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Progress Report{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:rgba(15,23,42,.08);
+  --line2:rgba(15,23,42,.05);
+  --shadow:0 10px 28px rgba(2,6,23,.06);
+  --shadow-soft:0 6px 16px rgba(2,6,23,.04);
+  --radius:18px;
+  --blue:#0ea5e9;
+  --blue2:#0284c7;
+  --green:#16a34a;
+  --red:#dc2626;
+  --amber:#d97706;
+  --slate:#0f172a;
+  --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.report-shell{
+  max-width:1160px;
+  margin:0 auto;
+}
+
+.report-top{
+  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+  border:1px solid var(--line);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.report-head{
+  padding:16px 18px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.report-title{
+  margin:0;
+  font-size:1.12rem;
+  font-weight:900;
+  color:var(--text);
+  letter-spacing:-.02em;
+}
+
+.report-sub{
+  margin-top:5px;
+  color:var(--muted);
+  font-size:.86rem;
+  line-height:1.45;
+}
+
+.report-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 11px;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  border:1px solid #bfdbfe;
+  font-size:.74rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.report-form{
+  border-top:1px solid var(--line2);
+  padding:12px 16px 16px;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:10px;
+  align-items:end;
+}
+
+.fgroup label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--muted);
+  font-size:.72rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.fcontrol{
+  width:100%;
+  height:40px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  padding:0 12px;
+  font-size:.90rem;
+  color:var(--text);
+  outline:none;
+  transition:.18s ease;
+}
+
+.fcontrol:focus{
+  border-color:#7dd3fc;
+  box-shadow:0 0 0 4px rgba(14,165,233,.10);
+}
+
+.factions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  width:100%;
+}
+
+.btnx{
+  width:100%;
+  height:40px;
+  padding:0 14px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:.86rem;
+  font-weight:800;
+  cursor:pointer;
+  transition:.18s ease;
+  white-space:nowrap;
+}
+
+.btnx:hover{
+  transform:translateY(-1px);
+  box-shadow:var(--shadow-soft);
+}
+
+.btnx-primary{
+  border-color:transparent;
+  color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+}
+
+.btnx-excel{
+  color:#fff;
+  border-color:transparent;
+  background:linear-gradient(135deg,#16a34a,#15803d);
+}
+
+.kpi-grid{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:10px;
+}
+
+.kpi{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--shadow-soft);
+  padding:12px 13px;
+  min-height:86px;
+  position:relative;
+  overflow:hidden;
+}
+
+.kpi::after{
+  content:"";
+  position:absolute;
+  right:-16px;
+  top:-16px;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:rgba(148,163,184,.08);
+}
+
+.kpi .k-label{
+  position:relative;
+  z-index:1;
+  font-size:.70rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--muted);
+}
+
+.kpi .k-value{
+  position:relative;
+  z-index:1;
+  margin-top:7px;
+  font-size:1rem;
+  font-weight:900;
+  color:var(--text);
+  font-family:var(--mono);
+  line-height:1.22;
+  word-break:break-word;
+}
+
+.kpi.blue .k-value{ color:var(--blue2); }
+.kpi.green .k-value{ color:var(--green); }
+.kpi.red .k-value{ color:var(--red); }
+.kpi.amber .k-value{ color:var(--amber); }
+
+.block{
+  margin-top:14px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.block-head{
+  padding:12px 14px;
+  border-bottom:1px solid var(--line2);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.block-title{
+  margin:0;
+  font-size:.96rem;
+  font-weight:900;
+  color:var(--text);
+}
+
+.block-sub{
+  color:var(--muted);
+  font-size:.80rem;
+  margin-top:2px;
+}
+
+.badge-soft{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:.72rem;
+  font-weight:800;
+  background:#eef6ff;
+  color:#075985;
+  border:1px solid #dbeafe;
+}
+
+.table-wrap{
+  overflow:auto;
+}
+
+.rtable{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:760px;
+}
+
+.rtable thead th{
+  background:#0f172a;
+  color:#e2e8f0;
+  font-size:.70rem;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:800;
+  padding:11px 10px;
+  white-space:nowrap;
+  position:sticky;
+  top:0;
+}
+
+.rtable tbody td{
+  padding:10px 10px;
+  border-top:1px solid var(--line2);
+  font-size:.83rem;
+  color:var(--text);
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.rtable tbody tr:nth-child(even){
+  background:#fbfdff;
+}
+
+.rtable tbody tr:hover{
+  background:#f1f5f9;
+}
+
+.money{
+  font-family:var(--mono);
+  font-weight:900;
+}
+
+.status-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:80px;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:.70rem;
+  font-weight:800;
+  border:1px solid transparent;
+}
+
+.status-paid,
+.status-completed{
+  background:#ecfdf5;
+  color:#166534;
+  border-color:#bbf7d0;
+}
+
+.status-pending{
+  background:#fff7ed;
+  color:#9a3412;
+  border-color:#fed7aa;
+}
+
+.status-debt{
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.status-cancelled{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.boolean-badge{
+  display:inline-flex;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:.70rem;
+  font-weight:800;
+}
+
+.bool-yes{
+  background:#ecfdf5;
+  color:#166534;
+}
+
+.bool-no{
+  background:#f8fafc;
+  color:#475569;
+}
+
+.empty-state{
+  padding:18px 12px;
+  text-align:center;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.pager{
+  padding:12px 14px 14px;
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  border-top:1px solid var(--line2);
+}
+
+.pager a,
+.pager span{
+  min-width:34px;
+  height:32px;
+  padding:0 10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  color:var(--text);
+  background:#fff;
+  font-weight:800;
+  font-size:.82rem;
+}
+
+.pager a:hover{
+  background:#f8fafc;
+}
+
+.pager .active{
+  background:#e0f2fe;
+  color:#075985;
+  border-color:#bae6fd;
+}
+
+.pager .disabled{
+  opacity:.5;
+  pointer-events:none;
+}
+
+@media (max-width:1100px){
+  .report-form{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+  }
+  .kpi-grid{
+    grid-template-columns:repeat(2, minmax(0,1fr));
+  }
+}
+
+@media (max-width:720px){
+  .report-head{
+    padding:14px 14px 9px;
+  }
+  .report-form{
+    grid-template-columns:1fr;
+    padding:12px 14px 14px;
+  }
+  .kpi-grid{
+    grid-template-columns:1fr;
+  }
+  .block-head{
+    padding:12px 13px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-shell">
+
+  <div class="report-top">
+    <div class="report-head">
+      <div>
+        <h2 class="report-title">Sales Progress Report</h2>
+        <div class="report-sub">
+          Period <strong>{{ start_date }}</strong> to <strong>{{ end_date }}</strong> • Branch <strong>{{ branch_label }}</strong>
+        </div>
+      </div>
+      <div class="report-badge">
+        <i class="fa-solid fa-chart-line"></i>
+        Summary Report
+      </div>
+    </div>
+
+    <form method="get" class="report-form">
+      <div class="fgroup">
+        <label>Start Date</label>
+        <input type="date" class="fcontrol" name="start_date" value="{{ start_date }}">
+      </div>
+
+      <div class="fgroup">
+        <label>End Date</label>
+        <input type="date" class="fcontrol" name="end_date" value="{{ end_date }}">
+      </div>
+
+      {% if not is_seller %}
+      <div class="fgroup">
+        <label>Branch</label>
+        <select class="fcontrol" name="branch">
+          <option value="">All Branches</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="factions">
+        <button type="submit" class="btnx btnx-primary">
+          <i class="fa-solid fa-filter"></i>
+          Apply Filter
+        </button>
+
+        <a class="btnx btnx-excel"
+           href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&format=xlsx">
+          <i class="fa-solid fa-file-excel"></i>
+          Export Excel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="k-label">Total Received</div>
+      <div class="k-value">{{ total_received|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi red">
+      <div class="k-label">Expenses</div>
+      <div class="k-value">{{ expenses_total|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi {% if net_cashflow >= 0 %}green{% else %}red{% endif %}">
+      <div class="k-label">Net Cashflow</div>
+      <div class="k-value">{{ net_cashflow|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi amber">
+      <div class="k-label">Invoices</div>
+      <div class="k-value">{{ invoice_count|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Cash Sales</div>
+      <div class="k-value">{{ cash_sales|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Bank Sales</div>
+      <div class="k-value">{{ bank_sales|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">EBT Sales</div>
+      <div class="k-value">{{ ebt_sales|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Debt Payments</div>
+      <div class="k-value">{{ debt_payments_received|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Debt Issued</div>
+      <div class="k-value">{{ debt_issued|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Returns</div>
+      <div class="k-value">{{ returns_total|floatformat:2|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Paid Invoices</div>
+      <div class="k-value">{{ paid_invoice_count|intcomma }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k-label">Average Invoice</div>
+      <div class="k-value">{{ avg_invoice_value|floatformat:2|intcomma }}</div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <h3 class="block-title">Sales History</h3>
+        <div class="block-sub">Compact period sales records</div>
+      </div>
+      <span class="badge-soft">Page {{ sales_page.number }} of {{ sales_page.paginator.num_pages }}</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="rtable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Invoice</th>
+            <th>Customer</th>
+            <th>Status</th>
+            <th>Paid</th>
+            <th>Seller</th>
+            <th>Branch</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in sales_page %}
+          <tr>
+            <td>{{ inv.created_at|date:"Y-m-d H:i" }}</td>
+            <td>INV-{{ inv.id }}</td>
+            <td>{{ inv.customer.name|default:"Walk-in" }}</td>
+            <td>
+              <span class="status-badge {% if inv.status|lower == 'paid' or inv.status|lower == 'completed' %}status-completed{% elif inv.status|lower == 'pending' %}status-pending{% elif inv.status|lower == 'debt' %}status-debt{% elif inv.status|lower == 'cancelled' %}status-cancelled{% else %}status-pending{% endif %}">
+                {{ inv.status|upper }}
+              </span>
+            </td>
+            <td>
+              {% if inv.paid %}
+                <span class="boolean-badge bool-yes">YES</span>
+              {% else %}
+                <span class="boolean-badge bool-no">NO</span>
+              {% endif %}
+            </td>
+            <td>{{ inv.seller.username|default:"—" }}</td>
+            <td>{% if inv.branch %}{{ inv.branch.name }}{% else %}—{% endif %}</td>
+            <td class="money">{{ inv.total_amount|floatformat:2|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8"><div class="empty-state">No sales found in this period.</div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if sales_page.paginator.num_pages > 1 %}
+    <div class="pager">
+      {% if sales_page.has_previous %}
+        <a href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&sales_page={{ sales_page.previous_page_number }}&expense_page={{ expense_page.number }}">‹</a>
+      {% else %}
+        <span class="disabled">‹</span>
+      {% endif %}
+
+      {% for num in sales_page.paginator.page_range %}
+        {% if num == sales_page.number %}
+          <span class="active">{{ num }}</span>
+        {% else %}
+          <a href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&sales_page={{ num }}&expense_page={{ expense_page.number }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if sales_page.has_next %}
+        <a href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&sales_page={{ sales_page.next_page_number }}&expense_page={{ expense_page.number }}">›</a>
+      {% else %}
+        <span class="disabled">›</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <h3 class="block-title">Expense History</h3>
+        <div class="block-sub">Compact period expense records</div>
+      </div>
+      <span class="badge-soft">Page {{ expense_page.number }} of {{ expense_page.paginator.num_pages }}</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="rtable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Branch</th>
+            <th>Created By</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for exp in expense_page %}
+          <tr>
+            <td>{{ exp.date }}</td>
+            <td>{{ exp.category|default:"—" }}</td>
+            <td>{{ exp.description|default:"—" }}</td>
+            <td>{% if exp.branch %}{{ exp.branch.name }}{% else %}—{% endif %}</td>
+            <td>{{ exp.created_by.username|default:"—" }}</td>
+            <td class="money">{{ exp.amount|floatformat:2|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6"><div class="empty-state">No expenses found in this period.</div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if expense_page.paginator.num_pages > 1 %}
+    <div class="pager">
+      {% if expense_page.has_previous %}
+        <a href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&sales_page={{ sales_page.number }}&expense_page={{ expense_page.previous_page_number }}">‹</a>
+      {% else %}
+        <span class="disabled">‹</span>
+      {% endif %}
+
+      {% for num in expense_page.paginator.page_range %}
+        {% if num == expense_page.number %}
+          <span class="active">{{ num }}</span>
+        {% else %}
+          <a href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&sales_page={{ sales_page.number }}&expense_page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if expense_page.has_next %}
+        <a href="?start_date={{ start_date|urlencode }}&end_date={{ end_date|urlencode }}{% if selected_branch %}&branch={{ selected_branch|urlencode }}{% endif %}&sales_page={{ sales_page.number }}&expense_page={{ expense_page.next_page_number }}">›</a>
+      {% else %}
+        <span class="disabled">›</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

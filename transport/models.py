@@ -1,4 +1,3 @@
-# transport/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -23,11 +22,9 @@ class Vehicle(models.Model):
         ]
 
     def __str__(self):
-        # Example: "T 123 ABC (Hiace)"
         return f"{self.plate_number} ({self.model})" if self.model else self.plate_number
 
     def get_absolute_url(self):
-        # adjust if you have details pages later
         return reverse("transport:vehicle_list")
 
 
@@ -40,7 +37,6 @@ class Driver(models.Model):
         on_delete=models.CASCADE,
         related_name="driver_profile"
     )
-
     first_name = models.CharField(max_length=100, blank=True, default="")
     last_name = models.CharField(max_length=100, blank=True, default="")
     phone = models.CharField(max_length=20, blank=True)
@@ -69,16 +65,13 @@ class Driver(models.Model):
     @property
     def full_name(self):
         name = f"{self.first_name} {self.last_name}".strip()
-        # include phone if available
         if name and self.phone:
             return f"{name} ({self.phone})"
         if name:
             return name
-        # fallback to username if no name
         return self.user.username
 
     def __str__(self):
-        # dropdown will show: "John Doe (+2557...)" or username fallback
         return self.full_name
 
     def get_absolute_url(self):
@@ -86,7 +79,7 @@ class Driver(models.Model):
 
 
 # -------------------------
-# Trip (MAIN TRANSPORT SALE)
+# Trip
 # -------------------------
 class Trip(models.Model):
     branch = models.ForeignKey(
@@ -110,6 +103,9 @@ class Trip(models.Model):
     origin = models.CharField(max_length=255)
     destination = models.CharField(max_length=255)
 
+    # ✅ NEW
+    customer_phone = models.CharField(max_length=20, blank=True, default="")
+
     amount_charged = models.DecimalField(max_digits=12, decimal_places=2)
     notes = models.TextField(blank=True)
 
@@ -128,6 +124,7 @@ class Trip(models.Model):
             models.Index(fields=["branch", "trip_date"]),
             models.Index(fields=["vehicle"]),
             models.Index(fields=["driver"]),
+            models.Index(fields=["customer_phone"]),  # ✅ NEW
         ]
 
     def __str__(self):
@@ -135,7 +132,6 @@ class Trip(models.Model):
 
     def get_absolute_url(self):
         return reverse("transport:trip_list")
-
 
 # -------------------------
 # Transport Expenses
@@ -145,6 +141,11 @@ class TransportExpense(models.Model):
         ("fuel", "Fuel"),
         ("repair", "Repair"),
         ("service", "Service"),
+        ("office_rent", "Office Rent"),
+        ("water_bill", "Water Bill"),
+        ("electricity", "Electricity"),
+        ("internet", "Internet / Phone"),
+        ("salary", "Salary / Wages"),
         ("other", "Other"),
     ]
 
@@ -154,14 +155,17 @@ class TransportExpense(models.Model):
         related_name="transport_expenses"
     )
 
+    # ✅ NOW OPTIONAL
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.PROTECT,
-        related_name="expenses"
+        related_name="expenses",
+        null=True,
+        blank=True
     )
 
     expense_type = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=EXPENSE_CHOICES
     )
 
@@ -186,7 +190,69 @@ class TransportExpense(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.vehicle} | {self.get_expense_type_display()} | {self.amount}"
+        if self.vehicle:
+            return f"{self.vehicle} | {self.get_expense_type_display()} | {self.amount}"
+        return f"General Expense | {self.get_expense_type_display()} | {self.amount}"
 
     def get_absolute_url(self):
         return reverse("transport:expense_list")
+
+    @property
+    def is_general_expense(self):
+        return self.vehicle is None
+
+
+# -------------------------
+# Booking / Order
+# -------------------------
+class Booking(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="transport_bookings"
+    )
+
+    customer_name = models.CharField(max_length=150)
+    customer_phone = models.CharField(max_length=30)
+
+    pickup_area = models.CharField(max_length=255)
+    destination = models.CharField(max_length=255, blank=True)
+
+    booking_datetime = models.DateTimeField()
+    notes = models.TextField(blank=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    reminder_sent = models.BooleanField(default=False)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="transport_bookings_created"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["booking_datetime", "-id"]
+        indexes = [
+            models.Index(fields=["booking_datetime"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["branch", "booking_datetime"]),
+            models.Index(fields=["customer_phone"]),
+        ]
+
+    def __str__(self):
+        return f"{self.customer_name} - {self.pickup_area} - {self.booking_datetime:%d %b %Y %H:%M}"
+
+    @property
+    def is_overdue(self):
+        return self.status == "pending" and self.booking_datetime < timezone.now()
+
+    def get_absolute_url(self):
+        return reverse("transport:booking_list")

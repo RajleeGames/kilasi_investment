@@ -1,4 +1,3 @@
-{# templates/transport/trip_list.html #}
 {% extends "base.html" %}
 {% load humanize %}
 
@@ -10,271 +9,343 @@
   --card:#ffffff;
   --text:#0f172a;
   --muted:#64748b;
-  --border:rgba(15,23,42,.10);
+  --border:rgba(15,23,42,.08);
   --border2:rgba(15,23,42,.06);
-  --shadow:0 12px 30px rgba(2,6,23,.08);
-  --shadow2:0 8px 22px rgba(2,6,23,.06);
+  --shadow:0 10px 24px rgba(2,6,23,.06);
+  --shadow2:0 8px 18px rgba(2,6,23,.05);
   --radius:14px;
   --accent:#0ea5e9;
-  --focus:rgba(14,165,233,.25);
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  --focus:rgba(14,165,233,.22);
+  --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 
-/* -------- Wrapper -------- */
 .trip-card{
-  max-width: 1120px;
-  margin: 18px auto;
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 14px;
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow);
-  box-sizing: border-box;
-  font-family: var(--font);
-  color: var(--text);
+  max-width:1120px;
+  margin:12px auto;
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:12px;
+  border:1px solid var(--border2);
+  box-shadow:var(--shadow);
+  box-sizing:border-box;
+  font-family:var(--font);
+  color:var(--text);
 }
 
-/* -------- Header -------- */
 .trip-head{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap: 12px;
-  padding: 4px 4px 12px 4px;
+  gap:10px;
+  padding:2px 2px 10px 2px;
 }
 .trip-title{
   margin:0;
-  font-size: 1.1rem;
-  font-weight: 900;
-  letter-spacing:.2px;
+  font-size:.98rem;
+  font-weight:900;
+  letter-spacing:.1px;
   display:flex;
   align-items:center;
-  gap: 8px;
+  gap:8px;
 }
 .trip-sub{
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: .9rem;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:.78rem;
+  font-weight:700;
 }
 .trip-actions{
   display:flex;
-  gap: 10px;
+  gap:8px;
   align-items:center;
-  flex-wrap: wrap;
+  flex-wrap:wrap;
   justify-content:flex-end;
-}
-
-/* ✅ filter bar */
-.trip-filterbar{
-  width: 100%;
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  flex-wrap:wrap;
-  justify-content:space-between;
-  padding: 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border2);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  box-shadow: 0 8px 18px rgba(2,6,23,.05);
-}
-.trip-filter-left{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.trip-chip{
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--muted);
-  font-size: .86rem;
-  user-select:none;
-}
-.trip-chip strong{
-  color: var(--text);
-  font-weight: 900;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.trip-datebox{
-  display:flex;
-  align-items:center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background:#fff;
-}
-.trip-datebox label{
-  margin:0;
-  font-weight: 900;
-  font-size: .82rem;
-  color:#334155;
-  display:flex;
-  gap:6px;
-  align-items:center;
-}
-.trip-datebox input[type="date"]{
-  border:none;
-  outline:none;
-  background:transparent;
-  font-weight: 900;
-  font-size:.92rem;
 }
 
 .trip-search{
   display:flex;
   align-items:center;
-  gap: 8px;
-  min-width: 280px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+  gap:8px;
+  min-width:250px;
+  padding:7px 10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#fff;
+  box-shadow:0 6px 14px rgba(2,6,23,.04);
 }
-.trip-search i{ color: var(--muted); }
+.trip-search i{ color:var(--muted); font-size:.8rem; }
 .trip-search input{
   width:100%;
   border:none;
   outline:none;
-  font-size:.95rem;
-  background: transparent;
+  font-size:.82rem;
+  font-weight:700;
+  background:transparent;
 }
 .trip-search input::placeholder{ color:#94a3b8; }
 
-/* -------- Table -------- */
-.trip-table-wrap{ padding-top: 6px; }
+.trip-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--muted);
+  font-size:.76rem;
+  font-weight:700;
+  user-select:none;
+}
+.trip-chip strong{
+  color:var(--text);
+  font-weight:900;
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
+}
+
+.trip-filterbar{
+  width:100%;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid var(--border2);
+  background:linear-gradient(180deg,#ffffff,#fbfdff);
+  box-shadow:0 8px 18px rgba(2,6,23,.04);
+}
+.trip-filter-left{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.trip-datebox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+}
+.trip-datebox label{
+  margin:0;
+  font-weight:800;
+  font-size:.75rem;
+  color:#334155;
+  display:flex;
+  gap:6px;
+  align-items:center;
+  white-space:nowrap;
+}
+.trip-datebox input[type="date"],
+.trip-datebox select{
+  border:none;
+  outline:none;
+  background:transparent;
+  font-weight:800;
+  font-size:.8rem;
+  color:#0f172a;
+  min-width:130px;
+}
+
+.trip-filter-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.trip-filter-actions .btn,
+.trip-actions .btn{
+  font-size:.78rem;
+  font-weight:800;
+  border-radius:10px;
+  padding:.48rem .72rem;
+}
+
+.trip-table-wrap{ padding-top:6px; }
 
 .trip-table{
   width:100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
+  border-collapse:separate;
+  border-spacing:0 8px;
 }
 .trip-table thead th{
-  padding: .65rem .85rem;
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #475569;
-  border: 0;
-  background: transparent;
-  font-weight: 900;
+  padding:.55rem .75rem;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#475569;
+  border:0;
+  background:transparent;
+  font-weight:900;
 }
 
 .trip-row{
   background:#fff;
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  box-shadow: var(--shadow2);
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  border:1px solid var(--border2);
+  border-radius:12px;
+  box-shadow:var(--shadow2);
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 .trip-row:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(2,6,23,.10);
-  border-color: rgba(14,165,233,.18);
+  transform:translateY(-1px);
+  box-shadow:0 12px 22px rgba(2,6,23,.08);
+  border-color:rgba(14,165,233,.18);
 }
 .trip-row.trip-clickable{ cursor:pointer; }
 .trip-row:focus,
 .trip-row:focus-within{
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline:3px solid var(--focus);
+  outline-offset:2px;
 }
 
 .trip-table td{
-  padding: .7rem .85rem;
-  border: 0;
-  vertical-align: middle;
-  font-size: .92rem;
-  color: var(--text);
-  max-width: 340px;
+  padding:.62rem .75rem;
+  border:0;
+  vertical-align:middle;
+  font-size:.82rem;
+  color:var(--text);
+  max-width:260px;
   overflow:hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 .trip-date{
-  font-family: var(--mono);
-  font-size: .88rem;
+  font-family:var(--mono);
+  font-size:.76rem;
   color:#0b1220;
 }
-.trip-muted{ color: var(--muted); }
+.trip-muted{ color:var(--muted); }
+.trip-phone{
+  font-weight:800;
+  color:#0369a1;
+}
 
-/* Amount pill */
 .trip-amount{
   text-align:right;
-  font-weight: 900;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
+  font-weight:900;
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
 }
 .amount-pill{
   display:inline-flex;
   align-items:center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(14,165,233,.20);
-  background: rgba(14,165,233,.10);
-  color: #075985;
+  gap:6px;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid rgba(14,165,233,.20);
+  background:rgba(14,165,233,.10);
+  color:#075985;
 }
 .amount-pill .tzs{
-  font-size:.82rem;
-  font-weight: 900;
-  opacity: .9;
+  font-size:.72rem;
+  font-weight:900;
+  opacity:.9;
 }
 
-/* Empty state */
 .trip-empty{
-  padding: 18px;
+  padding:16px;
   text-align:center;
-  color: var(--muted);
-  background: linear-gradient(180deg, #fbfdff, #fff);
-  border-radius: 12px;
-  border: 1px dashed rgba(15,23,42,.14);
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:700;
+  background:linear-gradient(180deg,#fbfdff,#fff);
+  border-radius:12px;
+  border:1px dashed rgba(15,23,42,.14);
 }
 
-/* Mobile stacked rows */
 .td-label{ display:none; }
 
 @media (max-width: 991.98px){
-  .trip-head{ flex-direction:column; align-items:flex-start; }
-  .trip-actions{ justify-content:flex-start; width:100%; }
-  .trip-search{ min-width: 100%; }
+  .trip-head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
 
-  .trip-filterbar{ justify-content:flex-start; }
-  .trip-datebox{ width:100%; justify-content:space-between; }
-  .trip-datebox input[type="date"]{ width: 100%; max-width: 220px; }
+  .trip-actions{
+    justify-content:flex-start;
+    width:100%;
+  }
+
+  .trip-search{
+    min-width:100%;
+  }
+
+  .trip-filterbar{
+    justify-content:flex-start;
+    padding:8px;
+  }
+
+  .trip-filter-left{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .trip-datebox{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  .trip-datebox input[type="date"],
+  .trip-datebox select{
+    width:100%;
+    min-width:0;
+    max-width:220px;
+    font-size:.78rem;
+  }
+
+  .trip-filter-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .trip-filter-actions .btn{
+    width:100%;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+  }
 
   .trip-table thead{ display:none; }
-  .trip-row{ display:block; padding: .65rem .75rem; }
+
+  .trip-row{
+    display:block;
+    padding:.55rem .7rem;
+  }
+
   .trip-table td{
     display:flex;
     justify-content:space-between;
-    gap: 12px;
-    padding: .5rem 0;
-    white-space: normal;
+    gap:10px;
+    padding:.42rem 0;
+    white-space:normal;
     max-width:none;
-    border-bottom: 1px dashed rgba(15,23,42,.08);
+    border-bottom:1px dashed rgba(15,23,42,.08);
+    font-size:.77rem;
   }
   .trip-table td:last-child{ border-bottom:0; }
+
   .td-label{
     display:inline-block;
-    color: var(--muted);
-    font-weight: 800;
-    font-size: .82rem;
-    min-width: 34%;
+    color:var(--muted);
+    font-weight:800;
+    font-size:.73rem;
+    min-width:36%;
+    flex-shrink:0;
   }
+
   .trip-amount{ text-align:left; }
 }
 
-/* small helpers */
 .me-1{ margin-right:6px; }
 </style>
 {% endblock %}
@@ -287,13 +358,13 @@
         <i class="fa-solid fa-road"></i>
         Trips
       </h1>
-      <div class="trip-sub">Filter by date, search fast, and open by clicking a row.</div>
+      <div class="trip-sub">Filter by date and vehicle, then search quickly.</div>
     </div>
 
     <div class="trip-actions">
       <div class="trip-search" title="Search trips">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="tripSearch" type="search" placeholder="Search vehicle, driver, from, to, branch..." aria-label="Search trips">
+        <input id="tripSearch" type="search" placeholder="Search vehicle, driver, phone, from, to..." aria-label="Search trips">
       </div>
 
       <span class="trip-chip" title="Visible rows">
@@ -306,36 +377,50 @@
     </div>
   </div>
 
-  <!-- ✅ DATE FILTER (GET ?date=YYYY-MM-DD) -->
-  <form method="get" class="trip-filterbar" aria-label="Filter trips by date">
+  <form method="get" class="trip-filterbar" aria-label="Filter trips">
     <div class="trip-filter-left">
       <span class="trip-chip" title="Current filter">
         <i class="fa-regular fa-calendar"></i>
-        {% if selected_date %}
-          Date: <strong>{{ selected_date|date:"d M Y" }}</strong>
-        {% else %}
-          Date: <strong>All</strong>
-        {% endif %}
+        Date:
+        <strong>
+          {% if selected_date %}
+            {{ selected_date|date:"d M Y" }}
+          {% else %}
+            All
+          {% endif %}
+        </strong>
       </span>
 
       <div class="trip-datebox">
         <label for="tripDate">
-          <i class="fa-solid fa-calendar-day"></i> Choose
+          <i class="fa-solid fa-calendar-day"></i> Date
         </label>
         <input id="tripDate" type="date" name="date" value="{{ selected_date }}" aria-label="Select date">
       </div>
+
+      <div class="trip-datebox">
+        <label for="tripVehicle">
+          <i class="fa-solid fa-truck"></i> Vehicle
+        </label>
+        <select id="tripVehicle" name="vehicle" aria-label="Select vehicle">
+          <option value="">All Vehicles</option>
+          {% for v in vehicles %}
+            <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
+              {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <div class="trip-filter-actions">
       <button class="btn btn-outline-primary btn-sm" type="submit">
         <i class="fa-solid fa-filter me-1"></i> Apply
       </button>
 
-      {% if selected_date %}
-        <a class="btn btn-light btn-sm" href="{% url 'transport:trip_list' %}">
-          <i class="fa-solid fa-rotate-left me-1"></i> Clear
-        </a>
-      {% endif %}
+      <a class="btn btn-light btn-sm" href="{% url 'transport:trip_list' %}">
+        <i class="fa-solid fa-rotate-left me-1"></i> Clear
+      </a>
     </div>
   </form>
 
@@ -347,6 +432,7 @@
             <th>Date</th>
             <th>Vehicle</th>
             <th>Driver</th>
+            <th>Customer Phone</th>
             <th>From</th>
             <th>To</th>
             <th class="text-end">Amount</th>
@@ -373,6 +459,11 @@
             <td data-label="Driver">
               <span class="td-label">Driver</span>
               <span class="trip-muted">{{ t.driver|default:"—" }}</span>
+            </td>
+
+            <td data-label="Customer Phone">
+              <span class="td-label">Phone</span>
+              <span class="trip-phone">{{ t.customer_phone|default:"—" }}</span>
             </td>
 
             <td data-label="From">
@@ -404,11 +495,7 @@
     </div>
   {% else %}
     <div class="trip-empty">
-      {% if selected_date %}
-        No trips found for <strong>{{ selected_date|date:"d M Y" }}</strong>.
-      {% else %}
-        No trips recorded. Click <a href="{% url 'transport:trip_create' %}">Record Trip</a> to add one.
-      {% endif %}
+      No trips found for this filter.
     </div>
   {% endif %}
 </div>
@@ -429,7 +516,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (visibleEl) visibleEl.textContent = visible.length;
   }
 
-  // Row click/keyboard open if data-href exists
   document.querySelectorAll('.trip-row-js').forEach(function (row) {
     const href = row.dataset.href;
     if (!href) return;
@@ -446,7 +532,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Search filter (client-side)
   const search = document.getElementById('tripSearch');
   function applyFilter(){
     if (!table) return;
@@ -459,23 +544,35 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   if (search) search.addEventListener('input', applyFilter);
 
-  // Format amounts if raw numeric (extra safe)
   document.querySelectorAll('.amount-badge').forEach(function (pill) {
     const raw = pill.dataset.raw;
     if (!raw) return;
     const n = Number(raw);
     if (Number.isFinite(n)) {
       const amt = pill.querySelector('.amt');
-      if (amt) amt.textContent = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (amt) {
+        amt.textContent = n.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
     }
   });
 
   updateCounts();
 
-  // ✅ auto-submit when date changes (optional)
   const dateInput = document.getElementById('tripDate');
+  const vehicleInput = document.getElementById('tripVehicle');
+
   if (dateInput) {
     dateInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
+
+  if (vehicleInput) {
+    vehicleInput.addEventListener('change', function () {
       const form = this.closest('form');
       if (form) form.submit();
     });

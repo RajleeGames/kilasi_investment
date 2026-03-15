@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if is_edit %}Edit Booking{% else %}Add Booking{% endif %}
+{% endblock %}
+
+{% block page_title %}
+  {% if is_edit %}Edit Booking{% else %}Add Booking{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+  {% if is_edit %}Update booking details{% else %}Create customer booking{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .booking-wrap{
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .booking-card{
+    background:#fff;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:18px;
+    box-shadow:0 10px 26px rgba(2,6,23,.06);
+    padding:18px;
+  }
+
+  .booking-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+
+  .booking-head h3{
+    margin:0;
+    font-size:1rem;
+    font-weight:800;
+  }
+
+  .booking-head p{
+    margin:.2rem 0 0;
+    color:#64748b;
+    font-size:.82rem;
+  }
+
+  .booking-actions-top{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .booking-actions-top .btn,
+  .booking-actions-bottom .btn{
+    border-radius:12px;
+    font-weight:700;
+  }
+
+  .field-box{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:14px;
+    padding:12px;
+    background:#fff;
+    height:100%;
+  }
+
+  .field-box label{
+    display:block;
+    margin-bottom:8px;
+    font-size:.82rem;
+    font-weight:700;
+    color:#0f172a;
+  }
+
+  .booking-card .form-control,
+  .booking-card .form-select,
+  .booking-card textarea,
+  .booking-card input,
+  .booking-card select{
+    border-radius:12px !important;
+    min-height:42px;
+    border:1px solid rgba(15,23,42,.12);
+    font-size:.9rem;
+    box-shadow:none !important;
+  }
+
+  .booking-card textarea{
+    min-height:95px;
+    resize:vertical;
+  }
+
+  .booking-card .form-control:focus,
+  .booking-card .form-select:focus,
+  .booking-card textarea:focus,
+  .booking-card input:focus,
+  .booking-card select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .15rem rgba(37,99,235,.08) !important;
+  }
+
+  .error-text{
+    margin-top:6px;
+    color:#dc2626;
+    font-size:.76rem;
+    font-weight:600;
+  }
+
+  .top-errors{
+    margin-bottom:14px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(239,68,68,.16);
+    background:rgba(239,68,68,.06);
+    color:#b91c1c;
+    font-size:.82rem;
+    font-weight:600;
+  }
+
+  .booking-actions-bottom{
+    margin-top:16px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-wrap">
+  <div class="booking-card">
+
+    <div class="booking-head">
+      <div>
+        <h3>{% if is_edit %}Edit Booking{% else %}New Booking{% endif %}</h3>
+        <p>{% if is_edit %}Change booking info{% else %}Add customer booking details{% endif %}</p>
+      </div>
+
+      <div class="booking-actions-top">
+        <a href="{% url 'transport:booking_list' %}" class="btn btn-light btn-sm">
+          <i class="fa-solid fa-arrow-left me-1"></i> Back
+        </a>
+        {% if is_edit and booking %}
+          <a href="{% url 'transport:booking_delete' booking.pk %}" class="btn btn-outline-danger btn-sm">
+            <i class="fa-solid fa-trash me-1"></i> Delete
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="top-errors">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Branch</label>
+            {{ form.branch }}
+            {% if form.branch.errors %}<div class="error-text">{{ form.branch.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Booking Date & Time</label>
+            {{ form.booking_datetime }}
+            {% if form.booking_datetime.errors %}<div class="error-text">{{ form.booking_datetime.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Customer Name</label>
+            {{ form.customer_name }}
+            {% if form.customer_name.errors %}<div class="error-text">{{ form.customer_name.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Phone Number</label>
+            {{ form.customer_phone }}
+            {% if form.customer_phone.errors %}<div class="error-text">{{ form.customer_phone.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Pickup Area</label>
+            {{ form.pickup_area }}
+            {% if form.pickup_area.errors %}<div class="error-text">{{ form.pickup_area.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Destination</label>
+            {{ form.destination }}
+            {% if form.destination.errors %}<div class="error-text">{{ form.destination.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-box">
+            <label>Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="error-text">{{ form.status.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="field-box">
+            <label>Notes</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="error-text">{{ form.notes.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="booking-actions-bottom">
+        <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-secondary">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk me-1"></i>
+          {% if is_edit %}Update{% else %}Save{% endif %}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

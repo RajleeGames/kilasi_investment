@@ -1,18 +1,16 @@
-# transport/views.py  ✅ FULL COMPLETE FILE (with DATE FILTERS added)
 from datetime import datetime, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Count
+from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from .models import Vehicle, Driver, Trip, TransportExpense
-from .forms import VehicleForm, DriverForm, TripForm, TransportExpenseForm
+from .models import Vehicle, Driver, Trip, TransportExpense, Booking
+from .forms import VehicleForm, DriverForm, TripForm, TransportExpenseForm, BookingForm
 
 
-# Try to import role_required helper; if not present create simple fallback.
 try:
     from users.utils import role_required
 except Exception:
@@ -25,16 +23,14 @@ except Exception:
             @wraps(view_func)
             def _wrapped(request, *args, **kwargs):
                 profile = getattr(request.user, 'profile', None)
-                if profile and profile.role in allowed_roles:
+                role = (getattr(profile, "role", "") or "").lower()
+                if profile and role in allowed_roles:
                     return view_func(request, *args, **kwargs)
                 return HttpResponseForbidden("You don't have permission to view this page.")
             return _wrapped
         return decorator
 
 
-# -------------------------
-# Helpers (role + branch)
-# -------------------------
 def _role(request):
     profile = getattr(request.user, "profile", None)
     return (getattr(profile, "role", "") or "").lower()
@@ -46,10 +42,6 @@ def _branch(request):
 
 
 def _parse_date(date_str: str):
-    """
-    Parse YYYY-MM-DD into date.
-    Returns date object or None if invalid/empty.
-    """
     if not date_str:
         return None
     try:
@@ -58,53 +50,69 @@ def _parse_date(date_str: str):
         return None
 
 
-# ---------- Dashboard / Index ----------
+def _parse_int(value):
+    try:
+        return int(value)
+    except Exception:
+        return None
+
+
+# -------------------------
+# Dashboard
+# -------------------------
 @login_required
 @role_required(['admin', 'cashier', 'transport'])
 def index(request):
-    """
-    Transport dashboard:
-     - totals: trips_total, trips_count, expenses_total
-     - net_total (income - expenses)
-     - profit_value / loss_value (for pie charts)
-     - recent_trips, recent_expenses
-     - chart arrays:
-         - if no date filter => last 30 days
-         - if date filter => selected day only
-    """
+    role = _role(request)
+    branch = _branch(request)
 
-    profile = getattr(request.user, "profile", None)
-    role = getattr(profile, "role", None)
-
-    # Scope queryset depending on role
     if role in ['admin', 'cashier']:
         trips_qs = Trip.objects.select_related('vehicle', 'driver', 'branch').all()
         expenses_qs = TransportExpense.objects.select_related('vehicle', 'branch', 'recorded_by').all()
+        bookings_qs = Booking.objects.select_related('branch', 'created_by').all()
+        vehicles = Vehicle.objects.filter(is_active=True).order_by('plate_number')
     else:
-        branch = getattr(profile, 'branch', None)
-        trips_qs = Trip.objects.select_related('vehicle', 'driver', 'branch').filter(branch=branch)
-        expenses_qs = TransportExpense.objects.select_related('vehicle', 'branch', 'recorded_by').filter(branch=branch)
+        if branch:
+            trips_qs = Trip.objects.select_related('vehicle', 'driver', 'branch').filter(branch=branch)
+            expenses_qs = TransportExpense.objects.select_related('vehicle', 'branch', 'recorded_by').filter(branch=branch)
+            bookings_qs = Booking.objects.select_related('branch', 'created_by').filter(branch=branch)
+            vehicles = Vehicle.objects.filter(is_active=True).order_by('plate_number')
+        else:
+            trips_qs = Trip.objects.none()
+            expenses_qs = TransportExpense.objects.none()
+            bookings_qs = Booking.objects.none()
+            vehicles = Vehicle.objects.none()
 
-    # ✅ Date filter for dashboard (GET param: ?date=YYYY-MM-DD)
+    # -------------------------
+    # Default date = today
+    # -------------------------
+    today_local = timezone.localtime(timezone.now()).date()
     selected_date_str = request.GET.get("date", "").strip()
-    filter_date = _parse_date(selected_date_str)
+    filter_date = _parse_date(selected_date_str) or today_local
 
-    if filter_date:
-        trips_qs = trips_qs.filter(trip_date__date=filter_date)
-        expenses_qs = expenses_qs.filter(expense_date__date=filter_date)
+    # Vehicle filter
+    selected_vehicle_id = _parse_int(request.GET.get("vehicle"))
+    selected_vehicle = None
 
-    # Totals and counts
+    if selected_vehicle_id:
+        selected_vehicle = vehicles.filter(pk=selected_vehicle_id).first()
+        if selected_vehicle:
+            trips_qs = trips_qs.filter(vehicle_id=selected_vehicle.pk)
+            expenses_qs = expenses_qs.filter(vehicle_id=selected_vehicle.pk)
+
+    # Today by default (or chosen date)
+    trips_qs = trips_qs.filter(trip_date__date=filter_date)
+    expenses_qs = expenses_qs.filter(expense_date__date=filter_date)
+
     trips_total = trips_qs.aggregate(total=Sum('amount_charged')).get('total') or 0
     trips_count = trips_qs.count()
     expenses_total = expenses_qs.aggregate(total=Sum('amount')).get('total') or 0
 
-    # Net (profit = income - expenses)
     try:
         net_total = (trips_total or 0) - (expenses_total or 0)
     except Exception:
         net_total = float(trips_total or 0) - float(expenses_total or 0)
 
-    # Profit / Loss numbers for pie chart (always float)
     try:
         net_float = float(net_total or 0)
     except Exception:
@@ -113,22 +121,38 @@ def index(request):
     profit_value = net_float if net_float > 0 else 0.0
     loss_value = abs(net_float) if net_float < 0 else 0.0
 
-    # Recent items (will reflect filter if date is selected)
     recent_trips = trips_qs.order_by('-trip_date')[:6]
     recent_expenses = expenses_qs.order_by('-expense_date')[:6]
 
-    # ✅ Chart: last 30 days OR single day if filter_date set
-    if filter_date:
-        days = 1
-        start_date = filter_date
-    else:
-        days = 30
-        today = timezone.localtime(timezone.now()).date()
-        start_date = today - timedelta(days=days - 1)
+    # For chart:
+    # if vehicle selected and date selected -> that day only
+    # otherwise today only (dashboard default)
+    days = 1
+    start_date = filter_date
 
     trips_by_day_qs = (
-        trips_qs
-        .filter(trip_date__date__gte=start_date)
+        Trip.objects.select_related('vehicle', 'driver', 'branch')
+        .filter(trip_date__date__gte=start_date, trip_date__date__lte=filter_date)
+    )
+    expenses_by_day_qs = (
+        TransportExpense.objects.select_related('vehicle', 'branch', 'recorded_by')
+        .filter(expense_date__date__gte=start_date, expense_date__date__lte=filter_date)
+    )
+
+    if role == "transport":
+        if branch:
+            trips_by_day_qs = trips_by_day_qs.filter(branch=branch)
+            expenses_by_day_qs = expenses_by_day_qs.filter(branch=branch)
+        else:
+            trips_by_day_qs = Trip.objects.none()
+            expenses_by_day_qs = TransportExpense.objects.none()
+
+    if selected_vehicle:
+        trips_by_day_qs = trips_by_day_qs.filter(vehicle=selected_vehicle)
+        expenses_by_day_qs = expenses_by_day_qs.filter(vehicle=selected_vehicle)
+
+    trips_by_day_qs = (
+        trips_by_day_qs
         .annotate(day=TruncDate('trip_date'))
         .values('day')
         .annotate(total=Sum('amount_charged'))
@@ -136,22 +160,26 @@ def index(request):
     )
 
     expenses_by_day_qs = (
-        expenses_qs
-        .filter(expense_date__date__gte=start_date)
+        expenses_by_day_qs
         .annotate(day=TruncDate('expense_date'))
         .values('day')
         .annotate(total=Sum('amount'))
         .order_by('day')
     )
 
-    # Convert queryset results into dict for quick lookup
-    trips_map = {entry['day'].isoformat(): float(entry['total'] or 0) for entry in trips_by_day_qs}
-    expenses_map = {entry['day'].isoformat(): float(entry['total'] or 0) for entry in expenses_by_day_qs}
+    trips_map = {
+        entry['day'].isoformat(): float(entry['total'] or 0)
+        for entry in trips_by_day_qs
+    }
+    expenses_map = {
+        entry['day'].isoformat(): float(entry['total'] or 0)
+        for entry in expenses_by_day_qs
+    }
 
-    # Build labels & values arrays for chart
     labels = []
     trips_values = []
     expenses_values = []
+
     for i in range(days):
         d = start_date + timedelta(days=i)
         labels.append(d.strftime('%d %b'))
@@ -159,30 +187,77 @@ def index(request):
         trips_values.append(trips_map.get(key, 0.0))
         expenses_values.append(expenses_map.get(key, 0.0))
 
+    # -------------------------
+    # Bookings
+    # -------------------------
+    now = timezone.localtime(timezone.now())
+    today = now.date()
+
+    pending_bookings = bookings_qs.filter(status='pending').order_by('booking_datetime')
+    today_bookings = pending_bookings.filter(booking_datetime__date=today).order_by('booking_datetime')
+    upcoming_bookings = pending_bookings.filter(booking_datetime__gt=now).order_by('booking_datetime')
+    overdue_bookings = pending_bookings.filter(booking_datetime__lt=now).order_by('booking_datetime')
+
+    booking_count_today = today_bookings.count()
+    booking_count_upcoming = upcoming_bookings.count()
+    booking_count_overdue = overdue_bookings.count()
+    booking_count_pending = pending_bookings.count()
+
+    session_key = f"transport_dashboard_notice_{today.isoformat()}"
+    if not request.session.get(session_key):
+        if booking_count_overdue > 0:
+            first_overdue = overdue_bookings.first()
+            messages.warning(
+                request,
+                f"You have {booking_count_overdue} overdue booking(s). "
+                f"Nearest overdue: {first_overdue.customer_name} ({first_overdue.customer_phone}) "
+                f"scheduled for {timezone.localtime(first_overdue.booking_datetime).strftime('%d %b %Y %H:%M')} "
+                f"from {first_overdue.pickup_area}."
+            )
+            request.session[session_key] = True
+        elif booking_count_upcoming > 0:
+            nearest = upcoming_bookings.first()
+            messages.info(
+                request,
+                f"You have {booking_count_upcoming} upcoming booking(s). "
+                f"Nearest: {nearest.customer_name} ({nearest.customer_phone}) "
+                f"on {timezone.localtime(nearest.booking_datetime).strftime('%d %b %Y %H:%M')} "
+                f"from {nearest.pickup_area}."
+            )
+            request.session[session_key] = True
+
     context = {
         'trips_total': trips_total,
         'trips_count': trips_count,
         'expenses_total': expenses_total,
         'net_total': net_total,
-
         'profit_value': profit_value,
         'loss_value': loss_value,
-
         'recent_trips': recent_trips,
         'recent_expenses': recent_expenses,
-
         'trips_chart_labels': labels,
         'trips_chart_values': trips_values,
         'expenses_chart_values': expenses_values,
 
-        # ✅ for <input type="date" value="...">
-        'selected_date': filter_date.isoformat() if filter_date else "",
+        'selected_date': filter_date.isoformat(),
+        'vehicles': vehicles,
+        'selected_vehicle_id': selected_vehicle.pk if selected_vehicle else "",
+
+        'today_bookings': today_bookings[:6],
+        'upcoming_bookings': upcoming_bookings[:6],
+        'overdue_bookings': overdue_bookings[:6],
+        'booking_count_today': booking_count_today,
+        'booking_count_upcoming': booking_count_upcoming,
+        'booking_count_overdue': booking_count_overdue,
+        'booking_count_pending': booking_count_pending,
     }
 
     return render(request, 'transport/index.html', context)
 
 
-# ---------- Vehicle CRUD ----------
+# -------------------------
+# Vehicles
+# -------------------------
 @login_required
 @role_required(['admin', 'cashier', 'transport'])
 def vehicle_list(request):
@@ -204,7 +279,9 @@ def vehicle_create(request):
     return render(request, 'transport/vehicle_form.html', {'form': form})
 
 
-# ---------- Driver CRUD ----------
+# -------------------------
+# Drivers
+# -------------------------
 @login_required
 @role_required(['admin', 'transport', 'cashier'])
 def driver_list(request):
@@ -229,20 +306,27 @@ def driver_create(request):
     return render(request, 'transport/driver_form.html', {'form': form})
 
 
-# ---------- Trips ----------
+# -------------------------
+# Trips
+# -------------------------
 @login_required
 @role_required(['admin', 'cashier', 'transport'])
 def trip_list(request):
     profile = request.user.profile
+    vehicles = Vehicle.objects.filter(is_active=True).order_by('plate_number')
 
     if profile.role in ['admin', 'cashier']:
         trips = Trip.objects.select_related('vehicle', 'driver', 'branch').all()
     else:
         trips = Trip.objects.select_related('vehicle', 'driver', 'branch').filter(branch=profile.branch)
 
-    # ✅ Date filter for trip list (GET param: ?date=YYYY-MM-DD)
     selected_date_str = request.GET.get("date", "").strip()
     filter_date = _parse_date(selected_date_str)
+
+    selected_vehicle_id = _parse_int(request.GET.get("vehicle"))
+    if selected_vehicle_id:
+        trips = trips.filter(vehicle_id=selected_vehicle_id)
+
     if filter_date:
         trips = trips.filter(trip_date__date=filter_date)
 
@@ -251,6 +335,8 @@ def trip_list(request):
     return render(request, 'transport/trip_list.html', {
         'trips': trips,
         'selected_date': filter_date.isoformat() if filter_date else "",
+        'vehicles': vehicles,
+        'selected_vehicle_id': selected_vehicle_id or "",
     })
 
 
@@ -272,42 +358,53 @@ def trip_create(request):
     return render(request, 'transport/trip_form.html', {'form': form})
 
 
-# ---------- Expenses ----------
+# -------------------------
+# Expenses
+# -------------------------
 @login_required
 @role_required(['admin', 'transport', 'cashier'])
 def expense_list(request):
     role = _role(request)
     branch = _branch(request)
+    vehicles = Vehicle.objects.filter(is_active=True).order_by('plate_number')
 
     qs = TransportExpense.objects.select_related(
         'vehicle', 'branch', 'recorded_by'
     ).order_by('-expense_date', '-id')
 
-    # ✅ Role scope:
-    # - Cashier: view ALL expenses
-    # - Admin: view ALL expenses
-    # - Transport: view their branch only
     if role == "transport":
         if branch:
             qs = qs.filter(branch=branch)
         else:
             qs = qs.none()
 
-    # ✅ Date filter for expense list (GET param: ?date=YYYY-MM-DD)
     selected_date_str = request.GET.get("date", "").strip()
     filter_date = _parse_date(selected_date_str)
+    selected_vehicle_id = _parse_int(request.GET.get("vehicle"))
+    expense_scope = request.GET.get("scope", "").strip()  # all / vehicle / general
+
     if filter_date:
         qs = qs.filter(expense_date__date=filter_date)
+
+    if selected_vehicle_id:
+        qs = qs.filter(vehicle_id=selected_vehicle_id)
+
+    if expense_scope == "vehicle":
+        qs = qs.filter(vehicle__isnull=False)
+    elif expense_scope == "general":
+        qs = qs.filter(vehicle__isnull=True)
 
     return render(request, 'transport/expense_list.html', {
         'expenses': qs,
         'role': role,
         'selected_date': filter_date.isoformat() if filter_date else "",
+        'vehicles': vehicles,
+        'selected_vehicle_id': selected_vehicle_id or "",
+        'selected_scope': expense_scope,
         'is_cashier': role == "cashier",
         'is_admin': role == "admin",
         'is_transport': role == "transport",
     })
-
 
 @login_required
 @role_required(['admin', 'transport'])
@@ -325,3 +422,124 @@ def expense_create(request):
     else:
         form = TransportExpenseForm(user=request.user)
     return render(request, 'transport/expense_form.html', {'form': form})
+
+
+# -------------------------
+# Bookings
+# -------------------------
+@login_required
+@role_required(['admin', 'cashier', 'transport'])
+def booking_list(request):
+    role = _role(request)
+    branch = _branch(request)
+
+    qs = Booking.objects.select_related('branch', 'created_by').all()
+
+    if role == "transport":
+        if branch:
+            qs = qs.filter(branch=branch)
+        else:
+            qs = qs.none()
+
+    selected_date_str = request.GET.get("date", "").strip()
+    filter_date = _parse_date(selected_date_str)
+    status = request.GET.get("status", "").strip()
+
+    if filter_date:
+        qs = qs.filter(booking_datetime__date=filter_date)
+
+    if status:
+        qs = qs.filter(status=status)
+
+    qs = qs.order_by('booking_datetime', '-id')
+
+    return render(request, 'transport/booking_list.html', {
+        'bookings': qs,
+        'selected_date': filter_date.isoformat() if filter_date else "",
+        'selected_status': status,
+    })
+
+
+@login_required
+@role_required(['admin', 'cashier', 'transport'])
+def booking_create(request):
+    if request.method == 'POST':
+        form = BookingForm(request.POST, user=request.user)
+        if form.is_valid():
+            booking = form.save(commit=False)
+            booking.created_by = request.user
+
+            if request.user.profile.role == 'transport' and request.user.profile.branch:
+                booking.branch = request.user.profile.branch
+
+            if not booking.status:
+                booking.status = "pending"
+
+            booking.save()
+            messages.success(request, "Booking added successfully.")
+            return redirect('transport:booking_list')
+        else:
+            messages.error(request, "Please correct the booking form errors.")
+    else:
+        form = BookingForm(user=request.user)
+
+    return render(request, 'transport/booking_form.html', {'form': form})
+
+
+@login_required
+@role_required(['admin', 'cashier', 'transport'])
+def booking_edit(request, pk):
+    role = _role(request)
+    branch = _branch(request)
+
+    booking = get_object_or_404(Booking, pk=pk)
+
+    if role == "transport":
+        if not branch or booking.branch != branch:
+            messages.error(request, "You do not have permission to edit this booking.")
+            return redirect('transport:booking_list')
+
+    if request.method == 'POST':
+        form = BookingForm(request.POST, instance=booking, user=request.user)
+        if form.is_valid():
+            edited_booking = form.save(commit=False)
+
+            if request.user.profile.role == 'transport' and request.user.profile.branch:
+                edited_booking.branch = request.user.profile.branch
+
+            edited_booking.save()
+            messages.success(request, "Booking updated successfully.")
+            return redirect('transport:booking_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = BookingForm(instance=booking, user=request.user)
+
+    return render(request, 'transport/booking_form.html', {
+        'form': form,
+        'is_edit': True,
+        'booking': booking,
+    })
+
+
+@login_required
+@role_required(['admin', 'cashier', 'transport'])
+def booking_delete(request, pk):
+    role = _role(request)
+    branch = _branch(request)
+
+    booking = get_object_or_404(Booking, pk=pk)
+
+    if role == "transport":
+        if not branch or booking.branch != branch:
+            messages.error(request, "You do not have permission to delete this booking.")
+            return redirect('transport:booking_list')
+
+    if request.method == 'POST':
+        booking.delete()
+        messages.success(request, "Booking deleted successfully.")
+        return redirect('transport:booking_list')
+
+    return render(request, 'transport/booking_confirm_delete.html', {
+        'booking': booking
+    })

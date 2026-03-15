@@ -135,3 +135,36 @@ SalesReturnItemFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
+
+
+from django import forms
+from .models import GenjiSale
+
+
+class GenjiSaleForm(forms.ModelForm):
+    class Meta:
+        model = GenjiSale
+        fields = [
+            "customer_name",
+            "customer_phone",
+            "item_name",
+            "notes",
+            "buy_date",
+            "sell_date",
+            "buying_cost",
+            "selling_price",
+            "quantity",
+            "branch",
+        ]
+        widgets = {
+            "customer_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Customer name"}),
+            "customer_phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Customer phone"}),
+            "item_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Item / furniture name"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Optional notes"}),
+            "buy_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "sell_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "buying_cost": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "selling_price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "branch": forms.Select(attrs={"class": "form-select"}),
+        }

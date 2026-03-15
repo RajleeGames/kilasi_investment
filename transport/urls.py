@@ -1,4 +1,3 @@
-# transport/urls.py
 from django.urls import path
 from . import views
 
@@ -22,4 +21,11 @@ urlpatterns = [
     # Expenses
     path('expenses/', views.expense_list, name='expense_list'),
     path('expenses/add/', views.expense_create, name='expense_create'),
+
+    # Bookings
+    path('bookings/', views.booking_list, name='booking_list'),
+    path('bookings/add/', views.booking_create, name='booking_create'),
+    
+    path('bookings/<int:pk>/edit/', views.booking_edit, name='booking_edit'),
+    path('bookings/<int:pk>/delete/', views.booking_delete, name='booking_delete'),
 ]

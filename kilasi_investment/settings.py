@@ -85,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'transport.context_processors.transport_booking_badge',
 
                 'sales.context_processors.debt_invoices_sidebar',
                 'sales.context_processors.today_expenses',

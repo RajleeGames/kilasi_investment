@@ -771,3 +771,59 @@ class SalesReturnItem(models.Model):
 
     class Meta:
         ordering = ["id"]
+
+from decimal import Decimal
+from django.conf import settings
+from django.db import models
+from inventory.models import Branch
+
+
+class GenjiSale(models.Model):
+    customer_name = models.CharField(max_length=150, blank=True, default="")
+    customer_phone = models.CharField(max_length=50, blank=True, default="")
+    item_name = models.CharField(max_length=200)
+    notes = models.TextField(blank=True, default="")
+
+    buy_date = models.DateField()
+    sell_date = models.DateField()
+
+    buying_cost = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    selling_price = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    quantity = models.PositiveIntegerField(default=1)
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="genji_sales"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="genji_sales_created"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-sell_date", "-id"]
+
+    def __str__(self):
+        return f"Genji #{self.id} - {self.item_name}"
+
+    @property
+    def total_buying(self):
+        return Decimal(self.buying_cost or 0) * Decimal(self.quantity or 0)
+
+    @property
+    def total_selling(self):
+        return Decimal(self.selling_price or 0) * Decimal(self.quantity or 0)
+
+    @property
+    def profit(self):
+        return self.total_selling - self.total_buying

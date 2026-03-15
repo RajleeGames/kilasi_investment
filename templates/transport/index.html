@@ -7,61 +7,81 @@
 {% block extra_css %}
 <style>
 :root{
-  --text:#0b1220;
-  --muted:#6b7280;
+  --text:#0f172a;
+  --muted:#64748b;
   --card:#fff;
   --line:rgba(15,23,42,.08);
   --a1:#06b6d4;
   --a2:#60a5fa;
   --ind:#6366f1;
+  --ok:#10b981;
+  --warn:#f59e0b;
+  --danger:#ef4444;
   --r:16px;
-  --shadow:0 10px 24px rgba(2,6,23,.08);
-  --fs:13px;
+  --shadow:0 10px 22px rgba(2,6,23,.06);
+  --fs:12.5px;
 }
-.dash{max-width:1180px;margin:12px auto;padding:0 10px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--text);font-size:var(--fs);}
-.hero{background:radial-gradient(900px 320px at 10% 0%, rgba(6,182,212,.15), transparent 55%),radial-gradient(800px 320px at 90% 0%, rgba(96,165,250,.12), transparent 55%),#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;}
-.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;}
+
+.dash{
+  max-width:1180px;
+  margin:10px auto;
+  padding:0 8px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color:var(--text);
+  font-size:var(--fs);
+}
+
+.hero{
+  background:
+    radial-gradient(900px 320px at 10% 0%, rgba(6,182,212,.10), transparent 55%),
+    radial-gradient(800px 320px at 90% 0%, rgba(96,165,250,.08), transparent 55%),
+    #fff;
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+  padding:12px;
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+
 .h1{display:flex;gap:10px;align-items:center;}
-.ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg, rgba(6,182,212,.22), rgba(96,165,250,.16));border:1px solid rgba(15,23,42,.06);}
-.h1 h1{margin:0;font-size:1.02rem;font-weight:950;}
-.sub{color:var(--muted);font-weight:700;font-size:.86rem;margin-top:2px;}
-.actions{display:flex;gap:8px;flex-wrap:wrap;}
-.actions .btn{border-radius:12px;padding:.5rem .75rem;font-weight:900;font-size:.9rem;}
+.ico{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg, rgba(6,182,212,.18), rgba(96,165,250,.14));
+  border:1px solid rgba(15,23,42,.06);
+  flex-shrink:0;
+}
+.h1 h1{
+  margin:0;
+  font-size:.98rem;
+  font-weight:900;
+  line-height:1.1;
+}
+.sub{
+  color:var(--muted);
+  font-weight:700;
+  font-size:.78rem;
+  margin-top:2px;
+}
 
-.kpis{margin-top:10px;display:grid;grid-template-columns:1fr;gap:10px;}
-@media(min-width:720px){.kpis{grid-template-columns:repeat(2,1fr);}}
-@media(min-width:992px){.kpis{grid-template-columns:repeat(4,1fr);}}
-.kpi{background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;min-height:88px;}
-.kpi-in{display:flex;justify-content:space-between;gap:10px;align-items:center;}
-.k-left{display:flex;gap:10px;align-items:center;min-width:0;}
-.k-ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg, rgba(6,182,212,.18), rgba(96,165,250,.14));border:1px solid rgba(15,23,42,.06);}
-.k-t{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:#334155;font-weight:900;}
-.k-v{font-size:1.08rem;font-weight:950;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.k-r{color:var(--muted);font-weight:750;font-size:.82rem;text-align:right;}
-.pill{margin-top:6px;display:inline-flex;gap:6px;align-items:center;padding:.18rem .55rem;border-radius:999px;font-weight:950;font-size:.76rem;border:1px solid rgba(15,23,42,.10);background:rgba(2,6,23,.02);}
-.pill.profit{color:#0f766e;background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.25);}
-.pill.loss{color:#b91c1c;background:rgba(185,28,28,.08);border-color:rgba(185,28,28,.25);}
-.pill.even{color:#334155;}
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.actions .btn{
+  border-radius:10px;
+  padding:.45rem .7rem;
+  font-weight:800;
+  font-size:.78rem;
+}
 
-.grid{margin-top:10px;display:grid;grid-template-columns:1fr;gap:10px;}
-@media(min-width:992px){.grid{grid-template-columns:1.55fr .95fr;}}
-.card{background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;}
-.chead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px;}
-.chead .h{font-weight:950;font-size:.98rem;}
-.chead .n{color:var(--muted);font-weight:750;font-size:.84rem;}
-
-.chart-wrap{position:relative;width:100%;height:290px;}
-@media(max-width:480px){.chart-wrap{height:240px;}}
-.pie-wrap{position:relative;width:100%;height:200px;}
-@media(max-width:480px){.pie-wrap{height:190px;}}
-.chart-wrap canvas,.pie-wrap canvas{width:100%!important;height:100%!important;display:block;}
-
-.no-data{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:10px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.92));border:1px dashed rgba(15,23,42,.12);color:var(--muted);font-weight:900;font-size:.88rem;}
-
-.debug{margin-top:8px;font-weight:900;font-size:.85rem;color:#334155;}
-.debug span{padding:2px 8px;border-radius:999px;border:1px solid rgba(15,23,42,.12);background:rgba(2,6,23,.02);}
-
-/* ✅ Date filter UI */
 .filterbar{
   margin-top:10px;
   display:flex;
@@ -70,58 +90,476 @@
   justify-content:space-between;
   flex-wrap:wrap;
   padding:10px;
-  background:rgba(255,255,255,.9);
+  background:rgba(255,255,255,.92);
   border:1px solid rgba(15,23,42,.06);
   border-radius:14px;
 }
 .filter-left{
   display:flex;
-  gap:10px;
+  gap:8px;
   align-items:center;
   flex-wrap:wrap;
 }
 .fchip{
   display:inline-flex;
-  gap:8px;
+  gap:6px;
   align-items:center;
-  padding:.35rem .6rem;
+  padding:.3rem .58rem;
   border-radius:999px;
   border:1px solid rgba(15,23,42,.10);
   background:rgba(2,6,23,.02);
-  font-weight:900;
+  font-weight:800;
   color:#334155;
-  font-size:.82rem;
+  font-size:.74rem;
 }
-.fchip i{ opacity:.85; }
+.fchip i{opacity:.85;}
 
 .datebox{
   display:flex;
-  gap:8px;
+  gap:7px;
   align-items:center;
-  padding:8px 10px;
+  padding:7px 10px;
   border-radius:12px;
   border:1px solid rgba(15,23,42,.10);
   background:#fff;
-  box-shadow:0 8px 18px rgba(2,6,23,.05);
+  box-shadow:0 8px 18px rgba(2,6,23,.04);
 }
 .datebox label{
-  font-weight:900;
-  font-size:.82rem;
+  font-weight:800;
+  font-size:.76rem;
   color:#334155;
   margin:0;
   display:flex;
   gap:6px;
   align-items:center;
+  white-space:nowrap;
 }
-.datebox input[type="date"]{
+.datebox input[type="date"],
+.datebox select{
   border:none;
   outline:none;
+  font-weight:800;
+  font-size:.8rem;
+  background:transparent;
+  color:#0f172a;
+  min-width:120px;
+}
+
+.fbtns{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.fbtns .btn{
+  border-radius:10px;
+  font-weight:800;
+  font-size:.78rem;
+  padding:.45rem .7rem;
+}
+
+.kpis{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+@media(min-width:640px){ .kpis{ grid-template-columns:repeat(2,1fr); } }
+@media(min-width:992px){ .kpis{ grid-template-columns:repeat(4,1fr); } }
+
+.kpi{
+  background:#fff;
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:10px;
+  min-height:80px;
+}
+.kpi-in{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+}
+.k-left{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  min-width:0;
+}
+.k-ico{
+  width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg, rgba(6,182,212,.14), rgba(96,165,250,.12));
+  border:1px solid rgba(15,23,42,.06);
+  flex-shrink:0;
+}
+.k-t{
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:#334155;
+  font-weight:900;
+}
+.k-v{
+  font-size:.96rem;
+  font-weight:900;
+  margin-top:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.k-r{
+  color:var(--muted);
+  font-weight:700;
+  font-size:.74rem;
+  text-align:right;
+}
+.pill{
+  margin-top:5px;
+  display:inline-flex;
+  gap:5px;
+  align-items:center;
+  padding:.14rem .48rem;
+  border-radius:999px;
+  font-weight:900;
+  font-size:.68rem;
+  border:1px solid rgba(15,23,42,.10);
+  background:rgba(2,6,23,.02);
+}
+.pill.profit{color:#0f766e;background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.22);}
+.pill.loss{color:#b91c1c;background:rgba(185,28,28,.08);border-color:rgba(185,28,28,.22);}
+.pill.even{color:#334155;}
+
+.notice-banner{
+  margin-top:10px;
+  border-radius:14px;
+  padding:12px;
+  border:1px solid rgba(245,158,11,.22);
+  background:
+    radial-gradient(700px 160px at 0% 0%, rgba(245,158,11,.10), transparent 55%),
+    linear-gradient(135deg, rgba(255,251,235,1), rgba(255,255,255,1));
+  box-shadow:0 10px 24px rgba(245,158,11,.06);
+}
+.notice-banner.danger{
+  border-color:rgba(239,68,68,.20);
+  background:
+    radial-gradient(700px 160px at 0% 0%, rgba(239,68,68,.08), transparent 55%),
+    linear-gradient(135deg, rgba(254,242,242,1), rgba(255,255,255,1));
+}
+.notice-banner.ok{
+  border-color:rgba(16,185,129,.20);
+  background:
+    radial-gradient(700px 160px at 0% 0%, rgba(16,185,129,.08), transparent 55%),
+    linear-gradient(135deg, rgba(236,253,245,1), rgba(255,255,255,1));
+}
+.notice-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.notice-left{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.notice-icon{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  background:rgba(255,255,255,.8);
+  border:1px solid rgba(15,23,42,.08);
+  flex-shrink:0;
+}
+.notice-title{
   font-weight:900;
   font-size:.9rem;
-  background:transparent;
+  line-height:1.2;
+  margin-bottom:2px;
 }
-.fbtns{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.fbtns .btn{ border-radius:12px; font-weight:900; }
+.notice-text{
+  color:#475569;
+  font-weight:700;
+  font-size:.77rem;
+}
+.notice-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.notice-actions .btn{
+  border-radius:10px;
+  font-weight:800;
+  font-size:.76rem;
+  padding:.45rem .7rem;
+}
+
+.booking-summary{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+@media(min-width:768px){
+  .booking-summary{grid-template-columns:repeat(3,1fr);}
+}
+
+.notice-card{
+  background:#fff;
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:10px;
+}
+.notice-card-head{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:flex-start;
+  margin-bottom:8px;
+}
+.notice-badge{
+  min-width:30px;
+  height:30px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  border:1px solid rgba(15,23,42,.08);
+  background:#fff;
+  font-size:.82rem;
+}
+.notice-badge.today{color:#0369a1;background:rgba(6,182,212,.10);}
+.notice-badge.upcoming{color:#065f46;background:rgba(16,185,129,.10);}
+.notice-badge.overdue{color:#991b1b;background:rgba(239,68,68,.10);}
+
+.notice-card .title{
+  font-weight:900;
+  font-size:.86rem;
+  margin:0;
+}
+.notice-card .subtext{
+  color:var(--muted);
+  font-size:.74rem;
+  font-weight:700;
+  margin-top:2px;
+}
+.booking-count{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:.24rem .58rem;
+  border-radius:999px;
+  font-size:.72rem;
+  font-weight:900;
+  border:1px solid rgba(15,23,42,.08);
+  background:rgba(2,6,23,.02);
+}
+.booking-count.today{color:#0369a1;background:rgba(6,182,212,.08);}
+.booking-count.upcoming{color:#065f46;background:rgba(16,185,129,.08);}
+.booking-count.overdue{color:#991b1b;background:rgba(239,68,68,.08);}
+
+.booking-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.booking-item{
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:12px;
+  padding:9px;
+  background:linear-gradient(180deg, rgba(248,250,252,.9), rgba(255,255,255,1));
+}
+.booking-name{
+  font-weight:900;
+  font-size:.8rem;
+  color:#0f172a;
+  margin-bottom:2px;
+}
+.booking-phone{
+  font-weight:800;
+  color:#0369a1;
+  font-size:.74rem;
+}
+.booking-meta{
+  margin-top:5px;
+  display:grid;
+  gap:4px;
+}
+.booking-line{
+  color:#475569;
+  font-size:.74rem;
+  font-weight:700;
+  display:flex;
+  gap:7px;
+  align-items:flex-start;
+}
+.booking-line i{
+  width:13px;
+  margin-top:2px;
+  color:#64748b;
+}
+.booking-time{
+  margin-top:7px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:.24rem .54rem;
+  border-radius:999px;
+  font-size:.7rem;
+  font-weight:900;
+  border:1px solid rgba(15,23,42,.08);
+}
+.booking-time.today{background:rgba(6,182,212,.08);color:#0369a1;}
+.booking-time.upcoming{background:rgba(16,185,129,.08);color:#065f46;}
+.booking-time.overdue{background:rgba(239,68,68,.08);color:#991b1b;}
+
+.empty-mini{
+  border:1px dashed rgba(15,23,42,.12);
+  border-radius:12px;
+  padding:14px 10px;
+  text-align:center;
+  color:var(--muted);
+  font-weight:800;
+  background:rgba(248,250,252,.72);
+  font-size:.76rem;
+}
+
+.grid{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+@media(min-width:992px){
+  .grid{grid-template-columns:1.5fr .95fr;}
+}
+
+.card{
+  background:#fff;
+  border:1px solid rgba(15,23,42,.06);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:10px;
+}
+.chead{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+  margin-bottom:8px;
+}
+.chead .h{
+  font-weight:900;
+  font-size:.88rem;
+}
+.chead .n{
+  color:var(--muted);
+  font-weight:700;
+  font-size:.74rem;
+}
+
+.chart-wrap{
+  position:relative;
+  width:100%;
+  height:260px;
+}
+.pie-wrap{
+  position:relative;
+  width:100%;
+  height:180px;
+}
+@media(max-width:480px){
+  .chart-wrap{height:220px;}
+  .pie-wrap{height:170px;}
+}
+.chart-wrap canvas,.pie-wrap canvas{
+  width:100%!important;
+  height:100%!important;
+  display:block;
+}
+
+.no-data{
+  position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:10px;border-radius:12px;
+  background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.92));
+  border:1px dashed rgba(15,23,42,.12);color:var(--muted);font-weight:800;font-size:.76rem;
+}
+
+.debug{
+  margin-top:8px;
+  font-weight:800;
+  font-size:.74rem;
+  color:#334155;
+}
+.debug span{
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.12);
+  background:rgba(2,6,23,.02);
+}
+
+@media(max-width:767.98px){
+  .dash{padding:0 6px;}
+  .hero{padding:10px;}
+  .top{align-items:stretch;}
+  .actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  .actions .btn{
+    width:100%;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+    padding:.5rem .55rem;
+    font-size:.74rem;
+  }
+  .filterbar{
+    padding:8px;
+  }
+  .filter-left{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .datebox{
+    width:100%;
+  }
+  .datebox input[type="date"],
+  .datebox select{
+    width:100%;
+    min-width:0;
+    font-size:.78rem;
+  }
+  .fbtns{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .fbtns .btn{
+    width:100%;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+  }
+  .notice-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .notice-actions .btn{
+    width:100%;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+  }
+}
 </style>
 {% endblock %}
 
@@ -134,30 +572,31 @@
         <div class="ico"><i class="fa-solid fa-truck-fast"></i></div>
         <div>
           <h1>Transport Dashboard</h1>
-          <div class="sub">Trips, income, expenses, profit & loss</div>
+          <div class="sub">Today’s transport data{% if selected_vehicle_id %} • selected vehicle{% endif %}</div>
         </div>
       </div>
 
       <div class="actions">
         <a href="{% url 'transport:trip_create' %}" class="btn btn-outline-primary btn-sm">
-          <i class="fa-solid fa-route me-2"></i>Trip
+          <i class="fa-solid fa-route me-1"></i> Trip
         </a>
         <a href="{% url 'transport:expense_create' %}" class="btn btn-primary btn-sm">
-          <i class="fa-solid fa-receipt me-2"></i>Expense
+          <i class="fa-solid fa-receipt me-1"></i> Expense
+        </a>
+        <a href="{% url 'transport:booking_create' %}" class="btn btn-success btn-sm">
+          <i class="fa-solid fa-calendar-plus me-1"></i> Booking
+        </a>
+        <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-dark btn-sm">
+          <i class="fa-solid fa-bell-concierge me-1"></i> Bookings
         </a>
       </div>
     </div>
 
-    <!-- ✅ DATE FILTER (GET ?date=YYYY-MM-DD) -->
-    <form method="get" class="filterbar" aria-label="Filter dashboard by date">
+    <form method="get" class="filterbar" aria-label="Filter dashboard">
       <div class="filter-left">
-        <span class="fchip" title="Filter mode">
+        <span class="fchip" title="Current filter">
           <i class="fa-solid fa-calendar-day"></i>
-          {% if selected_date %}
-            Showing: {{ selected_date|date:"d M Y" }}
-          {% else %}
-            Showing: Last 30 days
-          {% endif %}
+          {{ selected_date|date:"d M Y" }}
         </span>
 
         <div class="datebox">
@@ -172,18 +611,29 @@
             aria-label="Select date"
           />
         </div>
+
+        <div class="datebox">
+          <label for="dashVehicle">
+            <i class="fa-solid fa-truck"></i> Vehicle
+          </label>
+          <select id="dashVehicle" name="vehicle" aria-label="Select vehicle">
+            <option value="">All Vehicles</option>
+            {% for v in vehicles %}
+              <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
+                {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
       <div class="fbtns">
         <button class="btn btn-outline-primary btn-sm" type="submit">
           <i class="fa-solid fa-filter me-1"></i> Apply
         </button>
-
-        {% if selected_date %}
-          <a class="btn btn-light btn-sm" href="{% url 'transport:index' %}">
-            <i class="fa-solid fa-rotate-left me-1"></i> Clear
-          </a>
-        {% endif %}
+        <a class="btn btn-light btn-sm" href="{% url 'transport:index' %}">
+          <i class="fa-solid fa-rotate-left me-1"></i> Reset
+        </a>
       </div>
     </form>
 
@@ -197,7 +647,7 @@
               <div class="k-v">{{ trips_count|default:"0" }}</div>
             </div>
           </div>
-          <div class="k-r">{% if selected_date %}Selected day{% else %}All time{% endif %}</div>
+          <div class="k-r">Selected day</div>
         </div>
       </div>
 
@@ -248,6 +698,245 @@
       </div>
     </div>
 
+    {% if booking_count_overdue > 0 %}
+      <div class="notice-banner danger">
+        <div class="notice-top">
+          <div class="notice-left">
+            <div class="notice-icon">
+              <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+            </div>
+            <div>
+              <div class="notice-title">Overdue bookings</div>
+              <div class="notice-text">
+                You have <strong>{{ booking_count_overdue }}</strong> overdue booking{{ booking_count_overdue|pluralize }}.
+              </div>
+            </div>
+          </div>
+
+          <div class="notice-actions">
+            <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-danger btn-sm">
+              <i class="fa-solid fa-eye me-1"></i> View
+            </a>
+            <a href="{% url 'transport:booking_create' %}" class="btn btn-danger btn-sm">
+              <i class="fa-solid fa-plus me-1"></i> Add
+            </a>
+          </div>
+        </div>
+      </div>
+    {% elif booking_count_upcoming > 0 %}
+      <div class="notice-banner">
+        <div class="notice-top">
+          <div class="notice-left">
+            <div class="notice-icon">
+              <i class="fa-solid fa-bell text-warning"></i>
+            </div>
+            <div>
+              <div class="notice-title">Upcoming bookings</div>
+              <div class="notice-text">
+                You have <strong>{{ booking_count_upcoming }}</strong> future booking{{ booking_count_upcoming|pluralize }} pending.
+              </div>
+            </div>
+          </div>
+
+          <div class="notice-actions">
+            <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-warning btn-sm">
+              <i class="fa-solid fa-calendar-check me-1"></i> View
+            </a>
+            <a href="{% url 'transport:booking_create' %}" class="btn btn-warning btn-sm text-dark">
+              <i class="fa-solid fa-plus me-1"></i> New
+            </a>
+          </div>
+        </div>
+      </div>
+    {% elif booking_count_today > 0 %}
+      <div class="notice-banner">
+        <div class="notice-top">
+          <div class="notice-left">
+            <div class="notice-icon">
+              <i class="fa-solid fa-calendar-day text-warning"></i>
+            </div>
+            <div>
+              <div class="notice-title">Today’s bookings</div>
+              <div class="notice-text">
+                You have <strong>{{ booking_count_today }}</strong> booking{{ booking_count_today|pluralize }} today.
+              </div>
+            </div>
+          </div>
+
+          <div class="notice-actions">
+            <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-warning btn-sm">
+              <i class="fa-solid fa-list me-1"></i> View
+            </a>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="notice-banner ok">
+        <div class="notice-top">
+          <div class="notice-left">
+            <div class="notice-icon">
+              <i class="fa-solid fa-circle-check text-success"></i>
+            </div>
+            <div>
+              <div class="notice-title">Bookings look good</div>
+              <div class="notice-text">
+                No urgent booking reminders right now.
+              </div>
+            </div>
+          </div>
+
+          <div class="notice-actions">
+            <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-success btn-sm">
+              <i class="fa-solid fa-list me-1"></i> View
+            </a>
+            <a href="{% url 'transport:booking_create' %}" class="btn btn-success btn-sm">
+              <i class="fa-solid fa-calendar-plus me-1"></i> Add
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="booking-summary">
+      <div class="notice-card">
+        <div class="notice-card-head">
+          <div>
+            <h3 class="title">Today’s Bookings</h3>
+            <div class="subtext">Scheduled for today</div>
+          </div>
+          <div class="notice-badge today">
+            <i class="fa-solid fa-calendar-day"></i>
+          </div>
+        </div>
+
+        <div class="booking-count today">
+          <i class="fa-solid fa-bell"></i> {{ booking_count_today|default:0 }}
+        </div>
+
+        <div class="booking-list mt-2">
+          {% for b in today_bookings %}
+            <div class="booking-item">
+              <div class="booking-name">{{ b.customer_name }}</div>
+              <div class="booking-phone">{{ b.customer_phone }}</div>
+
+              <div class="booking-meta">
+                <div class="booking-line">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <span>{{ b.pickup_area }}</span>
+                </div>
+                {% if b.destination %}
+                  <div class="booking-line">
+                    <i class="fa-solid fa-route"></i>
+                    <span>{{ b.destination }}</span>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="booking-time today">
+                <i class="fa-regular fa-clock"></i> {{ b.booking_datetime|date:"d M Y • H:i" }}
+              </div>
+            </div>
+          {% empty %}
+            <div class="empty-mini">
+              No bookings for today.
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="notice-card">
+        <div class="notice-card-head">
+          <div>
+            <h3 class="title">Upcoming</h3>
+            <div class="subtext">Future pending</div>
+          </div>
+          <div class="notice-badge upcoming">
+            <i class="fa-solid fa-bell-concierge"></i>
+          </div>
+        </div>
+
+        <div class="booking-count upcoming">
+          <i class="fa-solid fa-clock"></i> {{ booking_count_upcoming|default:0 }}
+        </div>
+
+        <div class="booking-list mt-2">
+          {% for b in upcoming_bookings %}
+            <div class="booking-item">
+              <div class="booking-name">{{ b.customer_name }}</div>
+              <div class="booking-phone">{{ b.customer_phone }}</div>
+
+              <div class="booking-meta">
+                <div class="booking-line">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <span>{{ b.pickup_area }}</span>
+                </div>
+                {% if b.destination %}
+                  <div class="booking-line">
+                    <i class="fa-solid fa-route"></i>
+                    <span>{{ b.destination }}</span>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="booking-time upcoming">
+                <i class="fa-regular fa-clock"></i> {{ b.booking_datetime|date:"d M Y • H:i" }}
+              </div>
+            </div>
+          {% empty %}
+            <div class="empty-mini">
+              No upcoming bookings.
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="notice-card">
+        <div class="notice-card-head">
+          <div>
+            <h3 class="title">Overdue</h3>
+            <div class="subtext">Past time pending</div>
+          </div>
+          <div class="notice-badge overdue">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+        </div>
+
+        <div class="booking-count overdue">
+          <i class="fa-solid fa-clock-rotate-left"></i> {{ booking_count_overdue|default:0 }}
+        </div>
+
+        <div class="booking-list mt-2">
+          {% for b in overdue_bookings %}
+            <div class="booking-item">
+              <div class="booking-name">{{ b.customer_name }}</div>
+              <div class="booking-phone">{{ b.customer_phone }}</div>
+
+              <div class="booking-meta">
+                <div class="booking-line">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <span>{{ b.pickup_area }}</span>
+                </div>
+                {% if b.destination %}
+                  <div class="booking-line">
+                    <i class="fa-solid fa-route"></i>
+                    <span>{{ b.destination }}</span>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="booking-time overdue">
+                <i class="fa-regular fa-clock"></i> {{ b.booking_datetime|date:"d M Y • H:i" }}
+              </div>
+            </div>
+          {% empty %}
+            <div class="empty-mini">
+              No overdue bookings.
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
     <div class="debug">
       JS status: <span id="jsStatus">NOT RUNNING</span> • Chart.js: <span id="chartStatus">UNKNOWN</span>
     </div>
@@ -257,14 +946,7 @@
     <div class="card">
       <div class="chead">
         <div>
-          <div class="h">
-            Activity
-            {% if selected_date %}
-              ({{ selected_date|date:"d M Y" }})
-            {% else %}
-              (Last 30 Days)
-            {% endif %}
-          </div>
+          <div class="h">Activity ({{ selected_date|date:"d M Y" }})</div>
           <div class="n">Income vs Expenses</div>
         </div>
       </div>
@@ -272,11 +954,7 @@
       <div class="chart-wrap">
         <canvas id="activityChart"></canvas>
         <div id="lineNoData" class="no-data">
-          {% if selected_date %}
-            No activity data for selected date.
-          {% else %}
-            No activity data for last 30 days.
-          {% endif %}
+          No activity data for selected date.
         </div>
       </div>
 
@@ -313,12 +991,10 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- ✅ load LOCAL chart.js (no CDN issues) -->
 <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // debug
   const jsStatus = document.getElementById('jsStatus');
   const chartStatus = document.getElementById('chartStatus');
   if (jsStatus) jsStatus.textContent = 'RUNNING ✅';
@@ -331,6 +1007,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!el) return fallback;
     try { return JSON.parse(el.textContent || 'null'); } catch(e) { return fallback; }
   }
+
   function toNum(x){
     if (x === null || x === undefined) return 0;
     if (typeof x === 'number') return isFinite(x) ? x : 0;
@@ -342,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const incomeArr = readJSON('chart-income', []);
   const expArr = readJSON('chart-expenses', []);
 
-  const hasLineData = (incomeArr||[]).some(v => toNum(v) > 0) || (expArr||[]).some(v => toNum(v) > 0);
+  const hasLineData = (incomeArr || []).some(v => toNum(v) > 0) || (expArr || []).some(v => toNum(v) > 0);
   const noDataEl = document.getElementById('lineNoData');
   if (!hasLineData && noDataEl) noDataEl.style.display = 'grid';
 
@@ -353,8 +1030,26 @@ document.addEventListener('DOMContentLoaded', function () {
       data:{
         labels: labels,
         datasets:[
-          { label:'Income', data: (incomeArr||[]).map(toNum), borderWidth:2, tension:.35, fill:true, borderColor:'#06b6d4', pointRadius:2 },
-          { label:'Expenses', data: (expArr||[]).map(toNum), borderWidth:2, tension:.35, fill:true, borderColor:'#6366f1', pointRadius:2 }
+          {
+            label:'Income',
+            data:(incomeArr || []).map(toNum),
+            borderWidth:2,
+            tension:.35,
+            fill:true,
+            borderColor:'#06b6d4',
+            pointRadius:2,
+            backgroundColor:'rgba(6,182,212,.12)'
+          },
+          {
+            label:'Expenses',
+            data:(expArr || []).map(toNum),
+            borderWidth:2,
+            tension:.35,
+            fill:true,
+            borderColor:'#6366f1',
+            pointRadius:2,
+            backgroundColor:'rgba(99,102,241,.10)'
+          }
         ]
       },
       options:{
@@ -380,8 +1075,20 @@ document.addEventListener('DOMContentLoaded', function () {
   if (pie1Has) {
     new Chart(document.getElementById('incomeExpensePie').getContext('2d'), {
       type:'doughnut',
-      data:{ labels:['Income','Expenses'], datasets:[{ data:[incomeTotal, expenseTotal], borderWidth:0 }] },
-      options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{position:'bottom'} } }
+      data:{
+        labels:['Income','Expenses'],
+        datasets:[{
+          data:[incomeTotal, expenseTotal],
+          borderWidth:0,
+          backgroundColor:['#06b6d4','#6366f1']
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        cutout:'68%',
+        plugins:{ legend:{position:'bottom'} }
+      }
     });
   }
 
@@ -391,22 +1098,43 @@ document.addEventListener('DOMContentLoaded', function () {
   if (pie2Has) {
     new Chart(document.getElementById('profitLossPie').getContext('2d'), {
       type:'doughnut',
-      data:{ labels:['Profit','Loss'], datasets:[{ data:[profitValue, lossValue], borderWidth:0 }] },
-      options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{position:'bottom'} } }
+      data:{
+        labels:['Profit','Loss'],
+        datasets:[{
+          data:[profitValue, lossValue],
+          borderWidth:0,
+          backgroundColor:['#10b981','#ef4444']
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        cutout:'68%',
+        plugins:{ legend:{position:'bottom'} }
+      }
     });
   }
 });
 </script>
 
-<!-- ✅ auto-submit when date changes (optional). Remove if you don't want this. -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const dateInput = document.getElementById('dashDate');
-  if (!dateInput) return;
-  dateInput.addEventListener('change', function () {
-    const form = this.closest('form');
-    if (form) form.submit();
-  });
+  const vehicleInput = document.getElementById('dashVehicle');
+
+  if (dateInput) {
+    dateInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
+
+  if (vehicleInput) {
+    vehicleInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
 });
 </script>
 {% endblock %}

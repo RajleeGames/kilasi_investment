@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Edit Genji{% else %}Add Genji{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:rgba(15,23,42,.08);
+  --line2:rgba(15,23,42,.05);
+  --shadow:0 10px 28px rgba(2,6,23,.06);
+  --shadow-soft:0 6px 16px rgba(2,6,23,.04);
+  --radius:18px;
+  --blue:#0ea5e9;
+  --blue2:#0284c7;
+  --green:#16a34a;
+}
+
+.genji-wrap{
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.genji-card{
+  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+  border:1px solid var(--line);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.genji-head{
+  padding:18px 20px 14px;
+  border-bottom:1px solid var(--line2);
+}
+
+.genji-title{
+  margin:0;
+  font-size:1.18rem;
+  font-weight:900;
+  color:var(--text);
+  letter-spacing:-.02em;
+}
+
+.genji-sub{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:.90rem;
+  line-height:1.5;
+}
+
+.genji-body{
+  padding:18px 20px 20px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(12, minmax(0,1fr));
+  gap:14px;
+}
+
+.span-12{ grid-column:span 12; }
+.span-6{ grid-column:span 6; }
+.span-4{ grid-column:span 4; }
+
+.form-group label{
+  display:block;
+  margin-bottom:6px;
+  font-size:.76rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--muted);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%;
+  min-height:42px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  color:var(--text);
+  padding:10px 12px;
+  font-size:.93rem;
+  outline:none;
+  transition:.2s ease;
+  box-shadow:none;
+}
+
+.form-group textarea{
+  min-height:110px;
+  resize:vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+  border-color:#7dd3fc;
+  box-shadow:0 0 0 4px rgba(14,165,233,.10);
+}
+
+.form-group .helptext{
+  display:block;
+  margin-top:6px;
+  color:var(--muted);
+  font-size:.78rem;
+}
+
+.form-group .errorlist{
+  list-style:none;
+  margin:6px 0 0;
+  padding:0;
+  color:#dc2626;
+  font-size:.82rem;
+  font-weight:700;
+}
+
+.actions{
+  margin-top:18px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btnx{
+  height:42px;
+  padding:0 16px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:.90rem;
+  font-weight:800;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.btnx:hover{
+  transform:translateY(-1px);
+  box-shadow:var(--shadow-soft);
+}
+
+.btnx-primary{
+  border-color:transparent;
+  color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+}
+
+.btnx-secondary{
+  color:var(--text);
+  background:#fff;
+}
+
+.badge-mode{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 11px;
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:800;
+  background:#eff6ff;
+  color:#1d4ed8;
+  border:1px solid #bfdbfe;
+  margin-top:10px;
+}
+
+@media (max-width: 768px){
+  .genji-head{
+    padding:16px 16px 12px;
+  }
+
+  .genji-body{
+    padding:16px;
+  }
+
+  .span-6,
+  .span-4{
+    grid-column:span 12;
+  }
+
+  .actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .btnx{
+    width:100%;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="genji-wrap">
+  <div class="genji-card">
+    <div class="genji-head">
+      <h3 class="genji-title">
+        {% if is_edit %}Edit Genji Record{% else %}Add Genji Record{% endif %}
+      </h3>
+      <div class="genji-sub">
+        Fill in the customer, item, dates, prices, quantity, and notes clearly.
+      </div>
+      <div class="badge-mode">
+        {% if is_edit %}Update Mode{% else %}New Record{% endif %}
+      </div>
+    </div>
+
+    <div class="genji-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-grid">
+          <div class="form-group span-6">
+            {{ form.customer_name.label_tag }}
+            {{ form.customer_name }}
+            {{ form.customer_name.errors }}
+          </div>
+
+          <div class="form-group span-6">
+            {{ form.customer_phone.label_tag }}
+            {{ form.customer_phone }}
+            {{ form.customer_phone.errors }}
+          </div>
+
+          <div class="form-group span-12">
+            {{ form.item_name.label_tag }}
+            {{ form.item_name }}
+            {{ form.item_name.errors }}
+          </div>
+
+          <div class="form-group span-6">
+            {{ form.buy_date.label_tag }}
+            {{ form.buy_date }}
+            {{ form.buy_date.errors }}
+          </div>
+
+          <div class="form-group span-6">
+            {{ form.sell_date.label_tag }}
+            {{ form.sell_date }}
+            {{ form.sell_date.errors }}
+          </div>
+
+          <div class="form-group span-4">
+            {{ form.buying_cost.label_tag }}
+            {{ form.buying_cost }}
+            {{ form.buying_cost.errors }}
+          </div>
+
+          <div class="form-group span-4">
+            {{ form.selling_price.label_tag }}
+            {{ form.selling_price }}
+            {{ form.selling_price.errors }}
+          </div>
+
+          <div class="form-group span-4">
+            {{ form.quantity.label_tag }}
+            {{ form.quantity }}
+            {{ form.quantity.errors }}
+          </div>
+
+          {% if not is_seller %}
+          <div class="form-group span-12">
+            {{ form.branch.label_tag }}
+            {{ form.branch }}
+            {{ form.branch.errors }}
+          </div>
+          {% else %}
+          <div class="form-group span-12" style="display:none;">
+            {{ form.branch }}
+          </div>
+          {% endif %}
+
+          <div class="form-group span-12">
+            {{ form.notes.label_tag }}
+            {{ form.notes }}
+            {{ form.notes.errors }}
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btnx btnx-primary" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            {% if is_edit %}Update Record{% else %}Save Record{% endif %}
+          </button>
+
+          <a href="{% url 'sales:genji_dashboard' %}" class="btnx btnx-secondary">
+            <i class="fa-solid fa-arrow-left"></i>
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

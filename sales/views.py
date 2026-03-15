@@ -8,8 +8,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-
-
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -31,7 +32,10 @@ from users.models import Role
 
 from inventory.models import Product, Category, StockEntry, Supplier, Branch, ProductStock
 from .models import Invoice, InvoiceItem, Customer, Payment, Expense
-
+from .models import GenjiSale
+from .forms import GenjiSaleForm
+from django.apps import apps
+from collections import OrderedDict
 
 # ───────────────────────────────────────────────────────────────
 # TEMPLATE RENDER HELPER (supports both "sales/x.html" and "x.html")
@@ -347,6 +351,260 @@ def _invoice_balance(inv) -> int:
 
     return balance
 
+def _parse_date_range(request):
+    today = localdate()
+
+    start_str = (request.GET.get("start_date") or "").strip()
+    end_str = (request.GET.get("end_date") or "").strip()
+
+    if not start_str and not end_str:
+        start = today - timedelta(days=6)
+        end = today
+        return start, end, start.isoformat(), end.isoformat()
+
+    try:
+        start = datetime.strptime(start_str, "%Y-%m-%d").date()
+    except Exception:
+        start = today - timedelta(days=6)
+
+    try:
+        end = datetime.strptime(end_str, "%Y-%m-%d").date()
+    except Exception:
+        end = today
+
+    if start > end:
+        start, end = end, start
+
+    return start, end, start.isoformat(), end.isoformat()
+
+
+from collections import OrderedDict
+from django.apps import apps
+
+
+from collections import OrderedDict
+from django.apps import apps
+
+
+def _clean_contact_name(name):
+    name = (name or "").strip()
+    return name if name else "Customer"
+
+
+def _clean_contact_phone(phone):
+    return (phone or "").strip()
+
+
+def _first_nonempty_attr(obj, candidates):
+    """
+    Return first non-empty attribute value from candidate field names.
+    """
+    for field in candidates:
+        try:
+            value = getattr(obj, field, None)
+            if value is not None and str(value).strip():
+                return str(value).strip()
+        except Exception:
+            pass
+    return ""
+
+
+def _get_model_safe(app_labels, model_names):
+    """
+    Try many app labels + model names safely.
+    """
+    for app_label in app_labels:
+        for model_name in model_names:
+            try:
+                return apps.get_model(app_label, model_name)
+            except Exception:
+                pass
+    return None
+
+
+def _save_customer_contact(name=None, phone=None):
+    """
+    Save/update contact into Customer table.
+
+    Rules:
+    - if no name => default 'Customer'
+    - if phone exists, use phone as main unique key
+    - if no phone, match by name
+    """
+    raw_name = (name or "").strip()
+    raw_phone = (phone or "").strip()
+
+    # nothing entered at all
+    if not raw_name and not raw_phone:
+        return None
+
+    clean_name = _clean_contact_name(raw_name)
+    clean_phone = _clean_contact_phone(raw_phone)
+
+    # phone is strongest match
+    if clean_phone:
+        obj = Customer.objects.filter(phone=clean_phone).first()
+        if obj:
+            old_name = (obj.name or "").strip().lower()
+            weak_names = ["", "unknown", "customer", "walk-in", "n/a", "—"]
+            if old_name in weak_names and clean_name:
+                obj.name = clean_name
+                obj.save(update_fields=["name"])
+            return obj
+
+        return Customer.objects.create(
+            name=clean_name,
+            phone=clean_phone
+        )
+
+    # fallback by name only
+    obj = Customer.objects.filter(name__iexact=clean_name).first()
+    if obj:
+        return obj
+
+    return Customer.objects.create(
+        name=clean_name,
+        phone=""
+    )
+
+
+def _collect_all_contacts():
+    """
+    ONLY collect contacts from:
+    1. Customer table (sales/debt)
+    2. GenjiSale
+    3. Transport Trips
+    4. Transport Bookings
+    """
+    contacts = OrderedDict()
+
+    def add_contact(name="", phone="", source="System", obj_id=None):
+        raw_name = (name or "").strip()
+        raw_phone = (phone or "").strip()
+
+        # skip if both are empty
+        if not raw_name and not raw_phone:
+            return
+
+        clean_name = _clean_contact_name(raw_name)
+        clean_phone = _clean_contact_phone(raw_phone)
+
+        # dedupe by phone first, else by name
+        key = f"phone:{clean_phone}" if clean_phone else f"name:{clean_name.lower()}"
+
+        if key not in contacts:
+            contacts[key] = {
+                "id": obj_id or "",
+                "name": clean_name,
+                "phone": clean_phone or "",
+                "source": source,
+            }
+        else:
+            existing = contacts[key]
+
+            weak_names = ["", "customer", "unknown", "walk-in", "n/a", "—"]
+            if existing["name"].strip().lower() in weak_names and clean_name:
+                existing["name"] = clean_name
+
+            if not existing["phone"] and clean_phone:
+                existing["phone"] = clean_phone
+
+            if source and source not in existing["source"]:
+                existing["source"] = f'{existing["source"]}, {source}'
+
+    # --------------------------------------------------
+    # 1) SALES / DEBT CUSTOMERS
+    # --------------------------------------------------
+    for c in Customer.objects.all().order_by("-id"):
+        add_contact(
+            name=getattr(c, "name", "") or "",
+            phone=getattr(c, "phone", "") or "",
+            source="Debt/Sales",
+            obj_id=getattr(c, "id", "")
+        )
+
+    # --------------------------------------------------
+    # 2) GENJI CONTACTS
+    # --------------------------------------------------
+    try:
+        for g in GenjiSale.objects.all().order_by("-id"):
+            g_name = _first_nonempty_attr(g, [
+                "customer_name", "name", "client_name", "contact_name"
+            ])
+            g_phone = _first_nonempty_attr(g, [
+                "customer_phone", "phone", "phone_number", "mobile", "contact_phone"
+            ])
+
+            add_contact(
+                name=g_name,
+                phone=g_phone,
+                source="Genji",
+                obj_id=getattr(g, "id", "")
+            )
+    except Exception:
+        pass
+
+    # --------------------------------------------------
+    # 3) TRIP CONTACTS
+    # --------------------------------------------------
+    TripModel = _get_model_safe(
+        app_labels=["transport", "trips"],
+        model_names=["Trip", "Trips", "TransportTrip"]
+    )
+
+    if TripModel:
+        try:
+            for t in TripModel.objects.all().order_by("-id"):
+                t_name = _first_nonempty_attr(t, [
+                    "customer_name", "name", "passenger_name", "client_name",
+                    "contact_name", "full_name", "receiver_name"
+                ])
+                t_phone = _first_nonempty_attr(t, [
+                    "customer_phone", "phone", "phone_number", "mobile",
+                    "contact_phone", "receiver_phone"
+                ])
+
+                add_contact(
+                    name=t_name,
+                    phone=t_phone,
+                    source="Trip",
+                    obj_id=getattr(t, "id", "")
+                )
+        except Exception:
+            pass
+
+    # --------------------------------------------------
+    # 4) BOOKING CONTACTS
+    # --------------------------------------------------
+    BookingModel = _get_model_safe(
+        app_labels=["transport", "bookings", "trips"],
+        model_names=["Booking", "Bookings", "TransportBooking"]
+    )
+
+    if BookingModel:
+        try:
+            for b in BookingModel.objects.all().order_by("-id"):
+                b_name = _first_nonempty_attr(b, [
+                    "customer_name", "name", "passenger_name", "client_name",
+                    "contact_name", "full_name", "receiver_name"
+                ])
+                b_phone = _first_nonempty_attr(b, [
+                    "customer_phone", "phone", "phone_number", "mobile",
+                    "contact_phone", "receiver_phone"
+                ])
+
+                add_contact(
+                    name=b_name,
+                    phone=b_phone,
+                    source="Booking",
+                    obj_id=getattr(b, "id", "")
+                )
+        except Exception:
+            pass
+
+    rows = list(contacts.values())
+    rows.sort(key=lambda x: (0 if x["phone"] else 1, (x["name"] or "").lower()))
+    return rows
 
 
 # ───────────────────────────────────────────────────────────────
@@ -630,15 +888,17 @@ def submit_sale(request):
     if payment not in ("cash", "debt", "ebt", "bank"):
         payment = "debt"
 
-    if payment == "debt":
-        customer, _ = Customer.objects.get_or_create(
-            name=customer_name or "Unknown",
-            phone=customer_phone or "N/A",
-        )
-        paid_flag = False
-    else:
-        customer = None
-        paid_flag = True
+    customer = None
+
+# save contact for ANY sale if entered
+    if     customer_name or customer_phone:
+       customer = _save_customer_contact(customer_name, customer_phone)
+
+# if debt and blank info, still create default customer
+    if payment == "debt" and customer is None:
+      customer = _save_customer_contact("Customer", customer_phone or "")
+
+      paid_flag = payment in ("cash", "bank", "ebt")
 
     try:
         with transaction.atomic():
@@ -1799,21 +2059,65 @@ def expense_overview(request):
 # ───────────────────────────────────────────────────────────────
 # PRODUCTS (seller sees ONLY branch stock)
 # ───────────────────────────────────────────────────────────────
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import OuterRef, Subquery, IntegerField, Value, Q
+from django.db.models.functions import Coalesce
+
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def product_list(request):
     q = (request.GET.get("q") or "").strip()
-    branch = _get_user_branch(request) if _is_seller(request) else None
+    selected_branch_id = (request.GET.get("branch") or "").strip()
+
+    user_branch = _get_user_branch(request) if _is_seller(request) else None
+    is_seller = bool(user_branch)
 
     qs = Product.objects.select_related("category")
 
-    use_branch_stock = bool(branch)
-    if use_branch_stock:
-        ps = ProductStock.objects.filter(product=OuterRef("pk"), branch=branch).values("quantity")[:1]
-        qs = qs.annotate(branch_qty=Coalesce(Subquery(ps, output_field=IntegerField()), Value(0))).filter(branch_qty__gt=0)
+    # Branch list for filter dropdown
+    branches = Branch.objects.filter(is_active=True).order_by("name") if 'Branch' in globals() else Branch.objects.all().order_by("name")
+
+    selected_branch = None
+    use_branch_stock = False
+
+    if is_seller:
+        # Seller is locked to own branch only
+        selected_branch = user_branch
+        use_branch_stock = True
+
+        ps = ProductStock.objects.filter(
+            product=OuterRef("pk"),
+            branch=selected_branch
+        ).values("quantity")[:1]
+
+        qs = qs.annotate(
+            branch_qty=Coalesce(Subquery(ps, output_field=IntegerField()), Value(0))
+        ).filter(branch_qty__gt=0)
+
+    else:
+        # Admin/Cashier can optionally filter by branch
+        if selected_branch_id.isdigit():
+            selected_branch = Branch.objects.filter(id=selected_branch_id).first()
+
+        if selected_branch:
+            use_branch_stock = True
+            ps = ProductStock.objects.filter(
+                product=OuterRef("pk"),
+                branch=selected_branch
+            ).values("quantity")[:1]
+
+            qs = qs.annotate(
+                branch_qty=Coalesce(Subquery(ps, output_field=IntegerField()), Value(0))
+            ).filter(branch_qty__gt=0)
+        else:
+            use_branch_stock = False
 
     if q:
-        qs = qs.filter(name__icontains=q)
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(category__name__icontains=q)
+        )
 
     paginator = Paginator(qs.order_by("-id"), 20)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -1825,7 +2129,10 @@ def product_list(request):
         "paginator": paginator,
         "query": q,
         "use_branch_stock": use_branch_stock,
-        "branch": branch,
+        "branch": selected_branch,
+        "branches": branches,
+        "selected_branch_id": str(selected_branch.id) if selected_branch else "",
+        "is_seller": is_seller,
     })
 
 
@@ -1973,11 +2280,19 @@ def top_selling_products(request):
 def customer_list(request):
     q = (request.GET.get("q") or "").strip()
 
-    qs = Customer.objects.all().order_by("-id")
-    if q:
-        qs = qs.filter(Q(name__icontains=q) | Q(phone__icontains=q))
+    rows = _collect_all_contacts()
 
-    page_obj = Paginator(qs, 25).get_page(request.GET.get("page"))
+    if q:
+        ql = q.lower()
+        rows = [
+            r for r in rows
+            if ql in (r.get("name", "") or "").lower()
+            or ql in (r.get("phone", "") or "").lower()
+            or ql in (r.get("source", "") or "").lower()
+        ]
+
+    paginator = Paginator(rows, 25)
+    page_obj = paginator.get_page(request.GET.get("page", 1))
 
     return _render(request, ["sales/customer_list.html", "customer_list.html"], {
         "customers": page_obj.object_list,
@@ -2867,4 +3182,479 @@ def sales_return_list(request):
         "is_paginated": page_obj.has_other_pages(),
         "paginator": page_obj.paginator,
         "query": q,
+    })
+
+
+
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def period_progress_report(request):
+    from decimal import Decimal
+    from django.http import HttpResponse
+    from django.core.paginator import Paginator
+    from django.db.models import Sum
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from .models import SalesReturn
+
+    start_date, end_date, start_str, end_str = _parse_date_range(request)
+    selected = _selected_branch(request)
+
+    inv_qs = _invoice_scope_qs(request)
+    exp_qs = _expense_scope_qs(request)
+    pay_qs = _payment_scope_qs(request)
+
+    if selected and _can_filter_branch(request):
+        if hasattr(Invoice, "branch_id"):
+            inv_qs = inv_qs.filter(branch=selected)
+            pay_qs = pay_qs.filter(invoice__branch=selected)
+        if hasattr(Expense, "branch_id"):
+            exp_qs = exp_qs.filter(branch=selected)
+
+    inv_period = inv_qs.filter(created_at__date__range=[start_date, end_date]).order_by("-created_at")
+    exp_period = exp_qs.filter(date__range=[start_date, end_date]).order_by("-date", "-id")
+    pay_period = pay_qs.filter(timestamp__date__range=[start_date, end_date]).order_by("-timestamp")
+
+    ret_qs = SalesReturn.objects.all()
+    if hasattr(SalesReturn, "status"):
+        ret_qs = ret_qs.filter(status__in=["posted", "POSTED", "Posted"])
+    if hasattr(SalesReturn, "created_at"):
+        ret_qs = ret_qs.filter(created_at__date__range=[start_date, end_date])
+
+    if _is_seller(request):
+        b = _get_user_branch(request)
+        if b:
+            if hasattr(SalesReturn, "branch_id"):
+                ret_qs = ret_qs.filter(branch=b)
+            elif hasattr(Invoice, "branch_id"):
+                ret_qs = ret_qs.filter(invoice__branch=b)
+            else:
+                ret_qs = ret_qs.filter(invoice__seller=request.user)
+    elif selected:
+        if hasattr(SalesReturn, "branch_id"):
+            ret_qs = ret_qs.filter(branch=selected)
+        elif hasattr(Invoice, "branch_id"):
+            ret_qs = ret_qs.filter(invoice__branch=selected)
+
+    cash_sales = _dec(inv_period.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"] or 0)
+    bank_sales = _dec(inv_period.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"] or 0)
+    ebt_sales = _dec(inv_period.filter(status="ebt", paid=True).aggregate(t=Sum("total_amount"))["t"] or 0)
+    debt_issued = _dec(inv_period.filter(status="debt").aggregate(t=Sum("total_amount"))["t"] or 0)
+    debt_payments_received = _dec(pay_period.aggregate(t=Sum("amount"))["t"] or 0)
+    returns_total = _dec(ret_qs.aggregate(t=Sum("total_amount"))["t"] or 0)
+    expenses_total = _dec(exp_period.aggregate(t=Sum("amount"))["t"] or 0)
+
+    total_received = cash_sales + bank_sales + ebt_sales + debt_payments_received
+    net_cashflow = total_received - expenses_total
+
+    invoice_count = inv_period.count()
+    paid_invoice_count = inv_period.filter(status__in=["cash", "bank", "ebt"], paid=True).count()
+    debt_invoice_count = inv_period.filter(status="debt").count()
+
+    avg_invoice_value = Decimal("0.00")
+    total_invoiced_amount = _dec(inv_period.aggregate(t=Sum("total_amount"))["t"] or 0)
+    if invoice_count > 0:
+        avg_invoice_value = total_invoiced_amount / Decimal(invoice_count)
+
+    if selected:
+        branch_label = selected.name
+    elif _is_seller(request):
+        seller_branch = _get_user_branch(request)
+        branch_label = seller_branch.name if seller_branch else "My Branch"
+    else:
+        branch_label = "All Branches"
+
+    sales_page = Paginator(inv_period, 15).get_page(request.GET.get("sales_page", 1))
+    expense_page = Paginator(exp_period, 15).get_page(request.GET.get("expense_page", 1))
+
+    export_fmt = (request.GET.get("format") or "").strip().lower()
+    if export_fmt == "xlsx":
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Summary"
+
+        # ---------- Styles ----------
+        dark_fill = PatternFill("solid", fgColor="0F172A")
+        slate_fill = PatternFill("solid", fgColor="E2E8F0")
+        blue_fill = PatternFill("solid", fgColor="E0F2FE")
+        green_fill = PatternFill("solid", fgColor="DCFCE7")
+        amber_fill = PatternFill("solid", fgColor="FEF3C7")
+        red_fill = PatternFill("solid", fgColor="FEE2E2")
+        zebra_fill = PatternFill("solid", fgColor="F8FAFC")
+
+        white_font = Font(color="FFFFFF", bold=True, size=12)
+        title_font = Font(size=16, bold=True, color="0F172A")
+        sub_font = Font(size=11, bold=True, color="475569")
+        head_font = Font(bold=True, color="0F172A")
+        bold_font = Font(bold=True)
+
+        center = Alignment(horizontal="center", vertical="center")
+        left = Alignment(horizontal="left", vertical="center")
+        right = Alignment(horizontal="right", vertical="center")
+
+        thin = Side(style="thin", color="CBD5E1")
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        money_fmt = '#,##0.00'
+        int_fmt = '#,##0'
+
+        # ---------- Summary Sheet ----------
+        ws.merge_cells("A1:D1")
+        ws["A1"] = "KILASI INVESTMENT - SALES PROGRESS REPORT"
+        ws["A1"].font = title_font
+        ws["A1"].alignment = center
+
+        ws.merge_cells("A2:D2")
+        ws["A2"] = f"Period: {start_str} to {end_str} | Branch: {branch_label}"
+        ws["A2"].font = sub_font
+        ws["A2"].alignment = center
+
+        ws["A4"] = "Metric"
+        ws["B4"] = "Value"
+        ws["A4"].fill = dark_fill
+        ws["B4"].fill = dark_fill
+        ws["A4"].font = white_font
+        ws["B4"].font = white_font
+        ws["A4"].alignment = center
+        ws["B4"].alignment = center
+        ws["A4"].border = border
+        ws["B4"].border = border
+
+        summary_rows = [
+            ("Cash Sales", cash_sales, blue_fill),
+            ("Bank Sales", bank_sales, blue_fill),
+            ("EBT Sales", ebt_sales, blue_fill),
+            ("Debt Issued", debt_issued, amber_fill),
+            ("Debt Payments Received", debt_payments_received, green_fill),
+            ("Returns", returns_total, amber_fill),
+            ("Expenses", expenses_total, red_fill),
+            ("Total Received", total_received, blue_fill),
+            ("Net Cashflow", net_cashflow, green_fill if net_cashflow >= 0 else red_fill),
+            ("Invoices Count", invoice_count, slate_fill),
+            ("Paid Invoices", paid_invoice_count, green_fill),
+            ("Debt Invoices", debt_invoice_count, amber_fill),
+            ("Average Invoice", avg_invoice_value, blue_fill),
+        ]
+
+        row = 5
+        for idx, (label, value, fill) in enumerate(summary_rows, start=1):
+            ws[f"A{row}"] = label
+            ws[f"B{row}"] = float(value) if isinstance(value, Decimal) else value
+
+            ws[f"A{row}"].font = bold_font
+            ws[f"A{row}"].alignment = left
+            ws[f"B{row}"].alignment = right
+
+            ws[f"A{row}"].fill = fill
+            ws[f"B{row}"].fill = fill
+
+            ws[f"A{row}"].border = border
+            ws[f"B{row}"].border = border
+
+            if label in ["Invoices Count", "Paid Invoices", "Debt Invoices"]:
+                ws[f"B{row}"].number_format = int_fmt
+            else:
+                ws[f"B{row}"].number_format = money_fmt
+
+            row += 1
+
+        ws.column_dimensions["A"].width = 30
+        ws.column_dimensions["B"].width = 18
+        ws.column_dimensions["C"].width = 16
+        ws.column_dimensions["D"].width = 16
+        ws.freeze_panes = "A5"
+
+        # ---------- Sales History Sheet ----------
+        ws2 = wb.create_sheet("Sales History")
+        sales_headers = ["Date", "Invoice", "Customer", "Status", "Paid", "Seller", "Branch", "Total"]
+
+        for c, h in enumerate(sales_headers, 1):
+            cell = ws2.cell(row=1, column=c, value=h)
+            cell.fill = dark_fill
+            cell.font = white_font
+            cell.alignment = center
+            cell.border = border
+
+        r = 2
+        for i, inv in enumerate(inv_period, start=1):
+            row_values = [
+                getattr(inv, "created_at", None).strftime("%Y-%m-%d %H:%M") if getattr(inv, "created_at", None) else "",
+                f"INV-{inv.id}",
+                getattr(getattr(inv, "customer", None), "name", "") or "Walk-in",
+                (inv.status or "").upper(),
+                "YES" if getattr(inv, "paid", False) else "NO",
+                getattr(getattr(inv, "seller", None), "username", "") or "",
+                getattr(getattr(inv, "branch", None), "name", "") if hasattr(inv, "branch") else "",
+                float(_dec(getattr(inv, "total_amount", 0) or 0)),
+            ]
+
+            for c, value in enumerate(row_values, 1):
+                cell = ws2.cell(r, c, value)
+                cell.border = border
+                if i % 2 == 0:
+                    cell.fill = zebra_fill
+                if c == 8:
+                    cell.number_format = money_fmt
+                    cell.alignment = right
+                elif c in [4, 5]:
+                    cell.alignment = center
+
+            r += 1
+
+        for col, width in {"A":18, "B":12, "C":24, "D":14, "E":10, "F":16, "G":18, "H":16}.items():
+            ws2.column_dimensions[col].width = width
+
+        ws2.freeze_panes = "A2"
+        ws2.auto_filter.ref = f"A1:H{max(r-1,1)}"
+
+        # ---------- Expense History Sheet ----------
+        ws3 = wb.create_sheet("Expense History")
+        expense_headers = ["Date", "Category", "Description", "Branch", "Created By", "Amount"]
+
+        for c, h in enumerate(expense_headers, 1):
+            cell = ws3.cell(row=1, column=c, value=h)
+            cell.fill = dark_fill
+            cell.font = white_font
+            cell.alignment = center
+            cell.border = border
+
+        r = 2
+        for i, exp in enumerate(exp_period, start=1):
+            row_values = [
+                str(getattr(exp, "date", "") or ""),
+                getattr(exp, "category", "") or "",
+                getattr(exp, "description", "") or "",
+                getattr(getattr(exp, "branch", None), "name", "") if hasattr(exp, "branch") else "",
+                getattr(getattr(exp, "created_by", None), "username", "") or "",
+                float(_dec(getattr(exp, "amount", 0) or 0)),
+            ]
+
+            for c, value in enumerate(row_values, 1):
+                cell = ws3.cell(r, c, value)
+                cell.border = border
+                if i % 2 == 0:
+                    cell.fill = zebra_fill
+                if c == 6:
+                    cell.number_format = money_fmt
+                    cell.alignment = right
+
+            r += 1
+
+        for col, width in {"A":14, "B":20, "C":34, "D":18, "E":18, "F":16}.items():
+            ws3.column_dimensions[col].width = width
+
+        ws3.freeze_panes = "A2"
+        ws3.auto_filter.ref = f"A1:F{max(r-1,1)}"
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="progress_report_{start_str}_to_{end_str}.xlsx"'
+        wb.save(response)
+        return response
+
+    return _render(
+        request,
+        ["sales/period_progress_report.html", "period_progress_report.html"],
+        {
+            "start_date": start_str,
+            "end_date": end_str,
+
+            "branches": _branches_for_sales_dropdown() if _can_filter_branch(request) else [],
+            "selected_branch": str(selected.id) if selected else "",
+            "selected_branch_obj": selected,
+            "branch_label": branch_label,
+
+            "cash_sales": cash_sales,
+            "bank_sales": bank_sales,
+            "ebt_sales": ebt_sales,
+            "debt_issued": debt_issued,
+            "debt_payments_received": debt_payments_received,
+            "returns_total": returns_total,
+            "expenses_total": expenses_total,
+            "total_received": total_received,
+            "net_cashflow": net_cashflow,
+
+            "invoice_count": invoice_count,
+            "paid_invoice_count": paid_invoice_count,
+            "debt_invoice_count": debt_invoice_count,
+            "avg_invoice_value": avg_invoice_value,
+
+            "sales_page": sales_page,
+            "expense_page": expense_page,
+
+            "is_admin": _is_admin(request),
+            "is_cashier": _is_cashier(request),
+            "is_seller": _is_seller(request),
+        }
+    )
+    
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def genji_dashboard(request):
+    start_date, end_date, start_str, end_str = _parse_date_range(request)
+    selected = _selected_branch(request)
+
+    qs = GenjiSale.objects.select_related("branch", "created_by")
+
+    if _is_seller(request):
+        user_branch = _get_user_branch(request)
+        if user_branch:
+            qs = qs.filter(branch=user_branch)
+        else:
+            qs = qs.filter(created_by=request.user)
+    elif selected and _can_filter_branch(request):
+        qs = qs.filter(branch=selected)
+
+    qs = qs.filter(sell_date__range=[start_date, end_date])
+
+    total_buying = Decimal("0.00")
+    total_selling = Decimal("0.00")
+    total_profit = Decimal("0.00")
+
+    for row in qs:
+        total_buying += row.total_buying
+        total_selling += row.total_selling
+        total_profit += row.profit
+
+    page_obj = Paginator(qs, 20).get_page(request.GET.get("page", 1))
+
+    return _render(request, ["sales/genji_dashboard.html", "genji_dashboard.html"], {
+        "genji_rows": page_obj.object_list,
+        "page_obj": page_obj,
+        "is_paginated": page_obj.has_other_pages(),
+        "paginator": page_obj.paginator,
+
+        "total_buying": total_buying,
+        "total_selling": total_selling,
+        "total_profit": total_profit,
+        "total_records": qs.count(),
+
+        "start_date": start_str,
+        "end_date": end_str,
+
+        "branches": _branches_for_sales_dropdown() if _can_filter_branch(request) else [],
+        "selected_branch": str(selected.id) if selected else "",
+        "selected_branch_obj": selected,
+
+        "is_admin": _is_admin(request),
+        "is_cashier": _is_cashier(request),
+        "is_seller": _is_seller(request),
+    })
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def genji_create(request):
+    if request.method == "POST":
+        form = GenjiSaleForm(request.POST)
+
+        if form.is_valid():
+            obj = form.save(commit=False)
+
+            if _is_seller(request):
+                obj.branch = _get_user_branch(request)
+
+            # normalize customer name
+            if hasattr(obj, "customer_name"):
+                obj.customer_name = _clean_contact_name(
+                    getattr(obj, "customer_name", "") or ""
+                )
+
+            obj.created_by = request.user
+            obj.save()
+
+            # save to customer table too
+            _save_customer_contact(
+                _first_nonempty_attr(obj, ["customer_name", "name", "client_name"]),
+                _first_nonempty_attr(obj, ["customer_phone", "phone", "phone_number", "mobile"]),
+            )
+
+            messages.success(request, "Genji record added successfully.")
+            return redirect("sales:genji_dashboard")
+
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = GenjiSaleForm()
+
+        if _is_seller(request):
+            user_branch = _get_user_branch(request)
+            if user_branch:
+                form.fields["branch"].initial = user_branch
+                form.fields["branch"].widget.attrs["disabled"] = True
+
+    return _render(request, ["sales/genji_form.html", "genji_form.html"], {
+        "form": form,
+        "is_edit": False,
+        "today_str": localdate().isoformat(),
+        "is_seller": _is_seller(request),
+    })
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def genji_update(request, pk):
+    obj = get_object_or_404(GenjiSale, pk=pk)
+
+    if _is_seller(request):
+        user_branch = _get_user_branch(request)
+        if user_branch and obj.branch_id != user_branch.id:
+            return HttpResponseForbidden("You cannot edit this record.")
+
+    if request.method == "POST":
+        form = GenjiSaleForm(request.POST, instance=obj)
+        if form.is_valid():
+            updated = form.save(commit=False)
+
+            if _is_seller(request):
+                updated.branch = _get_user_branch(request)
+
+            if hasattr(updated, "customer_name"):
+                updated.customer_name = _clean_contact_name(
+                    getattr(updated, "customer_name", "") or ""
+                )
+
+            updated.save()
+
+            _save_customer_contact(
+                _first_nonempty_attr(updated, ["customer_name", "name", "client_name"]),
+                _first_nonempty_attr(updated, ["customer_phone", "phone", "phone_number", "mobile"]),
+            )
+
+            messages.success(request, "Genji record updated.")
+            return redirect("sales:genji_dashboard")
+
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = GenjiSaleForm(instance=obj)
+        if _is_seller(request):
+            form.fields["branch"].widget.attrs["disabled"] = True
+
+    return _render(request, ["sales/genji_form.html", "genji_form.html"], {
+        "form": form,
+        "is_edit": True,
+        "obj": obj,
+        "is_seller": _is_seller(request),
+    })
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def genji_delete(request, pk):
+    obj = get_object_or_404(GenjiSale, pk=pk)
+
+    if _is_seller(request):
+        user_branch = _get_user_branch(request)
+        if user_branch and obj.branch_id != user_branch.id:
+            return HttpResponseForbidden("You cannot delete this record.")
+
+    if request.method == "POST":
+        obj.delete()
+        messages.success(request, "Genji record deleted.")
+        return redirect("sales:genji_dashboard")
+
+    return _render(request, ["sales/genji_delete.html", "genji_delete.html"], {
+        "obj": obj,
     })

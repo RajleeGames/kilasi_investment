@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block page_title %}Bookings{% endblock %}
+{% block page_subtitle %}Customer transport bookings and reminders{% endblock %}
+
+{% block extra_css %}
+<style>
+  .booking-page{
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .booking-box{
+    background:#fff;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:18px;
+    box-shadow:0 10px 26px rgba(2,6,23,.05);
+    padding:16px;
+  }
+
+  .booking-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+
+  .booking-top h3{
+    margin:0;
+    font-size:1rem;
+    font-weight:800;
+  }
+
+  .booking-top p{
+    margin:.2rem 0 0;
+    font-size:.82rem;
+    color:#64748b;
+  }
+
+  .booking-top .btn{
+    border-radius:12px;
+    font-size:.84rem;
+    font-weight:700;
+    padding:.55rem .85rem;
+  }
+
+  .booking-filter{
+    margin-bottom:14px;
+  }
+
+  .booking-filter .form-control,
+  .booking-filter .form-select,
+  .booking-filter .btn{
+    min-height:40px;
+    border-radius:12px;
+    font-size:.84rem;
+  }
+
+  .booking-filter .btn{
+    font-weight:700;
+  }
+
+  .desktop-table th{
+    font-size:.78rem;
+    font-weight:800;
+    color:#334155;
+    white-space:nowrap;
+  }
+
+  .desktop-table td{
+    font-size:.83rem;
+    vertical-align:middle;
+  }
+
+  .desktop-table .btn{
+    border-radius:10px;
+    font-size:.76rem;
+    font-weight:700;
+    padding:.35rem .65rem;
+  }
+
+  .mobile-bookings{
+    display:none;
+  }
+
+  .booking-card{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:16px;
+    padding:12px;
+    background:#fff;
+    box-shadow:0 8px 18px rgba(2,6,23,.04);
+  }
+
+  .booking-card + .booking-card{
+    margin-top:10px;
+  }
+
+  .booking-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:8px;
+  }
+
+  .booking-name{
+    font-size:.9rem;
+    font-weight:800;
+    color:#0f172a;
+    line-height:1.2;
+    margin:0;
+  }
+
+  .booking-phone{
+    font-size:.78rem;
+    color:#0369a1;
+    font-weight:700;
+    margin-top:3px;
+  }
+
+  .booking-status .badge{
+    font-size:.7rem;
+    padding:.42rem .55rem;
+    border-radius:999px;
+  }
+
+  .booking-meta{
+    display:grid;
+    gap:6px;
+    margin-top:8px;
+  }
+
+  .booking-meta-item{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    font-size:.78rem;
+    color:#475569;
+    line-height:1.35;
+  }
+
+  .booking-meta-item i{
+    width:14px;
+    margin-top:2px;
+    color:#64748b;
+    flex-shrink:0;
+  }
+
+  .booking-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+
+  .booking-actions .btn{
+    flex:1 1 140px;
+    border-radius:10px;
+    font-size:.78rem;
+    font-weight:700;
+    padding:.5rem .75rem;
+  }
+
+  .empty-box{
+    text-align:center;
+    padding:20px 12px;
+    color:#64748b;
+    font-size:.85rem;
+    border:1px dashed rgba(15,23,42,.10);
+    border-radius:14px;
+    background:#fafcff;
+  }
+
+  @media (max-width: 767.98px){
+    .booking-box{
+      padding:12px;
+      border-radius:16px;
+    }
+
+    .booking-top h3{
+      font-size:.95rem;
+    }
+
+    .booking-top p{
+      font-size:.76rem;
+    }
+
+    .desktop-table-wrap{
+      display:none;
+    }
+
+    .mobile-bookings{
+      display:block;
+    }
+
+    .booking-filter .row{
+      --bs-gutter-x: .5rem;
+      --bs-gutter-y: .5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-page">
+  <div class="booking-box">
+    <div class="booking-top">
+      <div>
+        <h3>Bookings</h3>
+        <p>Manage customer bookings</p>
+      </div>
+      <a href="{% url 'transport:booking_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> Add Booking
+      </a>
+    </div>
+
+    <form method="get" class="booking-filter">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input type="date" name="date" value="{{ selected_date }}" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <select name="status" class="form-select">
+            <option value="">All Status</option>
+            <option value="pending" {% if selected_status == "pending" %}selected{% endif %}>Pending</option>
+            <option value="completed" {% if selected_status == "completed" %}selected{% endif %}>Completed</option>
+            <option value="cancelled" {% if selected_status == "cancelled" %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+          <button class="btn btn-outline-primary flex-fill" type="submit">
+            <i class="fa-solid fa-filter me-1"></i> Filter
+          </button>
+          <a href="{% url 'transport:booking_list' %}" class="btn btn-light flex-fill">Clear</a>
+        </div>
+      </div>
+    </form>
+
+    <!-- Desktop table -->
+    <div class="desktop-table-wrap">
+      <div class="table-responsive">
+        <table class="table align-middle desktop-table">
+          <thead class="table-light">
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Pickup</th>
+              <th>Destination</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Branch</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in bookings %}
+            <tr>
+              <td class="fw-bold">{{ b.customer_name }}</td>
+              <td>{{ b.customer_phone }}</td>
+              <td>{{ b.pickup_area }}</td>
+              <td>{{ b.destination|default:"-" }}</td>
+              <td>{{ b.booking_datetime|date:"d M Y H:i" }}</td>
+              <td>
+                {% if b.status == "pending" %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% elif b.status == "completed" %}
+                  <span class="badge bg-success">Completed</span>
+                {% else %}
+                  <span class="badge bg-danger">Cancelled</span>
+                {% endif %}
+              </td>
+              <td>{{ b.branch }}</td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                  <a href="{% url 'transport:booking_edit' b.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                  </a>
+                  <a href="{% url 'transport:booking_delete' b.pk %}" class="btn btn-sm btn-outline-danger">
+                    <i class="fa-solid fa-trash me-1"></i> Delete
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">No bookings found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mobile-bookings">
+      {% for b in bookings %}
+        <div class="booking-card">
+          <div class="booking-card-top">
+            <div>
+              <h4 class="booking-name">{{ b.customer_name }}</h4>
+              <div class="booking-phone">{{ b.customer_phone }}</div>
+            </div>
+
+            <div class="booking-status">
+              {% if b.status == "pending" %}
+                <span class="badge bg-warning text-dark">Pending</span>
+              {% elif b.status == "completed" %}
+                <span class="badge bg-success">Completed</span>
+              {% else %}
+                <span class="badge bg-danger">Cancelled</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="booking-meta">
+            <div class="booking-meta-item">
+              <i class="fa-solid fa-location-dot"></i>
+              <span><strong>Pickup:</strong> {{ b.pickup_area }}</span>
+            </div>
+
+            <div class="booking-meta-item">
+              <i class="fa-solid fa-route"></i>
+              <span><strong>Destination:</strong> {{ b.destination|default:"-" }}</span>
+            </div>
+
+            <div class="booking-meta-item">
+              <i class="fa-regular fa-clock"></i>
+              <span><strong>Date:</strong> {{ b.booking_datetime|date:"d M Y H:i" }}</span>
+            </div>
+
+            <div class="booking-meta-item">
+              <i class="fa-solid fa-code-branch"></i>
+              <span><strong>Branch:</strong> {{ b.branch }}</span>
+            </div>
+          </div>
+
+          <div class="booking-actions">
+            <a href="{% url 'transport:booking_edit' b.pk %}" class="btn btn-outline-primary">
+              <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+            </a>
+            <a href="{% url 'transport:booking_delete' b.pk %}" class="btn btn-outline-danger">
+              <i class="fa-solid fa-trash me-1"></i> Delete
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty-box">No bookings found.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

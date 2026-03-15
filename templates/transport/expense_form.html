@@ -1,4 +1,3 @@
-{# templates/transport/expense_form.html #}
 {% extends "base.html" %}
 {% load humanize %}
 
@@ -10,219 +9,201 @@
   --card:#fff;
   --text:#0f172a;
   --muted:#64748b;
-  --border:rgba(15,23,42,.10);
+  --border:rgba(15,23,42,.08);
   --border2:rgba(15,23,42,.06);
-  --shadow:0 12px 30px rgba(2,6,23,.08);
-  --shadow2:0 8px 22px rgba(2,6,23,.06);
+  --shadow:0 10px 24px rgba(2,6,23,.06);
   --radius:14px;
-  --accent:#0ea5e9;
-  --focus:rgba(14,165,233,.25);
+  --focus:rgba(14,165,233,.18);
   --danger:#ef4444;
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 
-/* -------- Wrapper -------- */
 .exp-form-card{
   width:100%;
-  max-width: 980px;
-  margin: 18px auto;
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow);
-  padding: 14px;
-  box-sizing: border-box;
-  font-family: var(--font);
-  color: var(--text);
+  max-width:860px;
+  margin:12px auto;
+  background:var(--card);
+  border-radius:var(--radius);
+  border:1px solid var(--border2);
+  box-shadow:var(--shadow);
+  padding:12px;
+  box-sizing:border-box;
+  font-family:var(--font);
+  color:var(--text);
 }
 
 .exp-form-head{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap: 12px;
-  padding: 4px 4px 12px 4px;
+  gap:10px;
+  padding:2px 2px 10px 2px;
 }
 
 .exp-form-title{
   margin:0;
-  font-size: 1.08rem;
-  font-weight: 900;
-  letter-spacing:.2px;
+  font-size:.98rem;
+  font-weight:900;
   display:flex;
   align-items:center;
-  gap: 8px;
+  gap:8px;
 }
 
 .exp-form-sub{
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: .9rem;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:.78rem;
+  font-weight:700;
 }
 
-.exp-form-back{
-  display:flex;
-  gap: 8px;
-  align-items:center;
+.exp-form-back .btn{
+  border-radius:10px;
+  font-size:.78rem;
+  font-weight:800;
+  padding:.48rem .72rem;
 }
 
-/* -------- Inner form panel -------- */
 .exp-panel{
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  padding: 12px;
+  background:linear-gradient(180deg,#ffffff,#fbfdff);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  padding:12px;
 }
 
-/* -------- Grid -------- */
 .exp-grid{
   display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.exp-field{ min-width: 0; }
-.exp-label{
-  font-weight: 800;
-  display:block;
-  margin: 0 0 6px 0;
-  color: var(--text);
-  font-size: .92rem;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
 }
 
-/* -------- Inputs -------- */
-.exp-input,
+.exp-field{ min-width:0; }
+
+.exp-label{
+  font-weight:800;
+  display:block;
+  margin:0 0 6px 0;
+  color:var(--text);
+  font-size:.8rem;
+}
+
 .exp-panel input,
 .exp-panel select,
 .exp-panel textarea{
   width:100%;
   box-sizing:border-box;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 12px 12px;
-  font-size: 0.96rem;
-  min-height: 48px; /* better for mobile tap */
-  transition: box-shadow .12s ease, border-color .12s ease, transform .12s ease;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:10px 12px;
+  font-size:.82rem;
+  min-height:42px;
+  transition:box-shadow .12s ease, border-color .12s ease;
+  font-family:var(--font);
 }
 
-/* Smooth focus */
 .exp-panel input:focus,
 .exp-panel select:focus,
 .exp-panel textarea:focus{
   outline:none;
-  border-color: rgba(14,165,233,.55);
-  box-shadow: 0 10px 22px rgba(14,165,233,.10);
+  border-color:rgba(14,165,233,.45);
+  box-shadow:0 0 0 3px var(--focus);
 }
 
-/* Textarea */
 .exp-panel textarea{
-  min-height: 120px;
-  resize: vertical;
+  min-height:96px;
+  resize:vertical;
 }
 
-/* Select caret: remove “ugly x / weird look” & keep clean */
 .exp-panel select{
   -webkit-appearance:none;
   -moz-appearance:none;
   appearance:none;
-  padding-right: 44px;
+  padding-right:40px;
   background-image:
     linear-gradient(45deg, transparent 50%, #64748b 50%),
-    linear-gradient(135deg, #64748b 50%, transparent 50%),
-    linear-gradient(to right, rgba(15,23,42,.10), rgba(15,23,42,.10));
+    linear-gradient(135deg, #64748b 50%, transparent 50%);
   background-position:
     calc(100% - 18px) 50%,
-    calc(100% - 13px) 50%,
-    calc(100% - 2.65rem) 50%;
-  background-size: 6px 6px, 6px 6px, 1px 22px;
-  background-repeat: no-repeat;
+    calc(100% - 12px) 50%;
+  background-size:6px 6px, 6px 6px;
+  background-repeat:no-repeat;
 }
 
-/* Disable clear X in search inputs (if any) */
-.exp-panel input[type="search"]::-webkit-search-cancel-button { -webkit-appearance:none; }
-.exp-panel input::-ms-clear { display:none; }
-
-/* Helpers + errors */
 .exp-help{
-  font-size:.85rem;
-  color: var(--muted);
-  margin-top: 6px;
+  font-size:.72rem;
+  color:var(--muted);
+  margin-top:5px;
+  font-weight:700;
 }
+
 .exp-error{
-  font-size:.88rem;
-  color: var(--danger);
-  margin-top: 6px;
-  font-weight: 700;
+  font-size:.74rem;
+  color:var(--danger);
+  margin-top:5px;
+  font-weight:800;
 }
 
-/* Non-field errors */
 .exp-alert{
-  border: 1px solid rgba(239,68,68,.25);
-  background: rgba(239,68,68,.08);
-  color: #7f1d1d;
-  padding: 10px 12px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  font-weight: 700;
+  border:1px solid rgba(239,68,68,.18);
+  background:rgba(239,68,68,.06);
+  color:#7f1d1d;
+  padding:9px 11px;
+  border-radius:10px;
+  margin-bottom:10px;
+  font-weight:700;
+  font-size:.78rem;
 }
 
-/* Actions (desktop) */
 .exp-actions{
   display:flex;
-  gap: 10px;
+  gap:8px;
   justify-content:flex-end;
-  margin-top: 14px;
+  margin-top:12px;
+  flex-wrap:wrap;
 }
 .exp-actions .btn{
-  border-radius: 12px;
-  padding: .7rem 1rem;
-  font-weight: 800;
+  border-radius:10px;
+  padding:.58rem .85rem;
+  font-weight:800;
+  font-size:.78rem;
 }
 
-/* -------- Mobile sticky bar (super smooth) -------- */
-.exp-sticky{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: rgba(255,255,255,.86);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid var(--border2);
-  z-index: 1600;
-  box-shadow: 0 -8px 24px rgba(2,6,23,.08);
+.exp-note{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(2,6,23,.03);
+  border:1px solid rgba(15,23,42,.06);
+  color:#475569;
+  font-size:.74rem;
+  font-weight:700;
 }
 
-.exp-sticky-inner{
-  max-width: 980px;
-  margin: 0 auto;
-  display:flex;
-  gap: 10px;
-}
-
-.exp-sticky-inner .btn{
-  flex: 1 1 0;
-  border-radius: 12px;
-  padding: .8rem 1rem;
-  font-weight: 900;
-}
-
-/* Mobile */
 @media (max-width: 767.98px){
-  .exp-grid{ grid-template-columns: 1fr; }
-  .exp-form-card{ margin: 12px; padding: 12px; }
-  body{ padding-bottom: 86px; } /* room for sticky bar */
+  .exp-grid{ grid-template-columns:1fr; }
+  .exp-form-card{
+    margin:10px 6px;
+    padding:10px;
+  }
+  .exp-form-head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .exp-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .exp-actions .btn{
+    width:100%;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+  }
 }
 
-/* Desktop: hide sticky */
-@media (min-width: 768px){
-  .exp-sticky{ display:none; }
-}
-
-/* small spacing helper */
-.mt-2{ margin-top: .5rem; }
-.me-2{ margin-right: .5rem; }
+.me-1{ margin-right:6px; }
+.me-2{ margin-right:8px; }
+.mt-2{ margin-top:.5rem; }
 </style>
 {% endblock %}
 
@@ -234,12 +215,12 @@
         <i class="fa-solid fa-receipt"></i>
         Add Expense
       </h2>
-      <div class="exp-form-sub">Fill details carefully — amounts will appear in reports.</div>
+      <div class="exp-form-sub">Enter expense details clearly.</div>
     </div>
 
     <div class="exp-form-back">
-      <a href="{% url 'transport:expense_list' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-2"></i> Back
+      <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back
       </a>
     </div>
   </div>
@@ -256,28 +237,26 @@
         <div class="exp-field">
           <label class="exp-label" for="{{ form.expense_date.id_for_label }}">Date</label>
           {{ form.expense_date }}
-          {% if form.expense_date.help_text %}<div class="exp-help">{{ form.expense_date.help_text }}</div>{% endif %}
           {% if form.expense_date.errors %}<div class="exp-error">{{ form.expense_date.errors|striptags }}</div>{% endif %}
-        </div>
-
-        <div class="exp-field">
-          <label class="exp-label" for="{{ form.vehicle.id_for_label }}">Vehicle</label>
-          {{ form.vehicle }}
-          {% if form.vehicle.help_text %}<div class="exp-help">{{ form.vehicle.help_text }}</div>{% endif %}
-          {% if form.vehicle.errors %}<div class="exp-error">{{ form.vehicle.errors|striptags }}</div>{% endif %}
         </div>
 
         <div class="exp-field">
           <label class="exp-label" for="{{ form.expense_type.id_for_label }}">Type</label>
           {{ form.expense_type }}
-          {% if form.expense_type.help_text %}<div class="exp-help">{{ form.expense_type.help_text }}</div>{% endif %}
           {% if form.expense_type.errors %}<div class="exp-error">{{ form.expense_type.errors|striptags }}</div>{% endif %}
+          <div class="exp-help">Fuel/repair/service can use a vehicle. Office costs can stay general.</div>
+        </div>
+
+        <div class="exp-field">
+          <label class="exp-label" for="{{ form.vehicle.id_for_label }}">Vehicle</label>
+          {{ form.vehicle }}
+          {% if form.vehicle.errors %}<div class="exp-error">{{ form.vehicle.errors|striptags }}</div>{% endif %}
+          <div class="exp-help">Leave empty for general or office expenses.</div>
         </div>
 
         <div class="exp-field">
           <label class="exp-label" for="{{ form.amount.id_for_label }}">Amount</label>
           {{ form.amount }}
-          {% if form.amount.help_text %}<div class="exp-help">{{ form.amount.help_text }}</div>{% endif %}
           {% if form.amount.errors %}<div class="exp-error">{{ form.amount.errors|striptags }}</div>{% endif %}
         </div>
       </div>
@@ -285,38 +264,26 @@
       <div class="mt-2">
         <label class="exp-label" for="{{ form.description.id_for_label }}">Description</label>
         {{ form.description }}
-        {% if form.description.help_text %}<div class="exp-help">{{ form.description.help_text }}</div>{% endif %}
         {% if form.description.errors %}<div class="exp-error">{{ form.description.errors|striptags }}</div>{% endif %}
       </div>
 
       <div class="mt-2">
         <label class="exp-label" for="{{ form.branch.id_for_label }}">Branch</label>
         {{ form.branch }}
-        {% if form.branch.help_text %}<div class="exp-help">{{ form.branch.help_text }}</div>{% endif %}
         {% if form.branch.errors %}<div class="exp-error">{{ form.branch.errors|striptags }}</div>{% endif %}
       </div>
 
-      {# Desktop actions #}
-      <div class="exp-actions d-none d-md-flex">
-        <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">
-          <i class="fa-solid fa-floppy-disk me-2"></i> Save expense
-        </button>
+      <div class="exp-note">
+        Vehicle selected = car expense. No vehicle selected = general / office expense.
       </div>
 
-      {# hidden fallback submit #}
-      <button type="submit" class="d-none" aria-hidden="true" style="display:none;">submit</button>
+      <div class="exp-actions">
+        <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Save Expense
+        </button>
+      </div>
     </form>
-  </div>
-</div>
-
-{# Mobile sticky actions #}
-<div class="exp-sticky d-md-none" role="region" aria-label="Form actions">
-  <div class="exp-sticky-inner">
-    <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">Cancel</a>
-    <button type="button" id="mobileSaveBtn" class="btn btn-primary">
-      <i class="fa-solid fa-check me-2"></i> Save
-    </button>
   </div>
 </div>
 {% endblock %}
@@ -324,69 +291,32 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('expenseForm');
+  if (!form) return;
 
-  // Give Django widgets consistent styling without relying on widget attrs
-  (function normalizeControls(){
-    const form = document.getElementById('expenseForm');
-    if (!form) return;
+  const controls = form.querySelectorAll('input, select, textarea');
+  controls.forEach(el => {
+    if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
 
-    const controls = form.querySelectorAll('input, select, textarea');
-    controls.forEach(el => {
-      if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
+    const name = (el.name || '').toLowerCase();
+    if (name.includes('amount')) {
+      el.setAttribute('inputmode', 'decimal');
+      el.setAttribute('pattern', '[0-9.,]*');
+      el.setAttribute('autocomplete', 'off');
+    }
+  });
 
-      // Add a class hook (optional)
-      el.classList.add('exp-control');
-
-      // Better keyboard on mobile for amount
-      const name = (el.name || '').toLowerCase();
-      if (name.includes('amount')) {
-        el.setAttribute('inputmode', 'decimal');
-        el.setAttribute('pattern', '[0-9.,]*');
-        el.setAttribute('autocomplete', 'off');
-      }
-
-      // Improve date/datetime UX a bit
-      if ((el.type === 'datetime-local' || el.type === 'date') && !el.getAttribute('placeholder')) {
-        el.setAttribute('placeholder', 'YYYY-MM-DD');
-      }
-    });
-  })();
-
-  // Mobile save triggers submit (with tiny validation)
-  const mobileSave = document.getElementById('mobileSaveBtn');
-  if (mobileSave) {
-    mobileSave.addEventListener('click', function () {
-      const form = document.getElementById('expenseForm');
-      if (!form) return;
-
-      // minimal check: amount not empty
-      const amountEl = form.querySelector('input[name$="amount"], input[id$="amount"]');
-      if (amountEl) {
-        const val = (amountEl.value || '').trim();
-        if (!val) {
-          amountEl.focus();
-          alert('Please enter an amount.');
-          return;
-        }
-      }
-      form.requestSubmit ? form.requestSubmit() : form.submit();
-    });
-  }
-
-  // Enter submits (except textarea)
   document.querySelectorAll('#expenseForm input, #expenseForm select').forEach((el) => {
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const t = e.target.tagName.toLowerCase();
-        if (t !== 'textarea') {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag !== 'textarea') {
           e.preventDefault();
-          const form = document.getElementById('expenseForm');
-          if (form) (form.requestSubmit ? form.requestSubmit() : form.submit());
+          form.requestSubmit ? form.requestSubmit() : form.submit();
         }
       }
     });
   });
-
 });
 </script>
 {% endblock %}

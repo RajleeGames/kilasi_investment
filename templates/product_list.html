@@ -1,4 +1,3 @@
-{# templates/product_list.html (or sales/product_list.html) #}
 {% extends 'base.html' %}
 {% load humanize %}
 {% load static %}
@@ -58,12 +57,25 @@
   margin-top: 4px;
   color: var(--muted);
   font-size: .9rem;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
 }
 .ptools{
   display:flex;
   gap: 10px;
   align-items:center;
   flex-wrap: wrap;
+  justify-content:flex-end;
+}
+
+/* Filter form */
+.pfilters{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
   justify-content:flex-end;
 }
 
@@ -88,6 +100,65 @@
   background:transparent;
 }
 .psearch input::placeholder{ color:#94a3b8; }
+
+/* Select */
+.pselect-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width: 220px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:#fff;
+  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+}
+.pselect-wrap i{ color: var(--muted); }
+.pselect{
+  width:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  font-size:.95rem;
+  color:var(--text);
+  cursor:pointer;
+}
+
+/* Buttons */
+.pbtn-filter,
+.pbtn-clear{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:42px;
+  padding:0 14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  text-decoration:none;
+  font-weight:800;
+  font-size:.92rem;
+  transition:.15s ease;
+  white-space:nowrap;
+}
+.pbtn-filter{
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color:#fff;
+  border-color: transparent;
+  box-shadow: 0 10px 20px rgba(14,165,233,.20);
+}
+.pbtn-filter:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(14,165,233,.24);
+}
+.pbtn-clear{
+  background:#fff;
+  color:var(--text);
+}
+.pbtn-clear:hover{
+  border-color: rgba(14,165,233,.25);
+  color:#075985;
+}
 
 /* Chips */
 .pchip{
@@ -236,6 +307,13 @@
 /* Mobile tweaks */
 @media (max-width: 991.98px){
   .psearch{ min-width: 100%; }
+  .pfilters{ width:100%; }
+  .pselect-wrap,
+  .pbtn-filter,
+  .pbtn-clear{
+    width:100%;
+  }
+
   .ptable thead{ display:none; }
   .ptable tbody tr{ display:block; padding: 10px 12px; }
   .ptable tbody td{
@@ -271,27 +349,68 @@
         <i class="fa-solid fa-boxes-stacked"></i>
         All Products
       </h2>
+
       <div class="psub">
         {% if use_branch_stock and branch %}
-          Showing stock for <span class="badge-branch"><i class="fa-solid fa-location-dot"></i> {{ branch.name }}</span>
+          Showing stock for
+          <span class="badge-branch">
+            <i class="fa-solid fa-location-dot"></i> {{ branch.name }}
+          </span>
+          {% if is_seller %}
+            <span class="pmuted">• your assigned branch only</span>
+          {% endif %}
         {% else %}
-          Overview of products & stock levels.
+          Overview of products & stock levels across all branches.
         {% endif %}
       </div>
     </div>
 
     <div class="ptools" role="toolbar" aria-label="products toolbar">
-      <form method="get" class="psearch" role="search" title="Search products">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input
-          type="search"
-          id="searchInput"
-          name="q"
-          value="{{ query }}"
-          placeholder="Search products…"
-          aria-label="Search products"
-          autocomplete="off"
-        >
+      <form method="get" class="pfilters" role="search" title="Filter products">
+        <div class="psearch">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="search"
+            id="searchInput"
+            name="q"
+            value="{{ query }}"
+            placeholder="Search products…"
+            aria-label="Search products"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="pselect-wrap">
+          <i class="fa-solid fa-code-branch"></i>
+
+          {% if is_seller %}
+            <select name="branch" class="pselect" disabled>
+              <option value="{{ branch.id }}">{{ branch.name }}</option>
+            </select>
+            <input type="hidden" name="branch" value="{{ branch.id }}">
+          {% else %}
+            <select name="branch" id="branchFilter" class="pselect" aria-label="Filter by branch">
+              <option value="">All Branches</option>
+              {% for b in branches %}
+                <option value="{{ b.id }}" {% if selected_branch_id == b.id|stringformat:"s" %}selected{% endif %}>
+                  {{ b.name }}
+                </option>
+              {% endfor %}
+            </select>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="pbtn-filter">
+          <i class="fa-solid fa-sliders"></i>
+          Apply
+        </button>
+
+        {% if query or selected_branch_id %}
+          <a href="{% url 'sales:product_list' %}" class="pbtn-clear">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
+        {% endif %}
       </form>
 
       <span class="pchip" title="Visible rows">
@@ -359,7 +478,7 @@
     {% if is_paginated %}
       <div class="pager" aria-label="Pagination">
         {% if page_obj.has_previous %}
-          <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+          <a href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
         {% else %}
           <span class="disabled">‹ Prev</span>
         {% endif %}
@@ -368,12 +487,12 @@
           {% if num == page_obj.number %}
             <span class="active">{{ num }}</span>
           {% else %}
-            <a href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+            <a href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&page={{ num }}">{{ num }}</a>
           {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
-          <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
+          <a href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&page={{ page_obj.next_page_number }}">Next ›</a>
         {% else %}
           <span class="disabled">Next ›</span>
         {% endif %}
@@ -391,6 +510,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const table = document.getElementById('productsTable');
   const totalEl = document.getElementById('totalProducts');
   const visibleEl = document.getElementById('visibleProducts');
+  const searchInput = document.getElementById('searchInput');
+  const branchFilter = document.getElementById('branchFilter');
 
   function updateCounts(){
     if (!table) return;
@@ -400,7 +521,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (visibleEl) visibleEl.textContent = visible.length;
   }
 
-  // Make rows clickable + keyboard friendly
   document.querySelectorAll('#productsTable tbody tr.clickable').forEach(function (row) {
     const href = row.dataset.href;
     if (!href) return;
@@ -417,13 +537,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // If search box is cleared, reset
-  const searchInput = document.getElementById('searchInput');
   if (searchInput) {
     searchInput.addEventListener('input', function(){
-      if (!this.value.trim()) {
+      const hasBranch = "{{ selected_branch_id|default:'' }}".trim();
+      if (!this.value.trim() && !hasBranch) {
         window.location.href = window.location.pathname;
       }
+    });
+  }
+
+  if (branchFilter) {
+    branchFilter.addEventListener('change', function(){
+      this.form.submit();
     });
   }
 

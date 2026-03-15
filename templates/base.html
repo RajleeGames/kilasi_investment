@@ -1,4 +1,3 @@
-{# templates/base.html #}
 {% load static %}
 {% load humanize %}
 
@@ -7,18 +6,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>{% block title %}KILASI INVESTMENT{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" / >
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
-
-  <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous"/>
-
-  <!-- Select2 -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 
   <style>
@@ -39,10 +31,16 @@
       --sb-bg2: #0b1b2b;
       --sb-text: #e6eef6;
       --sb-line: rgba(255,255,255,.08);
+
+      --danger: #ef4444;
+      --danger-dark: #b91c1c;
+      --warning: #f59e0b;
+      --success: #10b981;
     }
 
     html, body { height:100%; margin:0; }
     html { scroll-behavior: smooth; }
+
     body{
       font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       background:
@@ -55,28 +53,22 @@
       overflow-x: hidden;
     }
 
-    /* ONE SCROLL: page scroll only */
     .app{
       min-height:100vh;
       display:flex;
       align-items:stretch;
     }
 
-    /* ===================== DESKTOP SIDEBAR ===================== */
     .sidebar{
       width: var(--sb-w);
       flex: 0 0 var(--sb-w);
       padding: 14px;
-
       background: linear-gradient(180deg, var(--sb-bg1) 0%, var(--sb-bg2) 60%, var(--sb-bg1) 100%);
       color: var(--sb-text);
       border-right: 1px solid var(--sb-line);
       box-shadow: var(--shadow-sm);
-
-      /* IMPORTANT: no inner scroll */
       position: relative;
       overflow: visible;
-
       display:none;
     }
     @media(min-width: 992px){ .sidebar{ display:flex; flex-direction:column; } }
@@ -94,6 +86,7 @@
       border: 1px solid rgba(255,255,255,.07);
       margin-bottom: 10px;
     }
+
     .sb-brand .logo{
       width:46px; height:46px; border-radius: 14px;
       display:grid; place-items:center;
@@ -102,6 +95,7 @@
       font-size: 18px;
       flex: 0 0 auto;
     }
+
     .sb-brand .name{ font-weight:800; color:#ecf8ff; line-height:1.1; }
     .sb-brand .sub{ font-size:.78rem; color: rgba(235,245,255,.68); }
 
@@ -130,28 +124,29 @@
       user-select:none;
       -webkit-tap-highlight-color: transparent;
       width:100%;
+      position: relative;
     }
+
     .sb-link i{ width:20px; text-align:center; font-size:16px; }
+
     .sb-link:hover{
       background: rgba(14,165,233,.10);
       transform: translateX(2px);
       color:#eafcff;
     }
+
     .sb-link.active{
       background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.10));
       border-color: rgba(14,165,233,.20);
       color:#fff;
     }
 
-    /* collapse mode: icons only, everything centered */
     .sidebar.collapsed .sb-link{ justify-content:center; padding: 13px 10px; }
     .sidebar.collapsed .sb-link .label{ display:none; }
 
-    /* dropdown chevron */
     .chev{ margin-left:auto; opacity:.8; }
     .sidebar.collapsed .chev{ display:none; }
 
-    /* Submenu */
     .sb-sub{
       margin: 8px 0 0 10px;
       padding-left: 10px;
@@ -161,10 +156,43 @@
       gap:6px;
     }
 
-    /* IMPORTANT: in collapsed mode hide submenus completely (clean look) */
     .sidebar.collapsed .collapse{ display:none !important; }
 
-    /* ===================== FOOTER ===================== */
+    .sb-badge{
+      margin-left:auto;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:.72rem;
+      font-weight:800;
+      line-height:1;
+      color:#fff;
+      background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+      box-shadow: 0 8px 16px rgba(239,68,68,.28);
+      border: 1px solid rgba(255,255,255,.12);
+      flex-shrink:0;
+    }
+
+    .sb-badge.warn{
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 8px 16px rgba(245,158,11,.28);
+    }
+
+    .sidebar.collapsed .sb-badge{
+      position:absolute;
+      top:6px;
+      right:6px;
+      min-width:18px;
+      height:18px;
+      font-size:.62rem;
+      padding:0 5px;
+      margin-left:0;
+    }
+
     .sb-footer{
       margin-top: 14px;
       padding: 12px;
@@ -172,6 +200,7 @@
       background: rgba(255,255,255,.03);
       border: 1px solid rgba(255,255,255,.07);
     }
+
     .avatar{
       width:46px; height:46px; border-radius: 14px;
       object-fit:cover;
@@ -179,6 +208,7 @@
       background:#071227;
       flex:0 0 auto;
     }
+
     .role-pill{
       display:inline-flex; align-items:center; gap:8px;
       font-size:.78rem;
@@ -191,12 +221,12 @@
     }
     .role-pill small{ color: rgba(235,245,255,.75); }
 
-    /* Footer actions */
     .footer-actions{
       margin-top: 12px;
       display:flex;
       gap:10px;
     }
+
     .footer-actions .btn{
       border-radius: 14px;
       padding: 10px 12px;
@@ -204,7 +234,6 @@
       white-space: nowrap;
     }
 
-    /* COLLAPSED FOOTER FIX (THIS is what your screenshot needs) */
     .sidebar.collapsed .sb-footer{
       padding: 10px 8px;
       text-align:center;
@@ -220,6 +249,7 @@
       gap:10px;
       margin-top: 10px;
     }
+
     .btn-icon{
       width:44px; height:44px;
       padding:0 !important;
@@ -228,10 +258,9 @@
       justify-content:center;
       border-radius: 14px;
     }
-    .btn-icon span{ display:none; } /* hide text always inside icon buttons */
+    .btn-icon span{ display:none; }
     .btn-icon i{ font-size: 16px; }
 
-    /* ===================== MAIN ===================== */
     .main{
       flex:1;
       min-width:0;
@@ -256,6 +285,7 @@
       color: var(--text);
       text-decoration:none;
     }
+
     .brand-mini .dot{
       width:38px; height:38px; border-radius: 14px;
       display:grid; place-items:center;
@@ -265,7 +295,6 @@
 
     .clock{ font-size:.9rem; color:#334155; white-space:nowrap; }
 
-    /* Desktop toggle */
     .btn-toggle-sidebar{ display:none; }
     @media(min-width: 992px){
       .btn-toggle-sidebar{
@@ -286,7 +315,48 @@
       box-shadow: var(--shadow-sm);
     }
 
-    /* ===================== MOBILE OFFCANVAS ===================== */
+    .topbar-bell{
+      position: relative;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid rgba(15,23,42,.08);
+      background:#fff;
+      color:#0f172a;
+      text-decoration:none;
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+      box-shadow: 0 8px 20px rgba(2,6,23,.05);
+    }
+
+    .topbar-bell:hover{
+      transform: translateY(-1px);
+      background:#f8fafc;
+      color:#0f172a;
+    }
+
+    .topbar-bell-badge{
+      position:absolute;
+      top:-4px;
+      right:-4px;
+      min-width:20px;
+      height:20px;
+      padding:0 6px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:.68rem;
+      font-weight:800;
+      color:#fff;
+      background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+      border:2px solid #fff;
+      box-shadow: 0 8px 16px rgba(239,68,68,.28);
+      line-height:1;
+    }
+
     .offcanvas.sidebar-offcanvas{
       background: linear-gradient(180deg, var(--sb-bg1) 0%, var(--sb-bg2) 60%, var(--sb-bg1) 100%);
       color: var(--sb-text);
@@ -295,34 +365,33 @@
       border-right: 1px solid rgba(255,255,255,.10);
       overflow:hidden;
     }
+
     .offcanvas.sidebar-offcanvas .offcanvas-header{
       border-bottom: 1px solid rgba(255,255,255,.10);
       padding: 14px;
     }
+
     .offcanvas.sidebar-offcanvas .offcanvas-body{
       padding: 12px 14px 14px;
       overflow:auto;
       -webkit-overflow-scrolling: touch;
     }
+
     .offcanvas.sidebar-offcanvas .sb-link{
       padding: 13px 12px;
       border-radius: 14px;
       font-size: 15px;
     }
+
     .offcanvas.sidebar-offcanvas .sb-sub .sb-link{
       padding: 11px 12px;
       font-size: 14px;
     }
 
-    /* Select2 */
     .select2-container .select2-selection--single{
       height:42px; border-radius:12px; display:flex; align-items:center;
     }
 
-    /* ----------------------------------------------------------
-       NEW RULE: hide the desktop sidebar footer (avatar + username)
-       but keep mobile/offcanvas profile links (so mobile still shows them)
-       ---------------------------------------------------------- */
     @media(min-width: 992px){
       .sb-footer {
         display: none !important;
@@ -336,10 +405,9 @@
 <body>
 <div class="app">
 
-  <!-- ===================== DESKTOP SIDEBAR ===================== -->
   <aside class="sidebar" id="primarySidebar">
 
-     <div class="sb-brand">
+    <div class="sb-brand">
       <div class="logo"><i class="fa-solid fa-building"></i></div>
       <div>
         <div class="name">KILASI INVESTMENT</div>
@@ -367,41 +435,55 @@
             </a>
           {% endif %}
 
-         {# ✅ Sales-only menus: hide from transport #}
-{% if role == 'admin' or role == 'cashier' or role == 'seller' %}
-
-  <a class="sb-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}"
-     href="{% url 'sales:product_list' %}" title="Products">
-    <i class="fa-solid fa-boxes-stacked"></i> <span class="label">Products</span>
-  </a>
-
-  <a class="sb-link {% if request.resolver_match.url_name == 'top_selling_products' %}active{% endif %}"
-     href="{% url 'sales:top_selling_products' %}" title="Top Selling">
-    <i class="fa-solid fa-ranking-star"></i> <span class="label">Top Selling</span>
-  </a>
-
-{% endif %}
-
           {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
-  <a class="sb-link {% if request.resolver_match.url_name == 'outstanding_debts' %}active{% endif %}"
-     href="{% url 'sales:outstanding_debts' %}" title="Debts">
-    <i class="fa-solid fa-clock-rotate-left"></i> <span class="label">Debts</span>
-  </a>
+            <a class="sb-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}"
+               href="{% url 'sales:product_list' %}" title="Products">
+              <i class="fa-solid fa-boxes-stacked"></i> <span class="label">Products</span>
+            </a>
 
-           {# ✅ Sales Returns (admin/cashier/seller only) #}
-<a class="sb-link {% if request.resolver_match.url_name in 'sales_return_list sales_return_create sales_return_detail sales_return_post' %}active{% endif %}"
-   href="{% url 'sales:sales_return_list' %}" title="Sales Returns">
-  <i class="fa-solid fa-rotate-left"></i> <span class="label">Sales Returns</span>
-</a>
+            <a class="sb-link {% if request.resolver_match.url_name == 'top_selling_products' %}active{% endif %}"
+               href="{% url 'sales:top_selling_products' %}" title="Top Selling">
+              <i class="fa-solid fa-ranking-star"></i> <span class="label">Top Selling</span>
+            </a>
 
+            <a class="sb-link {% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}active{% endif %}"
+               data-bs-toggle="collapse" href="#sbGenjiDesk" role="button"
+               aria-expanded="{% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}true{% else %}false{% endif %}"
+               aria-controls="sbGenjiDesk" title="Genji">
+              <i class="fa-solid fa-sack-dollar"></i> <span class="label">Genji</span>
+              <i class="fa-solid fa-chevron-down fa-xs chev"></i>
+            </a>
+
+            <div class="collapse {% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}show{% endif %}" id="sbGenjiDesk">
+              <div class="sb-sub">
+                <a class="sb-link {% if request.resolver_match.url_name == 'genji_dashboard' %}active{% endif %}"
+                   href="{% url 'sales:genji_dashboard' %}" title="Genji Dashboard">
+                  <i class="fa-solid fa-chart-pie"></i> <span class="label">Dashboard</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'genji_create' %}active{% endif %}"
+                   href="{% url 'sales:genji_create' %}" title="Add Genji">
+                  <i class="fa-solid fa-plus"></i> <span class="label">Add Genji</span>
+                </a>
+              </div>
+            </div>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'outstanding_debts' %}active{% endif %}"
+               href="{% url 'sales:outstanding_debts' %}" title="Debts">
+              <i class="fa-solid fa-clock-rotate-left"></i> <span class="label">Debts</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name in 'sales_return_list sales_return_create sales_return_detail sales_return_post' %}active{% endif %}"
+               href="{% url 'sales:sales_return_list' %}" title="Sales Returns">
+              <i class="fa-solid fa-rotate-left"></i> <span class="label">Sales Returns</span>
+            </a>
 
             <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsDesk" role="button"
                aria-expanded="false" aria-controls="sbReportsDesk" title="Reports">
               <i class="fa-solid fa-chart-line"></i> <span class="label">Reports</span>
               <i class="fa-solid fa-chevron-down fa-xs chev"></i>
             </a>
-            <div class="collapse {% if request.resolver_match.url_name in 'sales_history sales_report enhanced_sales_report expense_overview' %}show{% endif %}"
-                 id="sbReportsDesk">
+
+            <div class="collapse {% if request.resolver_match.url_name in 'sales_history sales_report enhanced_sales_report expense_overview period_progress_report' %}show{% endif %}" id="sbReportsDesk">
               <div class="sb-sub">
                 <a class="sb-link {% if request.resolver_match.url_name == 'sales_history' %}active{% endif %}"
                    href="{% url 'sales:kilasi_sales_history' %}" title="History">
@@ -410,6 +492,10 @@
                 <a class="sb-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}"
                    href="{% url 'sales:kilasi_sales_report' %}" title="Daily">
                   <i class="fa-solid fa-calendar-day"></i> <span class="label">Daily</span>
+                </a>
+                <a class="sb-link {% if request.resolver_match.url_name == 'period_progress_report' %}active{% endif %}"
+                   href="{% url 'sales:period_progress_report' %}" title="Progress Report">
+                  <i class="fa-solid fa-calendar-days"></i> <span class="label">Progress Report</span>
                 </a>
                 <a class="sb-link {% if request.resolver_match.url_name == 'enhanced_sales_report' %}active{% endif %}"
                    href="{% url 'sales:enhanced_sales_report' %}" title="Enhanced">
@@ -423,34 +509,53 @@
             </div>
           {% endif %}
 
-          {# ===== TRANSPORT DROPDOWN (Admin/Cashier/Transport) ===== #}
           {% if role == 'admin' or role == 'cashier' or role == 'transport' %}
             <a class="sb-link {% if request.resolver_match.namespace == 'transport' %}active{% endif %}"
                data-bs-toggle="collapse" href="#sbTransportDesk" role="button"
                aria-expanded="{% if request.resolver_match.namespace == 'transport' %}true{% else %}false{% endif %}"
                aria-controls="sbTransportDesk" title="Transport">
               <i class="fa-solid fa-truck-moving"></i> <span class="label">Transport</span>
+              {% if transport_booking_badge_count > 0 %}
+                <span class="sb-badge">{{ transport_booking_badge_count }}</span>
+              {% endif %}
               <i class="fa-solid fa-chevron-down fa-xs chev"></i>
             </a>
 
-             <div class="collapse {% if request.resolver_match.namespace == 'transport' %}show{% endif %}" id="sbTransportDesk">
+            <div class="collapse {% if request.resolver_match.namespace == 'transport' %}show{% endif %}" id="sbTransportDesk">
               <div class="sb-sub">
                 <a class="sb-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}"
                    href="{% url 'transport:index' %}" title="Transport Dashboard">
-                  <i class="fa-solid fa-gauge"></i> <span class="label">Dashboard</span>
+                  <i class="fa-solid fa-gauge-high"></i> <span class="label">Dashboard</span>
                 </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'booking_list' %}active{% endif %}"
+                   href="{% url 'transport:booking_list' %}" title="Bookings">
+                  <i class="fa-solid fa-calendar-check"></i> <span class="label">Bookings</span>
+                  {% if transport_booking_badge_count > 0 %}
+                    <span class="sb-badge warn">{{ transport_booking_badge_count }}</span>
+                  {% endif %}
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'booking_create' %}active{% endif %}"
+                   href="{% url 'transport:booking_create' %}" title="Add Booking">
+                  <i class="fa-solid fa-calendar-plus"></i> <span class="label">Add Booking</span>
+                </a>
+
                 <a class="sb-link {% if request.resolver_match.url_name == 'trip_list' %}active{% endif %}"
                    href="{% url 'transport:trip_list' %}" title="Trips">
                   <i class="fa-solid fa-route"></i> <span class="label">Trips</span>
                 </a>
+
                 <a class="sb-link {% if request.resolver_match.url_name == 'vehicle_list' %}active{% endif %}"
                    href="{% url 'transport:vehicle_list' %}" title="Vehicles">
                   <i class="fa-solid fa-truck"></i> <span class="label">Vehicles</span>
                 </a>
+
                 <a class="sb-link {% if request.resolver_match.url_name == 'driver_list' %}active{% endif %}"
                    href="{% url 'transport:driver_list' %}" title="Drivers">
                   <i class="fa-solid fa-id-card"></i> <span class="label">Drivers</span>
                 </a>
+
                 <a class="sb-link {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}"
                    href="{% url 'transport:expense_list' %}" title="Expenses">
                   <i class="fa-solid fa-gas-pump"></i> <span class="label">Expenses</span>
@@ -479,30 +584,27 @@
           {% endif %}
 
           {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
-  <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
-     href="{% url 'sales:debtor_list' %}">
-    <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
-  </a>
-{% endif %}
+            <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
+               href="{% url 'sales:debtor_list' %}">
+              <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
+            </a>
+          {% endif %}
 
-
-          {# ✅ Stock Transfers (Admin can see) #}
           <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
              href="{% url 'sales:stock_transfer_list' %}" title="Stock Transfers">
             <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
           </a>
 
           {% if request.user.is_authenticated and request.user.profile %}
-  {% with role=request.user.profile.role %}
-    {% if role != 'transport' %}
-      <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
-         href="{% url 'contacts:contact_list' %}">
-        <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
-      </a>
-    {% endif %}
-  {% endwith %}
-{% endif %}
-
+            {% with role=request.user.profile.role %}
+              {% if role != 'transport' %}
+                <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
+                   href="{% url 'contacts:contact_list' %}">
+                  <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
+                </a>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
 
         {% endwith %}
       {% else %}
@@ -513,7 +615,6 @@
       {% endif %}
     </nav>
 
-    <!-- Footer (HIDDEN ON DESKTOP by media-query above) -->
     <div class="sb-footer mt-auto">
       {% if request.user.is_authenticated and request.user.profile %}
         <div class="d-flex align-items-center gap-3">
@@ -537,10 +638,8 @@
           </div>
         </div>
 
-        <!-- Full mode buttons (text) + collapsed mode icon-buttons -->
         <div class="footer-actions">
-          <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info w-100 d-none d-lg-inline-flex"
-             style="border-radius:14px;">
+          <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info w-100 d-none d-lg-inline-flex" style="border-radius:14px;">
             <i class="fa-solid fa-user-pen me-2"></i> Profile
           </a>
 
@@ -551,7 +650,6 @@
             </button>
           </form>
 
-          {# Icon buttons: always exist, but they only look correct in collapsed mode #}
           <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info btn-icon" title="Profile">
             <i class="fa-solid fa-user-pen"></i><span>Profile</span>
           </a>
@@ -570,14 +668,12 @@
 
   </aside>
 
-  <!-- ===================== MAIN ===================== -->
   <section class="main">
 
     <div class="topbar">
       <div class="d-flex align-items-center justify-content-between">
 
         <div class="d-flex align-items-center">
-          <!-- Mobile hamburger -->
           <button class="btn btn-outline-dark d-lg-none"
                   type="button"
                   data-bs-toggle="offcanvas"
@@ -587,7 +683,6 @@
             <i class="fa-solid fa-bars"></i>
           </button>
 
-          <!-- Desktop collapse toggle -->
           <button id="btnToggleSidebar"
                   class="btn btn-outline-dark btn-toggle-sidebar ms-0 me-2"
                   type="button"
@@ -605,6 +700,15 @@
 
         <div class="d-flex align-items-center gap-3">
           <div class="clock" id="navClock"></div>
+
+          {% if request.user.is_authenticated and request.user.profile and request.user.profile.role == 'admin' or request.user.profile.role == 'cashier' or request.user.profile.role == 'transport' %}
+            <a href="{% url 'transport:booking_list' %}" class="topbar-bell" title="Booking notifications">
+              <i class="fa-solid fa-bell"></i>
+              {% if transport_booking_badge_count > 0 %}
+                <span class="topbar-bell-badge">{{ transport_booking_badge_count }}</span>
+              {% endif %}
+            </a>
+          {% endif %}
 
           <div class="dropdown">
             <a class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle"
@@ -655,21 +759,15 @@
   </section>
 </div>
 
-<!-- ===================== MOBILE OFFCANVAS ===================== -->
 <div class="offcanvas offcanvas-start sidebar-offcanvas d-lg-none"
      tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel"
      data-bs-backdrop="true" data-bs-auto-focus="false">
 
-  <div class="offcanvas-header py-3 px-3"
-       style="border-bottom: 1px solid rgba(255,255,255,.10);">
-
+  <div class="offcanvas-header py-3 px-3" style="border-bottom: 1px solid rgba(255,255,255,.10);">
     <h5 class="offcanvas-title m-0" id="mobileSidebarLabel">
       <div class="d-flex align-items-center gap-2" style="color:#e6eef6;">
-
         <span class="d-inline-flex align-items-center justify-content-center"
-              style="width:42px;height:42px;border-radius:14px;
-                     background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));
-                     border: 1px solid rgba(255,255,255,.12);">
+              style="width:42px;height:42px;border-radius:14px;background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));border: 1px solid rgba(255,255,255,.12);">
           <i class="fa-solid fa-building"></i>
         </span>
 
@@ -679,7 +777,6 @@
             Sales • Stock • Transport
           </div>
         </div>
-
       </div>
     </h5>
 
@@ -693,7 +790,6 @@
       {% if request.user.is_authenticated and request.user.profile %}
         {% with role=request.user.profile.role %}
 
-          {# ---------------- MAIN ---------------- #}
           {% if role == 'admin' or role == 'cashier' %}
             <a class="sb-link" href="{% url 'sales:admin_dashboard' %}">
               <i class="fa-solid fa-gauge-high"></i> Dashboard
@@ -706,7 +802,6 @@
             </a>
           {% endif %}
 
-          {# ---------------- SALES (all non-transport roles) ---------------- #}
           {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
             <a class="sb-link" href="{% url 'sales:product_list' %}">
               <i class="fa-solid fa-boxes-stacked"></i> Products
@@ -716,16 +811,31 @@
               <i class="fa-solid fa-ranking-star"></i> Top Selling
             </a>
 
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbGenjiMob"
+               role="button" aria-expanded="false" aria-controls="sbGenjiMob">
+              <i class="fa-solid fa-sack-dollar"></i> Genji
+              <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            </a>
+
+            <div class="collapse {% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}show{% endif %}" id="sbGenjiMob">
+              <div class="sb-sub">
+                <a class="sb-link" href="{% url 'sales:genji_dashboard' %}">
+                  <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a class="sb-link" href="{% url 'sales:genji_create' %}">
+                  <i class="fa-solid fa-plus"></i> Add Genji
+                </a>
+              </div>
+            </div>
+
             <a class="sb-link" href="{% url 'sales:outstanding_debts' %}">
               <i class="fa-solid fa-clock-rotate-left"></i> Debts
             </a>
 
-            {# ✅ Sales Returns (admin/cashier/seller only) #}
-<a class="sb-link {% if request.resolver_match.url_name in 'sales_return_list sales_return_create sales_return_detail sales_return_post' %}active{% endif %}"
-   href="{% url 'sales:sales_return_list' %}">
-  <i class="fa-solid fa-rotate-left"></i> Sales Returns
-</a>
-
+            <a class="sb-link {% if request.resolver_match.url_name in 'sales_return_list sales_return_create sales_return_detail sales_return_post' %}active{% endif %}"
+               href="{% url 'sales:sales_return_list' %}">
+              <i class="fa-solid fa-rotate-left"></i> Sales Returns
+            </a>
 
             <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsMob"
                role="button" aria-expanded="false" aria-controls="sbReportsMob">
@@ -733,13 +843,16 @@
               <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
             </a>
 
-            <div class="collapse" id="sbReportsMob">
+            <div class="collapse {% if request.resolver_match.url_name in 'sales_history sales_report enhanced_sales_report expense_overview period_progress_report' %}show{% endif %}" id="sbReportsMob">
               <div class="sb-sub">
                 <a class="sb-link" href="{% url 'sales:kilasi_sales_history' %}">
                   <i class="fa-regular fa-clock"></i> History
                 </a>
                 <a class="sb-link" href="{% url 'sales:kilasi_sales_report' %}">
                   <i class="fa-solid fa-calendar-day"></i> Daily
+                </a>
+                <a class="sb-link" href="{% url 'sales:period_progress_report' %}">
+                  <i class="fa-solid fa-calendar-days"></i> Progress Report
                 </a>
                 <a class="sb-link" href="{% url 'sales:enhanced_sales_report' %}">
                   <i class="fa-solid fa-chart-simple"></i> Enhanced
@@ -751,28 +864,45 @@
             </div>
           {% endif %}
 
-          {# ---------------- TRANSPORT (mobile) ---------------- #}
           {% if role == 'admin' or role == 'cashier' or role == 'transport' %}
             <a class="sb-link" data-bs-toggle="collapse" href="#sbTransportMob"
                role="button" aria-expanded="false" aria-controls="sbTransportMob">
               <i class="fa-solid fa-truck-moving"></i> Transport
+              {% if transport_booking_badge_count > 0 %}
+                <span class="sb-badge">{{ transport_booking_badge_count }}</span>
+              {% endif %}
               <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
             </a>
 
-            <div class="collapse" id="sbTransportMob">
+            <div class="collapse {% if request.resolver_match.namespace == 'transport' %}show{% endif %}" id="sbTransportMob">
               <div class="sb-sub">
                 <a class="sb-link" href="{% url 'transport:index' %}">
-                  <i class="fa-solid fa-grid-2"></i> Dashboard
+                  <i class="fa-solid fa-gauge-high"></i> Dashboard
                 </a>
+
+                <a class="sb-link" href="{% url 'transport:booking_list' %}">
+                  <i class="fa-solid fa-calendar-check"></i> Bookings
+                  {% if transport_booking_badge_count > 0 %}
+                    <span class="sb-badge warn">{{ transport_booking_badge_count }}</span>
+                  {% endif %}
+                </a>
+
+                <a class="sb-link" href="{% url 'transport:booking_create' %}">
+                  <i class="fa-solid fa-calendar-plus"></i> Add Booking
+                </a>
+
                 <a class="sb-link" href="{% url 'transport:trip_list' %}">
                   <i class="fa-solid fa-route"></i> Trips
                 </a>
+
                 <a class="sb-link" href="{% url 'transport:vehicle_list' %}">
                   <i class="fa-solid fa-truck"></i> Vehicles
                 </a>
+
                 <a class="sb-link" href="{% url 'transport:driver_list' %}">
                   <i class="fa-solid fa-id-card"></i> Drivers
                 </a>
+
                 <a class="sb-link" href="{% url 'transport:expense_list' %}">
                   <i class="fa-solid fa-gas-pump"></i> Expenses
                 </a>
@@ -780,7 +910,6 @@
             </div>
           {% endif %}
 
-          {# ---------------- ADMIN / STOCK AREA ---------------- #}
           {% if role == 'admin' %}
             <hr style="border-color: rgba(255,255,255,.10);">
 
@@ -788,7 +917,6 @@
               <i class="fa-solid fa-boxes-packing"></i> Stock
             </a>
 
-            {# ✅ Stock Transfers (ADMIN can see) #}
             <a class="sb-link" href="{% url 'sales:stock_transfer_list' %}">
               <i class="fa-solid fa-right-left"></i> Stock Transfers
             </a>
@@ -803,21 +931,18 @@
           {% endif %}
 
           {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
-  <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
-     href="{% url 'sales:debtor_list' %}">
-    <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
-  </a>
-{% endif %}
+            <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
+               href="{% url 'sales:debtor_list' %}">
+              <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
+            </a>
+          {% endif %}
 
-
-          {# ✅ Stock Transfers for SELLER too (even if not admin) #}
           {% if role == 'seller' %}
             <a class="sb-link" href="{% url 'sales:stock_transfer_list' %}">
               <i class="fa-solid fa-right-left"></i> Stock Transfers
             </a>
           {% endif %}
 
-          {# ---------------- CONTACTS (hide for transport) ---------------- #}
           {% if role != 'transport' %}
             <a class="sb-link {% if request.resolver_match.namespace == 'contacts' %}active{% endif %}"
                href="{% url 'contacts:contact_list' %}">
@@ -833,8 +958,7 @@
 
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button type="submit" class="sb-link w-100 text-start"
-                    style="background:transparent;border:0;">
+            <button type="submit" class="sb-link w-100 text-start" style="background:transparent;border:0;">
               <i class="fa-solid fa-right-from-bracket"></i> Logout
             </button>
           </form>
@@ -850,15 +974,11 @@
   </div>
 </div>
 
-
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-
 <script>
-  // Clock
   function updateClock(){
     const now = new Date();
     const el = document.getElementById('navClock');
@@ -872,12 +992,10 @@
   setInterval(updateClock, 60 * 1000);
 
   document.addEventListener("DOMContentLoaded", () => {
-    // Select2 init
     if (window.jQuery && jQuery().select2) {
       jQuery('select.select2').select2({ width: '100%' });
     }
 
-    // Desktop sidebar collapse (persist)
     const sidebar = document.getElementById('primarySidebar');
     const btn = document.getElementById('btnToggleSidebar');
     const KEY = 'chui_sb_collapsed';
@@ -896,7 +1014,6 @@
       });
     }
 
-    // Mobile: close offcanvas when clicking a normal link (not collapse toggles)
     const mobileEl = document.getElementById('mobileSidebar');
     if (mobileEl) {
       const off = bootstrap.Offcanvas.getOrCreateInstance(mobileEl);
@@ -904,7 +1021,9 @@
         const link = e.target.closest('a.sb-link, button.sb-link');
         if (!link) return;
         const isCollapse = link.getAttribute('data-bs-toggle') === 'collapse';
-        if (!isCollapse) { try { off.hide(); } catch(err){} }
+        if (!isCollapse) {
+          try { off.hide(); } catch(err){}
+        }
       });
     }
   });

@@ -84,6 +84,10 @@ urlpatterns = [
     path("returns/<int:pk>/", views.sales_return_detail, name="sales_return_detail"),
     path("returns/<int:pk>/post/", views.sales_return_post, name="sales_return_post"),
     
+    path("reports/progress/", views.period_progress_report, name="period_progress_report"),
     path("returns/", views.sales_return_list, name="sales_return_list"),
-
+    path("genji/", views.genji_dashboard, name="genji_dashboard"),
+path("genji/add/", views.genji_create, name="genji_create"),
+path("genji/<int:pk>/edit/", views.genji_update, name="genji_update"),
+path("genji/<int:pk>/delete/", views.genji_delete, name="genji_delete"),
 ]

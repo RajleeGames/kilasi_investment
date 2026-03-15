@@ -1,4 +1,3 @@
-{# templates/transport/expense_list.html #}
 {% extends "base.html" %}
 {% load humanize %}
 
@@ -7,282 +6,370 @@
 {% block extra_css %}
 <style>
 :root{
-  --bg: #f7fafc;
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: rgba(15,23,42,.08);
-  --border2: rgba(15,23,42,.06);
-  --shadow: 0 12px 30px rgba(2,6,23,.08);
-  --shadow2: 0 8px 22px rgba(2,6,23,.06);
-  --radius: 14px;
-  --focus: rgba(14,165,233,.25);
-  --accent: #0ea5e9;
-  --good: #10b981;
-  --danger: #ef4444;
-  --small: .92rem;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:rgba(15,23,42,.08);
+  --border2:rgba(15,23,42,.06);
+  --shadow:0 10px 24px rgba(2,6,23,.06);
+  --shadow2:0 8px 18px rgba(2,6,23,.05);
+  --radius:14px;
+  --focus:rgba(14,165,233,.22);
+  --accent:#0ea5e9;
+  --good:#10b981;
+  --danger:#ef4444;
+  --small:.82rem;
+  --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font:system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
-/* Page wrapper */
 .exp-card{
-  max-width: 1120px;
-  margin: 18px auto;
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 14px;
-  font-family: var(--font);
-  color: var(--text);
+  max-width:1120px;
+  margin:12px auto;
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:12px;
+  font-family:var(--font);
+  color:var(--text);
 }
 
 .exp-top{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap: 12px;
-  padding: 4px 4px 12px 4px;
+  gap:10px;
+  padding:2px 2px 10px 2px;
 }
 
 .exp-title{
-  margin: 0;
-  font-size: 1.08rem;
-  font-weight: 800;
-  letter-spacing: .2px;
+  margin:0;
+  font-size:.98rem;
+  font-weight:900;
+  letter-spacing:.1px;
   display:flex;
   align-items:center;
-  gap: 8px;
+  gap:8px;
 }
 
 .exp-sub{
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: .9rem;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:.78rem;
+  font-weight:700;
 }
 
 .exp-actions{
   display:flex;
   align-items:center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap:8px;
+  flex-wrap:wrap;
   justify-content:flex-end;
 }
 
 .exp-search{
   display:flex;
   align-items:center;
-  gap: 8px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 10px;
-  min-width: 280px;
-  box-shadow: 0 6px 18px rgba(2,6,23,.04);
+  gap:8px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:7px 10px;
+  min-width:250px;
+  box-shadow:0 6px 14px rgba(2,6,23,.04);
 }
-.exp-search i{ color: var(--muted); }
+.exp-search i{ color:var(--muted); font-size:.8rem; }
 .exp-search input{
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: .95rem;
-  background: transparent;
+  border:none;
+  outline:none;
+  width:100%;
+  font-size:.82rem;
+  font-weight:700;
+  background:transparent;
 }
-.exp-search input::placeholder{ color: #94a3b8; }
+.exp-search input::placeholder{ color:#94a3b8; }
 
 .exp-chip{
   display:inline-flex;
   align-items:center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  color: var(--muted);
-  font-size: .86rem;
+  gap:7px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,#ffffff,#fbfdff);
+  color:var(--muted);
+  font-size:.76rem;
+  font-weight:700;
   user-select:none;
 }
 .exp-chip strong{
-  color: var(--text);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  font-family: var(--mono);
+  color:var(--text);
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  font-family:var(--mono);
 }
 
-/* ✅ filter bar */
 .exp-filterbar{
-  width: 100%;
+  width:100%;
   display:flex;
-  gap: 10px;
+  gap:10px;
   align-items:center;
   flex-wrap:wrap;
   justify-content:space-between;
-  padding: 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border2);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  box-shadow: 0 8px 18px rgba(2,6,23,.05);
-  margin-top: 6px;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid var(--border2);
+  background:linear-gradient(180deg,#ffffff,#fbfdff);
+  box-shadow:0 8px 18px rgba(2,6,23,.04);
+  margin-top:4px;
 }
+
 .exp-filter-left{
   display:flex;
-  gap: 10px;
+  gap:8px;
   align-items:center;
   flex-wrap:wrap;
 }
+
 .exp-datebox{
   display:flex;
   align-items:center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  gap:8px;
+  padding:7px 10px;
+  border-radius:12px;
+  border:1px solid var(--border);
   background:#fff;
 }
 .exp-datebox label{
   margin:0;
-  font-weight: 900;
-  font-size: .82rem;
+  font-weight:800;
+  font-size:.75rem;
   color:#334155;
   display:flex;
   gap:6px;
   align-items:center;
+  white-space:nowrap;
 }
-.exp-datebox input[type="date"]{
+.exp-datebox input[type="date"],
+.exp-datebox select{
   border:none;
   outline:none;
   background:transparent;
-  font-weight: 900;
-  font-size:.92rem;
+  font-weight:800;
+  font-size:.8rem;
+  color:#0f172a;
+  min-width:130px;
 }
 
-/* Table */
-.exp-table-wrap{ padding-top: 6px; }
+.exp-filter-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.exp-filter-actions .btn,
+.exp-actions .btn{
+  font-size:.78rem;
+  font-weight:800;
+  border-radius:10px;
+  padding:.48rem .72rem;
+}
+
+.exp-table-wrap{ padding-top:6px; }
 
 .exp-table{
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 8px;
 }
+
 .exp-table thead th{
-  padding: .65rem .85rem;
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #475569;
-  border: 0;
-  background: transparent;
-  font-weight: 800;
+  padding:.55rem .75rem;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#475569;
+  border:0;
+  background:transparent;
+  font-weight:900;
 }
 
 .exp-row{
-  background: #fff;
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow2);
-  border-radius: 12px;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  background:#fff;
+  border:1px solid var(--border2);
+  box-shadow:var(--shadow2);
+  border-radius:12px;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 .exp-row:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(2,6,23,.10);
-  border-color: rgba(14,165,233,.18);
+  transform:translateY(-1px);
+  box-shadow:0 12px 22px rgba(2,6,23,.08);
+  border-color:rgba(14,165,233,.18);
 }
 
 .exp-table td{
-  padding: .7rem .85rem;
-  border: 0;
-  vertical-align: middle;
-  font-size: var(--small);
-  color: var(--text);
-  max-width: 360px;
+  padding:.62rem .75rem;
+  border:0;
+  vertical-align:middle;
+  font-size:var(--small);
+  color:var(--text);
+  max-width:260px;
   overflow:hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
-.exp-muted{ color: var(--muted); }
+.exp-muted{ color:var(--muted); }
 .exp-date{
-  font-family: var(--mono);
-  font-size: .88rem;
-  color: #0b1220;
+  font-family:var(--mono);
+  font-size:.76rem;
+  color:#0b1220;
 }
-
 .exp-amount{
-  text-align: right;
-  font-weight: 900;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
+  text-align:right;
+  font-weight:900;
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
 }
 .amount-pill{
   display:inline-flex;
   align-items:center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(16,185,129,.18);
-  background: rgba(16,185,129,.08);
-  color: #065f46;
+  gap:6px;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid rgba(16,185,129,.18);
+  background:rgba(16,185,129,.08);
+  color:#065f46;
 }
 .amount-pill .tzs{
-  font-weight: 800;
-  opacity: .9;
-  font-size: .82rem;
+  font-weight:800;
+  opacity:.9;
+  font-size:.72rem;
 }
 
-.exp-clickable{ cursor: pointer; }
+.general-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.10);
+  background:rgba(2,6,23,.04);
+  color:#475569;
+  font-size:.72rem;
+  font-weight:800;
+}
+
+.exp-clickable{ cursor:pointer; }
 .exp-clickable:focus,
 .exp-clickable:focus-within{
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline:3px solid var(--focus);
+  outline-offset:2px;
 }
 
-/* Empty state */
 .exp-empty{
-  padding: 18px;
-  text-align: center;
-  color: var(--muted);
-  background: linear-gradient(180deg, #fbfdff, #fff);
-  border-radius: 12px;
-  border: 1px dashed rgba(15,23,42,.14);
+  padding:16px;
+  text-align:center;
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:700;
+  background:linear-gradient(180deg,#fbfdff,#fff);
+  border-radius:12px;
+  border:1px dashed rgba(15,23,42,.14);
 }
 
-/* Mobile layout */
 .td-label{ display:none; }
 
 @media (max-width: 991.98px){
-  .exp-top{ flex-direction: column; align-items: flex-start; }
-  .exp-actions{ justify-content:flex-start; width: 100%; }
-  .exp-search{ min-width: 100%; }
+  .exp-top{
+    flex-direction:column;
+    align-items:flex-start;
+  }
 
-  .exp-filterbar{ justify-content:flex-start; }
-  .exp-datebox{ width:100%; justify-content:space-between; }
-  .exp-datebox input[type="date"]{ width: 100%; max-width: 220px; }
+  .exp-actions{
+    justify-content:flex-start;
+    width:100%;
+  }
+
+  .exp-search{
+    min-width:100%;
+  }
+
+  .exp-filterbar{
+    justify-content:flex-start;
+    padding:8px;
+  }
+
+  .exp-filter-left{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .exp-datebox{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  .exp-datebox input[type="date"],
+  .exp-datebox select{
+    width:100%;
+    min-width:0;
+    max-width:220px;
+    font-size:.78rem;
+  }
+
+  .exp-filter-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .exp-filter-actions .btn{
+    width:100%;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+  }
 
   .exp-table thead{ display:none; }
-  .exp-row{ display:block; padding: .65rem .75rem; }
+
+  .exp-row{
+    display:block;
+    padding:.55rem .7rem;
+  }
+
   .exp-table td{
     display:flex;
     justify-content:space-between;
-    gap: 12px;
-    padding: .5rem 0;
-    white-space: normal;
-    max-width: none;
-    border-bottom: 1px dashed rgba(15,23,42,.08);
+    gap:10px;
+    padding:.42rem 0;
+    white-space:normal;
+    max-width:none;
+    border-bottom:1px dashed rgba(15,23,42,.08);
+    font-size:.77rem;
   }
-  .exp-table td:last-child{ border-bottom: 0; }
+
+  .exp-table td:last-child{ border-bottom:0; }
+
   .td-label{
     display:inline-block;
-    color: var(--muted);
-    font-weight: 700;
-    font-size: .82rem;
-    min-width: 34%;
+    color:var(--muted);
+    font-weight:800;
+    font-size:.73rem;
+    min-width:36%;
+    flex-shrink:0;
   }
-  .exp-amount{ text-align: left; }
+
+  .exp-amount{
+    text-align:left;
+  }
 }
 
-/* Small helpers */
-.me-1{ margin-right: 6px; }
+.me-1{ margin-right:6px; }
 </style>
 {% endblock %}
 
@@ -294,13 +381,13 @@
         <i class="fa-solid fa-truck-moving"></i>
         Transport Expenses
       </h2>
-      <div class="exp-sub">Filter by date, search fast, and open a record by clicking a row.</div>
+      <div class="exp-sub">Filter by date, vehicle, or general office expenses.</div>
     </div>
 
     <div class="exp-actions">
       <div class="exp-search" title="Search expenses">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="expenseSearch" type="search" placeholder="Search vehicle, type, desc, branch, user..." aria-label="Search expenses">
+        <input id="expenseSearch" type="search" placeholder="Search vehicle, type, desc, branch..." aria-label="Search expenses">
       </div>
 
       <span class="exp-chip" title="Visible rows">
@@ -313,36 +400,61 @@
     </div>
   </div>
 
-  <!-- ✅ DATE FILTER (GET ?date=YYYY-MM-DD) -->
-  <form method="get" class="exp-filterbar" aria-label="Filter expenses by date">
+  <form method="get" class="exp-filterbar" aria-label="Filter expenses">
     <div class="exp-filter-left">
       <span class="exp-chip" title="Current filter">
         <i class="fa-regular fa-calendar"></i>
-        {% if selected_date %}
-          Date: <strong>{{ selected_date|date:"d M Y" }}</strong>
-        {% else %}
-          Date: <strong>All</strong>
-        {% endif %}
+        Date:
+        <strong>
+          {% if selected_date %}
+            {{ selected_date|date:"d M Y" }}
+          {% else %}
+            All
+          {% endif %}
+        </strong>
       </span>
 
       <div class="exp-datebox">
         <label for="expDate">
-          <i class="fa-solid fa-calendar-day"></i> Choose
+          <i class="fa-solid fa-calendar-day"></i> Date
         </label>
         <input id="expDate" type="date" name="date" value="{{ selected_date }}" aria-label="Select date">
       </div>
+
+      <div class="exp-datebox">
+        <label for="expVehicle">
+          <i class="fa-solid fa-truck"></i> Vehicle
+        </label>
+        <select id="expVehicle" name="vehicle" aria-label="Select vehicle">
+          <option value="">All Vehicles</option>
+          {% for v in vehicles %}
+            <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
+              {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="exp-datebox">
+        <label for="expScope">
+          <i class="fa-solid fa-layer-group"></i> Type
+        </label>
+        <select id="expScope" name="scope" aria-label="Select expense scope">
+          <option value="">All Expenses</option>
+          <option value="vehicle" {% if selected_scope == "vehicle" %}selected{% endif %}>Vehicle Only</option>
+          <option value="general" {% if selected_scope == "general" %}selected{% endif %}>General Only</option>
+        </select>
+      </div>
     </div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <div class="exp-filter-actions">
       <button class="btn btn-outline-primary btn-sm" type="submit">
         <i class="fa-solid fa-filter me-1"></i> Apply
       </button>
 
-      {% if selected_date %}
-        <a class="btn btn-light btn-sm" href="{% url 'transport:expense_list' %}">
-          <i class="fa-solid fa-rotate-left me-1"></i> Clear
-        </a>
-      {% endif %}
+      <a class="btn btn-light btn-sm" href="{% url 'transport:expense_list' %}">
+        <i class="fa-solid fa-rotate-left me-1"></i> Clear
+      </a>
     </div>
   </form>
 
@@ -375,7 +487,15 @@
 
               <td data-label="Vehicle">
                 <span class="td-label">Vehicle</span>
-                <span>{{ e.vehicle|default:"—" }}</span>
+                <span>
+                  {% if e.vehicle %}
+                    {{ e.vehicle }}
+                  {% else %}
+                    <span class="general-pill">
+                      <i class="fa-solid fa-building"></i> General / Office
+                    </span>
+                  {% endif %}
+                </span>
               </td>
 
               <td data-label="Type">
@@ -412,11 +532,7 @@
       </div>
     {% else %}
       <div class="exp-empty">
-        {% if selected_date %}
-          No expenses found for <strong>{{ selected_date|date:"d M Y" }}</strong>.
-        {% else %}
-          No expenses recorded yet. Click <a href="{% url 'transport:expense_create' %}">Add Expense</a> to start.
-        {% endif %}
+        No expenses found for this filter.
       </div>
     {% endif %}
   </div>
@@ -427,7 +543,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  // Click + keyboard open row (only if data-href exists)
   document.querySelectorAll('.expense-row').forEach(function (row) {
     const href = row.dataset.href;
     if (!href) return;
@@ -444,7 +559,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Count chips
   const totalEl = document.getElementById('totalCount');
   const visibleEl = document.getElementById('visibleCount');
   const table = document.getElementById('expensesTable');
@@ -453,12 +567,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!table) return;
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     const visibleRows = rows.filter(r => r.style.display !== 'none');
-    totalEl && (totalEl.textContent = rows.length);
-    visibleEl && (visibleEl.textContent = visibleRows.length);
+    if (totalEl) totalEl.textContent = rows.length;
+    if (visibleEl) visibleEl.textContent = visibleRows.length;
   }
 
-  // Search filter (client-side)
   const searchInput = document.getElementById('expenseSearch');
+
   function applyFilter() {
     if (!table) return;
     const q = (searchInput?.value || '').trim().toLowerCase();
@@ -476,7 +590,6 @@ document.addEventListener('DOMContentLoaded', function () {
     searchInput.addEventListener('input', applyFilter);
   }
 
-  // Format amounts (keeps server formatting, but if raw number exists, ensure nice locale)
   document.querySelectorAll('.amount-badge').forEach(function (pill) {
     const raw = pill.dataset.raw;
     if (!raw) return;
@@ -484,17 +597,36 @@ document.addEventListener('DOMContentLoaded', function () {
     if (Number.isFinite(n)) {
       const amt = pill.querySelector('.amt');
       if (amt) {
-        amt.textContent = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        amt.textContent = n.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
       }
     }
   });
 
   updateCounts();
 
-  // ✅ auto-submit when date changes (optional)
   const dateInput = document.getElementById('expDate');
+  const vehicleInput = document.getElementById('expVehicle');
+  const scopeInput = document.getElementById('expScope');
+
   if (dateInput) {
     dateInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
+
+  if (vehicleInput) {
+    vehicleInput.addEventListener('change', function () {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
+
+  if (scopeInput) {
+    scopeInput.addEventListener('change', function () {
       const form = this.closest('form');
       if (form) form.submit();
     });

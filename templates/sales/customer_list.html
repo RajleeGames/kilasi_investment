@@ -3,44 +3,220 @@
 
 {% block title %}Customers{% endblock %}
 
+{% block extra_css %}
+<style>
+:root{
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:rgba(15,23,42,.08);
+  --line2:rgba(15,23,42,.05);
+  --shadow:0 10px 28px rgba(2,6,23,.06);
+  --radius:16px;
+  --blue:#0ea5e9;
+  --blue2:#0284c7;
+}
+
+.cwrap{max-width:1100px;margin:0 auto;}
+.chead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.ctitle{
+  margin:0;
+  font-size:1.15rem;
+  font-weight:900;
+  color:var(--text);
+}
+.csub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:.88rem;
+}
+.csearch{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.cinput{
+  min-width:260px;
+  height:42px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:0 12px;
+  outline:none;
+}
+.cbtn{
+  height:42px;
+  padding:0 14px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;
+  font-weight:800;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.cbtn-light{
+  background:#fff;
+  color:#0f172a;
+  border:1px solid var(--line);
+}
+.ccard{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.ccard-head{
+  padding:13px 16px;
+  border-bottom:1px solid var(--line2);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.cbadge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#eef6ff;
+  color:#075985;
+  border:1px solid #dbeafe;
+  font-size:.74rem;
+  font-weight:800;
+}
+.ctable-wrap{overflow:auto;}
+.ctable{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:760px;
+}
+.ctable thead th{
+  background:#0f172a;
+  color:#e2e8f0;
+  padding:11px 10px;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  white-space:nowrap;
+}
+.ctable tbody td{
+  padding:11px 10px;
+  border-top:1px solid var(--line2);
+  font-size:.87rem;
+  color:var(--text);
+}
+.ctable tbody tr:nth-child(even){background:#fbfdff;}
+.ctable tbody tr:hover{background:#f8fafc;}
+.cname{font-weight:800;}
+.cphone{font-weight:700;}
+.csource{
+  display:inline-flex;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#f8fafc;
+  color:#475569;
+  border:1px solid #e2e8f0;
+  font-size:.72rem;
+  font-weight:800;
+}
+.empty-row{
+  text-align:center;
+  color:var(--muted);
+  padding:20px 12px !important;
+  font-weight:700;
+}
+.pager{
+  padding:14px;
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  border-top:1px solid var(--line2);
+}
+.pager a,.pager span{
+  min-width:36px;
+  height:34px;
+  padding:0 10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  color:#0f172a;
+  background:#fff;
+  font-weight:800;
+  font-size:.84rem;
+}
+.pager .disabled{opacity:.6;pointer-events:none;}
+@media (max-width:700px){
+  .csearch{width:100%;}
+  .cinput,.cbtn,.cbtn-light{width:100%;}
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-  <div>
-    <h3 class="mb-1">Customers</h3>
-    <div class="text-muted small">Manage & review your customers list</div>
+<div class="cwrap">
+  <div class="chead">
+    <div>
+      <h3 class="ctitle">Customers</h3>
+      <div class="csub">Combined contacts from sales, genji, customers table, and other saved records</div>
+    </div>
+
+    <form method="get" class="csearch">
+      <input type="text" name="q" value="{{ query }}" class="cinput" placeholder="Search name, phone or source...">
+      <button class="cbtn">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        Search
+      </button>
+      {% if query %}
+        <a class="cbtn cbtn-light" href="{% url 'sales:customer_list' %}">Reset</a>
+      {% endif %}
+    </form>
   </div>
 
-  <form method="get" class="d-flex gap-2">
-    <input type="text" name="q" value="{{ query }}" class="form-control"
-           placeholder="Search name or phone..." style="min-width:240px;">
-    <button class="btn btn-primary"><i class="fa-solid fa-magnifying-glass me-1"></i> Search</button>
-    {% if query %}
-      <a class="btn btn-outline-secondary" href="{% url 'sales:customer_list' %}">Reset</a>
-    {% endif %}
-  </form>
-</div>
+  <div class="ccard">
+    <div class="ccard-head">
+      <strong>Customer Contacts</strong>
+      <span class="cbadge">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    </div>
 
-<div class="card shadow-sm" style="border-radius:14px;">
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
+    <div class="ctable-wrap">
+      <table class="ctable">
+        <thead>
           <tr>
             <th style="width:90px;">#</th>
             <th>Name</th>
-            <th style="width:180px;">Phone</th>
+            <th style="width:190px;">Phone</th>
+            <th style="width:220px;">Source</th>
           </tr>
         </thead>
         <tbody>
           {% for c in customers %}
             <tr>
-              <td class="text-muted">#{{ c.id }}</td>
-              <td class="fw-semibold">{{ c.name|default:"—" }}</td>
-              <td>{{ c.phone|default:"—" }}</td>
+              <td class="text-muted">#{{ forloop.counter0|add:page_obj.start_index }}</td>
+              <td class="cname">{{ c.name|default:"Customer" }}</td>
+              <td class="cphone">{{ c.phone|default:"—" }}</td>
+              <td><span class="csource">{{ c.source|default:"System" }}</span></td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="3" class="text-center py-4 text-muted">
+              <td colspan="4" class="empty-row">
                 <i class="fa-regular fa-face-frown me-1"></i> No customers found.
               </td>
             </tr>
@@ -48,28 +224,24 @@
         </tbody>
       </table>
     </div>
+
+    {% if is_paginated %}
+      <div class="pager">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+        {% else %}
+          <span class="disabled">‹ Prev</span>
+        {% endif %}
+
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
+        {% else %}
+          <span class="disabled">Next ›</span>
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 </div>
-
-{% if is_paginated %}
-  <nav class="mt-3">
-    <ul class="pagination justify-content-center mb-0">
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
-        </li>
-      {% endif %}
-
-      <li class="page-item disabled">
-        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-      </li>
-
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
-        </li>
-      {% endif %}
-    </ul>
-  </nav>
-{% endif %}
 {% endblock %}

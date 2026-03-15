@@ -76,20 +76,93 @@
     </form>
   </div>
 
-  <!-- Top stats -->
-  <div class="row g-3 mb-3">
+  <style>
+    .dash-card {
+      border: 0;
+      border-radius: 18px;
+      box-shadow: 0 .35rem 1rem rgba(0,0,0,.08);
+      height: 100%;
+      transition: .2s ease;
+    }
+    .dash-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 .6rem 1.4rem rgba(0,0,0,.12);
+    }
+    .dash-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+    .dash-title {
+      font-size: .9rem;
+      font-weight: 600;
+      color: #6c757d;
+    }
+    .dash-amount {
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .bg-soft-success { background: rgba(25,135,84,.12); color: #198754; }
+    .bg-soft-primary { background: rgba(13,110,253,.12); color: #0d6efd; }
+    .bg-soft-dark    { background: rgba(33,37,41,.10); color: #212529; }
+    .bg-soft-info    { background: rgba(13,202,240,.14); color: #0dcaf0; }
+    .bg-soft-warning { background: rgba(255,193,7,.18); color: #b58100; }
+    .bg-soft-danger  { background: rgba(220,53,69,.12); color: #dc3545; }
+    .bg-soft-purple  { background: rgba(111,66,193,.14); color: #6f42c1; }
+    .bg-soft-orange  { background: rgba(253,126,20,.14); color: #fd7e14; }
 
-    <!-- Cash Today -->
-    <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card shadow-sm border-0">
-        <div class="card-body d-flex align-items-center">
-          <i class="fa-solid fa-money-bill-wave fa-2x text-success me-3"></i>
+    .dash-card .card-footer {
+      background: transparent;
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: .85rem;
+      color: #212529;
+    }
+  </style>
+
+  <!-- ROW 1 : MAIN MONEY CARDS -->
+  <div class="row g-3 mb-4">
+
+    <!-- Total Sales Today -->
+    <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="dash-icon bg-soft-info">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
           <div>
-            <div class="fw-semibold">Cash Today</div>
-            <div class="h4 mb-0">Tsh {{ total_cash_today|floatformat:0|intcomma }}</div>
+            <div class="dash-title">Total Sales Today</div>
+            <div class="dash-amount">Tsh {{ total_today|floatformat:0|intcomma }}</div>
+            <small class="text-muted">Cash + Bank + EBT</small>
           </div>
         </div>
-        <div class="card-footer bg-transparent border-0 pt-0">
+      </div>
+    </div>
+
+    <!-- Cash Today -->
+    <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="dash-icon bg-soft-success">
+            <i class="fa-solid fa-money-bill-wave"></i>
+          </div>
+          <div>
+            <div class="dash-title">Cash Today</div>
+            <div class="dash-amount">Tsh {{ total_cash_today|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer">
           <a class="small text-decoration-none"
              href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=cash{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
              View details →
@@ -99,16 +172,18 @@
     </div>
 
     <!-- Bank Today -->
-    <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card shadow-sm border-0">
-        <div class="card-body d-flex align-items-center">
-          <i class="fa-solid fa-building-columns fa-2x text-primary me-3"></i>
+    <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="dash-icon bg-soft-primary">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
           <div>
-            <div class="fw-semibold">Bank Today</div>
-            <div class="h4 mb-0">Tsh {{ total_bank_today|floatformat:0|intcomma }}</div>
+            <div class="dash-title">Bank Today</div>
+            <div class="dash-amount">Tsh {{ total_bank_today|floatformat:0|intcomma }}</div>
           </div>
         </div>
-        <div class="card-footer bg-transparent border-0 pt-0">
+        <div class="card-footer">
           <a class="small text-decoration-none"
              href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=bank{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
              View details →
@@ -118,16 +193,19 @@
     </div>
 
     <!-- EBT Today -->
-    <div class="col-12 col-md-4 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card shadow-sm border-0">
-        <div class="card-body d-flex align-items-center">
-          <i class="fa-solid fa-credit-card fa-2x text-dark me-3"></i>
+    <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="dash-icon bg-soft-purple">
+            <i class="fa-solid fa-credit-card"></i>
+          </div>
           <div>
-            <div class="fw-semibold">EBT Today (Mobile/Transfer)</div>
-            <div class="h4 mb-0">Tsh {{ total_ebt_today|default:0|floatformat:0|intcomma }}</div>
+            <div class="dash-title">EBT Today</div>
+            <div class="dash-amount">Tsh {{ total_ebt_today|default:0|floatformat:0|intcomma }}</div>
+            <small class="text-muted">Mobile / Transfer</small>
           </div>
         </div>
-        <div class="card-footer bg-transparent border-0 pt-0">
+        <div class="card-footer">
           <a class="small text-decoration-none"
              href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=ebt{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
              View details →
@@ -135,56 +213,56 @@
         </div>
       </div>
     </div>
-
-    <!-- Total sales today -->
-    <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card shadow-sm border-0">
-        <div class="card-body d-flex align-items-center">
-          <i class="fa-solid fa-chart-line fa-2x text-info me-3"></i>
-          <div>
-            <div class="fw-semibold">Total Sales Today (Cash+Bank+EBT)</div>
-            <div class="h4 mb-0">Tsh {{ total_today|floatformat:0|intcomma }}</div>
-          </div>
-        </div>
-        <div class="card-footer bg-transparent border-0 pt-0">
-          <span class="small text-muted">Cashflow (doesn’t include debt invoices)</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Debt payments -->
-    <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card shadow-sm border-0">
-        <div class="card-body d-flex align-items-center">
-          <i class="fa-solid fa-hand-holding-dollar fa-2x text-warning me-3"></i>
-          <div>
-            <div class="fw-semibold">Debt Payments</div>
-            <div class="h4 mb-0">Tsh {{ total_debt_payments|floatformat:0|intcomma }}</div>
-          </div>
-        </div>
-        <div class="card-footer bg-transparent border-0 pt-0">
-          <a class="small text-decoration-none"
-             href="{% url 'sales:all_payments' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-             View payments →
-          </a>
-        </div>
-      </div>
-    </div>
-
   </div>
 
-  <!-- Profit cards -->
+  <!-- ROW 2 : PROFIT / EXPENSE / PAYMENTS -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-md-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
-            <div class="text-muted small">Expenses Today</div>
-            <div class="h4 mb-0">Tsh {{ expenses_today|floatformat:0|intcomma }}</div>
+
+    <!-- Profit Today -->
+    <div class="col-12 col-lg-6 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between gap-3">
+            <div>
+              <div class="dash-title">Profit Today (Selling - Buying - Expenses)</div>
+              <div class="dash-amount">Tsh {{ net_profit_today|floatformat:0|intcomma }}</div>
+
+              <div class="small text-muted mt-2">
+                Revenue: Tsh {{ revenue_today|floatformat:0|intcomma }}
+                • COGS: Tsh {{ cogs_today|floatformat:0|intcomma }}
+                • Gross: Tsh {{ gross_profit_today|floatformat:0|intcomma }}
+              </div>
+
+              <div class="small text-muted mt-1">
+                Period Net Profit: Tsh {{ net_profit_period|floatformat:0|intcomma }}
+              </div>
+
+              <div class="small text-muted mt-2">
+                Cashflow Net Today: <b>Tsh {{ net_today_cashflow|floatformat:0|intcomma }}</b><br>
+                Cashflow Overall Net: <b>Tsh {{ net_overall_cashflow|floatformat:0|intcomma }}</b>
+              </div>
+            </div>
+            <div class="dash-icon bg-soft-dark">
+              <i class="fa-solid fa-chart-pie"></i>
+            </div>
           </div>
-          <i class="fa-solid fa-receipt fa-2x text-danger"></i>
         </div>
-        <div class="card-footer bg-transparent border-0 pt-0">
+      </div>
+    </div>
+
+    <!-- Expenses Today -->
+    <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="dash-icon bg-soft-danger">
+            <i class="fa-solid fa-receipt"></i>
+          </div>
+          <div>
+            <div class="dash-title">Expenses Today</div>
+            <div class="dash-amount">Tsh {{ expenses_today|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="card-footer">
           <a class="small text-decoration-none"
              href="{% url 'sales:expense_overview' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
              Open expenses →
@@ -193,45 +271,42 @@
       </div>
     </div>
 
-    <div class="col-12 col-md-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <div class="text-muted small">Profit Today (Selling - Buying - Expenses)</div>
-              <div class="h4 mb-0">Tsh {{ net_profit_today|floatformat:0|intcomma }}</div>
-              <div class="small text-muted">
-                Revenue: Tsh {{ revenue_today|floatformat:0|intcomma }}
-                • COGS: Tsh {{ cogs_today|floatformat:0|intcomma }}
-                • Gross: Tsh {{ gross_profit_today|floatformat:0|intcomma }}
-              </div>
-              <div class="small text-muted mt-1">
-                Period Net Profit: Tsh {{ net_profit_period|floatformat:0|intcomma }}
-              </div>
-            </div>
-            <i class="fa-solid fa-chart-pie fa-2x text-dark"></i>
+    <!-- Debt Payments -->
+    <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
+      <div class="card dash-card">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="dash-icon bg-soft-warning">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
           </div>
-          <hr class="my-2">
-          <div class="small text-muted">
-            Cashflow Net Today (Cash+Bank+EBT - Expenses): <b>Tsh {{ net_today_cashflow|floatformat:0|intcomma }}</b><br>
-            Cashflow Overall Net: <b>Tsh {{ net_overall_cashflow|floatformat:0|intcomma }}</b>
+          <div>
+            <div class="dash-title">Debt Payments</div>
+            <div class="dash-amount">Tsh {{ total_debt_payments|floatformat:0|intcomma }}</div>
           </div>
+        </div>
+        <div class="card-footer">
+          <a class="small text-decoration-none"
+             href="{% url 'sales:all_payments' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+             View payments →
+          </a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Debt cards (FIXED) -->
+  <!-- ROW 3 : DEBTS -->
   <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="section-title">Debt Overview</div>
+    </div>
 
-    <!-- ✅ Outstanding Debts (count + amount) -->
-    <div class="col-12 col-md-4 col-lg-3">
+    <!-- Outstanding Debts -->
+    <div class="col-12 col-md-6 col-xl-4">
       <a class="text-decoration-none" href="{% url 'sales:outstanding_debts' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card text-white bg-dark shadow-sm border-0">
+        <div class="card dash-card text-white bg-dark">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">Unpaid Debts</div>
-              <div class="h2 mb-0">{{ num_debts|default:0 }}</div>
+              <div class="display-6 fw-bold mb-1">{{ num_debts|default:0 }}</div>
               <div class="small opacity-75">
                 Tsh {{ total_outstanding_debt|default:0|floatformat:0|intcomma }}
               </div>
@@ -242,13 +317,13 @@
       </a>
     </div>
 
-    <!-- ✅ Customer Credit (returns after paid) -->
-    <div class="col-12 col-md-4 col-lg-3">
-      <div class="card text-white bg-warning shadow-sm border-0">
+    <!-- Customer Credit -->
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="card dash-card text-white bg-warning">
         <div class="card-body d-flex align-items-center justify-content-between">
           <div>
             <div class="small opacity-75">Customer Credit (We Owe)</div>
-            <div class="h4 mb-0">
+            <div class="h3 mb-0">
               Tsh {{ total_customer_credit|default:0|floatformat:0|intcomma }}
             </div>
           </div>
@@ -257,14 +332,34 @@
       </div>
     </div>
 
+    <!-- All Transactions -->
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="card dash-card text-white bg-info">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">All Transactions</div>
+            <div class="display-6 fw-bold mb-0">{{ total_transactions|default:0 }}</div>
+          </div>
+          <i class="fa-solid fa-layer-group fa-2x opacity-75"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4 : TRANSACTION COUNTS -->
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="section-title">Transaction Types</div>
+    </div>
+
     <!-- Cash Transactions -->
-    <div class="col-12 col-md-4 col-lg-3">
+    <div class="col-12 col-md-4">
       <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card text-white bg-success shadow-sm border-0">
+        <div class="card dash-card text-white bg-success">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">Cash Transactions</div>
-              <div class="h2 mb-0">{{ num_cash_sales|default:0 }}</div>
+              <div class="display-6 fw-bold mb-0">{{ num_cash_sales|default:0 }}</div>
             </div>
             <i class="fa-solid fa-receipt fa-2x opacity-75"></i>
           </div>
@@ -273,13 +368,13 @@
     </div>
 
     <!-- Bank Transactions -->
-    <div class="col-12 col-md-4 col-lg-3">
+    <div class="col-12 col-md-4">
       <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card text-white bg-primary shadow-sm border-0">
+        <div class="card dash-card text-white bg-primary">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">Bank Transactions</div>
-              <div class="h2 mb-0">{{ num_bank_sales|default:0 }}</div>
+              <div class="display-6 fw-bold mb-0">{{ num_bank_sales|default:0 }}</div>
             </div>
             <i class="fa-solid fa-building-columns fa-2x opacity-75"></i>
           </div>
@@ -288,33 +383,19 @@
     </div>
 
     <!-- EBT Transactions -->
-    <div class="col-12 col-md-4 col-lg-3">
+    <div class="col-12 col-md-4">
       <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card text-white" style="background:#212529; box-shadow:0 .125rem .25rem rgba(0,0,0,.075)!important; border:0;">
+        <div class="card dash-card text-white" style="background:#6f42c1;">
           <div class="card-body d-flex align-items-center justify-content-between">
             <div>
               <div class="small opacity-75">EBT Transactions</div>
-              <div class="h2 mb-0">{{ num_ebt_sales|default:0 }}</div>
+              <div class="display-6 fw-bold mb-0">{{ num_ebt_sales|default:0 }}</div>
             </div>
             <i class="fa-solid fa-credit-card fa-2x opacity-75"></i>
           </div>
         </div>
       </a>
     </div>
-
-    <!-- All Transactions -->
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="card text-white bg-info shadow-sm border-0">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
-            <div class="small opacity-75">All Transactions</div>
-            <div class="h2 mb-0">{{ total_transactions|default:0 }}</div>
-          </div>
-          <i class="fa-solid fa-layer-group fa-2x opacity-75"></i>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- Recently Added Products -->
@@ -325,13 +406,13 @@
     </a>
   </div>
 
-  <ul class="list-group shadow-sm mb-2">
+  <ul class="list-group shadow-sm mb-2 rounded-4 overflow-hidden">
     {% for prod in recent_products %}
       {% with sp=prod.selling_price|default_if_none:0 %}
       {% with st=prod.branch_qty|default_if_none:prod.stock|default_if_none:0 %}
       {% with rl=prod.reorder_level|default_if_none:0 %}
 
-      <li class="list-group-item d-flex justify-content-between align-items-center">
+      <li class="list-group-item d-flex justify-content-between align-items-center py-3">
         <div class="d-flex align-items-center gap-3">
           <i class="fa-solid fa-box text-primary"></i>
           <div>
@@ -344,7 +425,7 @@
           </div>
         </div>
         <div class="text-end">
-          <div>Tsh {{ sp|floatformat:0|intcomma }}</div>
+          <div class="fw-semibold">Tsh {{ sp|floatformat:0|intcomma }}</div>
           <span class="badge {% if st|add:0 > rl|add:0 %}bg-success{% else %}bg-danger{% endif %}">
             {{ st|default:0 }}
           </span>
