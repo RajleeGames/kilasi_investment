@@ -1,135 +1,578 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Wanaodai (Debtors){% endblock %}
+{% block title %}Wanaodai (Debtors) — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --db-card:#ffffff;
+    --db-text:#0f172a;
+    --db-muted:#64748b;
+    --db-line:#e2e8f0;
+    --db-line-soft:#eef2f7;
+    --db-primary:#2563eb;
+    --db-primary-soft:rgba(37,99,235,.08);
+    --db-success:#16a34a;
+    --db-danger:#dc2626;
+    --db-dark:#334155;
+    --db-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .db-wrap{
+    max-width:1140px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--db-text);
+  }
+
+  .db-hero,
+  .db-search-card,
+  .db-stat,
+  .db-table-card,
+  .db-mobile-card{
+    background:var(--db-card);
+    border:1px solid var(--db-line);
+    border-radius:20px;
+    box-shadow:var(--db-shadow);
+  }
+
+  .db-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .db-hero-top,
+  .db-table-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .db-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .db-sub{
+    font-size:.75rem;
+    color:var(--db-muted);
+    margin:.22rem 0 0;
+  }
+
+  .db-btn,
+  .db-btn-light,
+  .db-btn-dark,
+  .db-btn-danger{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:38px;
+    padding:0 .9rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.75rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .db-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+  .db-btn:hover{ color:#fff; transform:translateY(-1px); }
+
+  .db-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--db-line);
+  }
+
+  .db-btn-dark{
+    background:#fff;
+    color:#0f172a;
+    border:1px solid var(--db-line);
+  }
+
+  .db-btn-danger{
+    background:#fff;
+    color:var(--db-danger);
+    border:1px solid rgba(220,38,38,.18);
+  }
+
+  .db-search-card,
+  .db-table-card{
+    overflow:hidden;
+    margin-bottom:1rem;
+  }
+
+  .db-search-body,
+  .db-table-body{
+    padding:1rem;
+  }
+
+  .db-search-wrap{
+    position:relative;
+  }
+
+  .db-search-icon{
+    position:absolute;
+    left:.78rem;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:.78rem;
+    color:#94a3b8;
+    pointer-events:none;
+  }
+
+  .db-input{
+    width:100%;
+    height:40px;
+    border-radius:12px;
+    border:1px solid var(--db-line);
+    background:#fff;
+    color:var(--db-text);
+    font-size:.78rem;
+    padding:0 .85rem 0 2.15rem;
+    box-shadow:none !important;
+  }
+
+  .db-input:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .db-stat{
+    padding:.95rem;
+    height:100%;
+  }
+
+  .db-stat-row{
+    display:flex;
+    align-items:center;
+    gap:.8rem;
+  }
+
+  .db-stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  .db-stat-icon.primary{ background:rgba(37,99,235,.10); color:var(--db-primary); }
+  .db-stat-icon.success{ background:rgba(22,163,74,.10); color:var(--db-success); }
+  .db-stat-icon.dark{ background:rgba(51,65,85,.10); color:var(--db-dark); }
+
+  .db-stat-label{
+    color:var(--db-muted);
+    font-size:.72rem;
+    margin-bottom:.08rem;
+  }
+
+  .db-stat-value{
+    font-size:1.16rem;
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .db-mobile-card{
+    padding:.95rem;
+    margin-bottom:.8rem;
+  }
+
+  .db-mobile-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.7rem;
+  }
+
+  .db-name{
+    font-weight:700;
+    font-size:.82rem;
+    line-height:1.2;
+  }
+
+  .db-meta{
+    font-size:.7rem;
+    color:var(--db-muted);
+    margin-top:.15rem;
+  }
+
+  .db-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.3rem .56rem;
+    border-radius:999px;
+    font-size:.7rem;
+    font-weight:700;
+    border:1px solid transparent;
+    text-transform:uppercase;
+  }
+
+  .db-badge.active{
+    background:rgba(22,163,74,.10);
+    color:var(--db-success);
+    border-color:rgba(22,163,74,.14);
+  }
+
+  .db-badge.closed{
+    background:rgba(51,65,85,.10);
+    color:var(--db-dark);
+    border-color:rgba(51,65,85,.14);
+  }
+
+  .db-mini-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:.7rem;
+    margin-top:.8rem;
+  }
+
+  .db-mini-box{
+    background:#f8fafc;
+    border:1px solid var(--db-line-soft);
+    border-radius:14px;
+    padding:.7rem .75rem;
+  }
+
+  .db-mini-label{
+    color:var(--db-muted);
+    font-size:.68rem;
+    margin-bottom:.12rem;
+  }
+
+  .db-mini-value{
+    font-size:.8rem;
+    font-weight:700;
+  }
+
+  .db-balance{
+    font-size:1rem;
+    font-weight:800;
+  }
+
+  .db-actions{
+    display:flex;
+    gap:.5rem;
+    flex-wrap:wrap;
+    margin-top:.9rem;
+  }
+
+  .db-table-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--db-line-soft);
+  }
+
+  .db-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .db-table-note{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid var(--db-line);
+  }
+
+  .db-table-wrap{
+    overflow:auto;
+  }
+
+  .db-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:980px;
+    margin:0;
+  }
+
+  .db-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    padding:.82rem .95rem;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    white-space:nowrap;
+    border-bottom:1px solid var(--db-line);
+  }
+
+  .db-table tbody td{
+    padding:.82rem .95rem;
+    border-top:1px solid var(--db-line-soft);
+    font-size:.79rem;
+    color:var(--db-text);
+    vertical-align:middle;
+  }
+
+  .db-table tbody tr:nth-child(even){
+    background:#fbfdff;
+  }
+
+  .db-table tbody tr:hover{
+    background:#f8fafc;
+  }
+
+  .db-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:700;
+  }
+
+  .db-empty{
+    background:#fff;
+    border:1px dashed var(--db-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--db-muted);
+    margin:1rem;
+  }
+
+  .db-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .db-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--db-text);
+    margin-bottom:.12rem;
+  }
+
+  .db-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  .db-pager{
+    padding:.95rem 1rem;
+    border-top:1px solid var(--db-line-soft);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .db-pager small{
+    color:var(--db-muted);
+    font-size:.72rem;
+  }
+
+  @media(max-width:768px){
+    .db-wrap{ padding:0 .7rem; }
+    .db-hero,
+    .db-search-body,
+    .db-table-body{ padding:.9rem; }
+    .db-table-head{ padding:.9rem; }
+    .db-btn,
+    .db-btn-light,
+    .db-btn-dark,
+    .db-btn-danger{ width:100%; }
+    .db-actions{ flex-direction:column; }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width:1100px;">
+<div class="db-wrap">
 
-  <!-- Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h4 class="mb-0">Wanaodai (Debtors)</h4>
-      <small class="text-muted">Admin only • Add people who owe money manually</small>
+  <div class="db-hero">
+    <div class="db-hero-top">
+      <div>
+        <h2 class="db-title">
+          <i class="fa-solid fa-users text-primary"></i>
+          Wanaodai (Debtors)
+        </h2>
+        <div class="db-sub">
+          Admin only • Add people who owe money manually
+        </div>
+      </div>
+
+      <a href="{% url 'sales:debtor_create' %}" class="db-btn">
+        <i class="fa-solid fa-plus"></i>
+        Add Debtor
+      </a>
     </div>
-    <a href="{% url 'sales:debtor_create' %}" class="btn btn-primary">
-      <i class="fa-solid fa-plus me-1"></i> Add Debtor
-    </a>
   </div>
 
-  <!-- Search -->
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body">
-      <form method="get" class="row g-2 align-items-center">
+  <div class="db-search-card">
+    <div class="db-search-body">
+      <form method="get" class="row g-3 align-items-center">
         <div class="col-lg-8">
-          <div class="input-group">
-            <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
-            <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by name...">
+          <div class="db-search-wrap">
+            <i class="fa-solid fa-magnifying-glass db-search-icon"></i>
+            <input type="text" name="q" value="{{ query }}" class="db-input" placeholder="Search by name...">
           </div>
         </div>
         <div class="col-lg-4 d-flex gap-2">
-          <button class="btn btn-outline-primary w-100" type="submit">Search</button>
-          <a class="btn btn-outline-secondary w-100" href="{% url 'sales:debtor_list' %}">Clear</a>
+          <button class="db-btn w-100" type="submit">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Search
+          </button>
+          <a class="db-btn-light w-100" href="{% url 'sales:debtor_list' %}">
+            <i class="fa-solid fa-rotate-left"></i>
+            Clear
+          </a>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Summary (clean mobile) -->
   <div class="row g-3 mb-3">
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Total Active Owed (Balance)</div>
-          <div class="h4 mb-0 fw-bold">
-            TZS {{ total_owed|floatformat:2|intcomma }}
+      <div class="db-stat">
+        <div class="db-stat-row">
+          <div class="db-stat-icon primary">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+          <div>
+            <div class="db-stat-label">Total Active Owed (Balance)</div>
+            <div class="db-stat-value">TZS {{ total_owed|floatformat:2|intcomma }}</div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Active Debtors</div>
-          <div class="h4 mb-0 fw-bold">{{ active_count|default:"0" }}</div>
+      <div class="db-stat">
+        <div class="db-stat-row">
+          <div class="db-stat-icon success">
+            <i class="fa-solid fa-user-check"></i>
+          </div>
+          <div>
+            <div class="db-stat-label">Active Debtors</div>
+            <div class="db-stat-value">{{ active_count|default:"0" }}</div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Closed Debtors</div>
-          <div class="h4 mb-0 fw-bold">{{ closed_count|default:"0" }}</div>
+      <div class="db-stat">
+        <div class="db-stat-row">
+          <div class="db-stat-icon dark">
+            <i class="fa-solid fa-user-lock"></i>
+          </div>
+          <div>
+            <div class="db-stat-label">Closed Debtors</div>
+            <div class="db-stat-value">{{ closed_count|default:"0" }}</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MOBILE: cards -->
+  <!-- MOBILE -->
   <div class="d-md-none">
-    <div class="d-flex flex-column gap-2">
-      {% for d in debtors %}
-        <div class="card border-0 shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div class="min-w-0">
-                <div class="fw-bold text-truncate">{{ d.obj.name }}</div>
-                <div class="text-muted small">
-                  {{ d.obj.phone|default:"—" }} • {{ d.obj.location|default:"—" }}
-                </div>
-              </div>
-              <div>
-                {% if d.obj.is_active %}
-                  <span class="badge bg-success">Active</span>
-                {% else %}
-                  <span class="badge bg-secondary">Closed</span>
-                {% endif %}
-              </div>
-            </div>
-
-            <hr class="my-2">
-
-            <div class="row g-2 small">
-              <div class="col-6">
-                <div class="text-muted">Owed</div>
-                <div class="fw-bold">TZS {{ d.obj.amount_owed|floatformat:2|intcomma }}</div>
-              </div>
-              <div class="col-6 text-end">
-                <div class="text-muted">Paid</div>
-                <div class="fw-bold">TZS {{ d.paid|floatformat:2|intcomma }}</div>
-              </div>
-              <div class="col-12">
-                <div class="text-muted">Balance</div>
-                <div class="fw-bold fs-5">TZS {{ d.balance|floatformat:2|intcomma }}</div>
-              </div>
-            </div>
-
-            <div class="d-flex gap-2 flex-wrap mt-3">
-              <a href="{% url 'sales:debtor_detail' d.obj.id %}" class="btn btn-sm btn-outline-dark w-100">
-                <i class="fa-solid fa-eye me-1"></i> View
-              </a>
-              <a href="{% url 'sales:debtor_update' d.obj.id %}" class="btn btn-sm btn-outline-primary w-100">
-                <i class="fa-solid fa-pen me-1"></i> Edit
-              </a>
-              <a href="{% url 'sales:debtor_delete' d.obj.id %}" class="btn btn-sm btn-outline-danger w-100">
-                <i class="fa-solid fa-trash me-1"></i> Delete
-              </a>
+    {% for d in debtors %}
+      <div class="db-mobile-card">
+        <div class="db-mobile-top">
+          <div class="min-w-0">
+            <div class="db-name">{{ d.obj.name }}</div>
+            <div class="db-meta">
+              {{ d.obj.phone|default:"—" }} • {{ d.obj.location|default:"—" }}
             </div>
           </div>
+
+          {% if d.obj.is_active %}
+            <span class="db-badge active">Active</span>
+          {% else %}
+            <span class="db-badge closed">Closed</span>
+          {% endif %}
         </div>
-      {% empty %}
-        <div class="text-center text-muted py-4">No debtors found.</div>
-      {% endfor %}
-    </div>
+
+        <div class="db-mini-grid">
+          <div class="db-mini-box">
+            <div class="db-mini-label">Owed</div>
+            <div class="db-mini-value">TZS {{ d.obj.amount_owed|floatformat:2|intcomma }}</div>
+          </div>
+
+          <div class="db-mini-box">
+            <div class="db-mini-label">Paid</div>
+            <div class="db-mini-value">TZS {{ d.paid|floatformat:2|intcomma }}</div>
+          </div>
+
+          <div class="db-mini-box" style="grid-column:1 / -1;">
+            <div class="db-mini-label">Balance</div>
+            <div class="db-balance">TZS {{ d.balance|floatformat:2|intcomma }}</div>
+          </div>
+        </div>
+
+        <div class="db-actions">
+          <a href="{% url 'sales:debtor_detail' d.obj.id %}" class="db-btn-dark">
+            <i class="fa-solid fa-eye"></i>
+            View
+          </a>
+          <a href="{% url 'sales:debtor_update' d.obj.id %}" class="db-btn-light">
+            <i class="fa-solid fa-pen"></i>
+            Edit
+          </a>
+          <a href="{% url 'sales:debtor_delete' d.obj.id %}" class="db-btn-danger">
+            <i class="fa-solid fa-trash"></i>
+            Delete
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="db-empty">
+        <i class="fa-regular fa-face-frown"></i>
+        <h6>No debtors found</h6>
+        <p>Try another search or add a new debtor.</p>
+      </div>
+    {% endfor %}
   </div>
 
-  <!-- DESKTOP: table -->
+  <!-- DESKTOP -->
   <div class="d-none d-md-block">
-    <div class="card border-0 shadow-sm overflow-hidden">
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead class="table-light">
+    <div class="db-table-card">
+      <div class="db-table-head">
+        <h3 class="db-table-title">
+          <i class="fa-solid fa-list"></i>
+          Debtors List
+        </h3>
+        <div class="db-table-note">
+          <i class="fa-solid fa-file-lines"></i>
+          Admin records
+        </div>
+      </div>
+
+      {% if debtors %}
+      <div class="db-table-wrap">
+        <table class="db-table">
+          <thead>
             <tr>
               <th>Name</th>
               <th>Phone</th>
@@ -147,55 +590,61 @@
               <td class="fw-semibold">{{ d.obj.name }}</td>
               <td>{{ d.obj.phone|default:"—" }}</td>
               <td>{{ d.obj.location|default:"—" }}</td>
-
-              <td class="text-end fw-bold">TZS {{ d.obj.amount_owed|floatformat:2|intcomma }}</td>
-              <td class="text-end">TZS {{ d.paid|floatformat:2|intcomma }}</td>
-              <td class="text-end fw-bold">TZS {{ d.balance|floatformat:2|intcomma }}</td>
-
+              <td class="text-end db-money">TZS {{ d.obj.amount_owed|floatformat:2|intcomma }}</td>
+              <td class="text-end db-money">TZS {{ d.paid|floatformat:2|intcomma }}</td>
+              <td class="text-end db-money">TZS {{ d.balance|floatformat:2|intcomma }}</td>
               <td>
                 {% if d.obj.is_active %}
-                  <span class="badge bg-success">Active</span>
+                  <span class="db-badge active">Active</span>
                 {% else %}
-                  <span class="badge bg-secondary">Closed</span>
+                  <span class="db-badge closed">Closed</span>
                 {% endif %}
               </td>
-
-              <td class="d-flex flex-wrap gap-2">
-                <a href="{% url 'sales:debtor_detail' d.obj.id %}" class="btn btn-sm btn-outline-dark">
-                  <i class="fa-solid fa-eye me-1"></i> View
-                </a>
-                <a href="{% url 'sales:debtor_update' d.obj.id %}" class="btn btn-sm btn-outline-primary">
-                  <i class="fa-solid fa-pen me-1"></i> Edit
-                </a>
-                <a href="{% url 'sales:debtor_delete' d.obj.id %}" class="btn btn-sm btn-outline-danger">
-                  <i class="fa-solid fa-trash me-1"></i> Delete
-                </a>
+              <td>
+                <div class="d-flex flex-wrap gap-2">
+                  <a href="{% url 'sales:debtor_detail' d.obj.id %}" class="db-btn-dark">
+                    <i class="fa-solid fa-eye"></i>
+                    View
+                  </a>
+                  <a href="{% url 'sales:debtor_update' d.obj.id %}" class="db-btn-light">
+                    <i class="fa-solid fa-pen"></i>
+                    Edit
+                  </a>
+                  <a href="{% url 'sales:debtor_delete' d.obj.id %}" class="db-btn-danger">
+                    <i class="fa-solid fa-trash"></i>
+                    Delete
+                  </a>
+                </div>
               </td>
             </tr>
-            {% empty %}
-              <tr><td colspan="8" class="text-center text-muted py-4">No debtors found.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+      {% else %}
+      <div class="db-empty">
+        <i class="fa-regular fa-face-frown"></i>
+        <h6>No debtors found</h6>
+        <p>Try another search or add a new debtor.</p>
+      </div>
+      {% endif %}
 
       {% if page_obj %}
-      <div class="card-footer bg-white">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
-          <div class="d-flex gap-2">
-            {% if page_obj.has_previous %}
-              <a class="btn btn-sm btn-outline-secondary" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Prev</a>
-            {% else %}
-              <button class="btn btn-sm btn-outline-secondary" disabled>Prev</button>
-            {% endif %}
+      <div class="db-pager">
+        <small>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
 
-            {% if page_obj.has_next %}
-              <a class="btn btn-sm btn-outline-secondary" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
-            {% else %}
-              <button class="btn btn-sm btn-outline-secondary" disabled>Next</button>
-            {% endif %}
-          </div>
+        <div class="d-flex gap-2">
+          {% if page_obj.has_previous %}
+            <a class="db-btn-light" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Prev</a>
+          {% else %}
+            <button class="db-btn-light" disabled>Prev</button>
+          {% endif %}
+
+          {% if page_obj.has_next %}
+            <a class="db-btn-light" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
+          {% else %}
+            <button class="db-btn-light" disabled>Next</button>
+          {% endif %}
         </div>
       </div>
       {% endif %}

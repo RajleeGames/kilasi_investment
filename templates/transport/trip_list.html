@@ -5,499 +5,506 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --border:rgba(15,23,42,.08);
-  --border2:rgba(15,23,42,.06);
-  --shadow:0 10px 24px rgba(2,6,23,.06);
-  --shadow2:0 8px 18px rgba(2,6,23,.05);
-  --radius:14px;
-  --accent:#0ea5e9;
-  --focus:rgba(14,165,233,.22);
-  --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-}
-
-.trip-card{
-  max-width:1120px;
-  margin:12px auto;
-  background:var(--card);
-  border-radius:var(--radius);
-  padding:12px;
-  border:1px solid var(--border2);
-  box-shadow:var(--shadow);
-  box-sizing:border-box;
-  font-family:var(--font);
-  color:var(--text);
-}
-
-.trip-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-  padding:2px 2px 10px 2px;
-}
-.trip-title{
-  margin:0;
-  font-size:.98rem;
-  font-weight:900;
-  letter-spacing:.1px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.trip-sub{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:.78rem;
-  font-weight:700;
-}
-.trip-actions{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.trip-search{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:250px;
-  padding:7px 10px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:#fff;
-  box-shadow:0 6px 14px rgba(2,6,23,.04);
-}
-.trip-search i{ color:var(--muted); font-size:.8rem; }
-.trip-search input{
-  width:100%;
-  border:none;
-  outline:none;
-  font-size:.82rem;
-  font-weight:700;
-  background:transparent;
-}
-.trip-search input::placeholder{ color:#94a3b8; }
-
-.trip-chip{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  background:#fff;
-  color:var(--muted);
-  font-size:.76rem;
-  font-weight:700;
-  user-select:none;
-}
-.trip-chip strong{
-  color:var(--text);
-  font-weight:900;
-  font-family:var(--mono);
-  font-variant-numeric:tabular-nums;
-}
-
-.trip-filterbar{
-  width:100%;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  justify-content:space-between;
-  padding:10px;
-  border-radius:14px;
-  border:1px solid var(--border2);
-  background:linear-gradient(180deg,#ffffff,#fbfdff);
-  box-shadow:0 8px 18px rgba(2,6,23,.04);
-}
-.trip-filter-left{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.trip-datebox{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:7px 10px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:#fff;
-}
-.trip-datebox label{
-  margin:0;
-  font-weight:800;
-  font-size:.75rem;
-  color:#334155;
-  display:flex;
-  gap:6px;
-  align-items:center;
-  white-space:nowrap;
-}
-.trip-datebox input[type="date"],
-.trip-datebox select{
-  border:none;
-  outline:none;
-  background:transparent;
-  font-weight:800;
-  font-size:.8rem;
-  color:#0f172a;
-  min-width:130px;
-}
-
-.trip-filter-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-.trip-filter-actions .btn,
-.trip-actions .btn{
-  font-size:.78rem;
-  font-weight:800;
-  border-radius:10px;
-  padding:.48rem .72rem;
-}
-
-.trip-table-wrap{ padding-top:6px; }
-
-.trip-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0 8px;
-}
-.trip-table thead th{
-  padding:.55rem .75rem;
-  font-size:.68rem;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  color:#475569;
-  border:0;
-  background:transparent;
-  font-weight:900;
-}
-
-.trip-row{
-  background:#fff;
-  border:1px solid var(--border2);
-  border-radius:12px;
-  box-shadow:var(--shadow2);
-  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-.trip-row:hover{
-  transform:translateY(-1px);
-  box-shadow:0 12px 22px rgba(2,6,23,.08);
-  border-color:rgba(14,165,233,.18);
-}
-.trip-row.trip-clickable{ cursor:pointer; }
-.trip-row:focus,
-.trip-row:focus-within{
-  outline:3px solid var(--focus);
-  outline-offset:2px;
-}
-
-.trip-table td{
-  padding:.62rem .75rem;
-  border:0;
-  vertical-align:middle;
-  font-size:.82rem;
-  color:var(--text);
-  max-width:260px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.trip-date{
-  font-family:var(--mono);
-  font-size:.76rem;
-  color:#0b1220;
-}
-.trip-muted{ color:var(--muted); }
-.trip-phone{
-  font-weight:800;
-  color:#0369a1;
-}
-
-.trip-amount{
-  text-align:right;
-  font-weight:900;
-  font-family:var(--mono);
-  font-variant-numeric:tabular-nums;
-}
-.amount-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:5px 9px;
-  border-radius:999px;
-  border:1px solid rgba(14,165,233,.20);
-  background:rgba(14,165,233,.10);
-  color:#075985;
-}
-.amount-pill .tzs{
-  font-size:.72rem;
-  font-weight:900;
-  opacity:.9;
-}
-
-.trip-empty{
-  padding:16px;
-  text-align:center;
-  color:var(--muted);
-  font-size:.8rem;
-  font-weight:700;
-  background:linear-gradient(180deg,#fbfdff,#fff);
-  border-radius:12px;
-  border:1px dashed rgba(15,23,42,.14);
-}
-
-.td-label{ display:none; }
-
-@media (max-width: 991.98px){
-  .trip-head{
-    flex-direction:column;
-    align-items:flex-start;
+  .trips-page{
+    max-width: 1120px;
+    margin: 0 auto;
   }
 
-  .trip-actions{
-    justify-content:flex-start;
-    width:100%;
+  .trips-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
   }
 
-  .trip-search{
-    min-width:100%;
+  .trips-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
   }
 
-  .trip-filterbar{
-    justify-content:flex-start;
-    padding:8px;
+  .trips-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
   }
 
-  .trip-filter-left{
-    width:100%;
-    display:grid;
-    grid-template-columns:1fr;
-    gap:8px;
+  .trips-hero-actions{
+    display:flex;
+    gap:.7rem;
+    align-items:center;
+    flex-wrap:wrap;
   }
 
-  .trip-datebox{
-    width:100%;
-    justify-content:space-between;
-  }
-
-  .trip-datebox input[type="date"],
-  .trip-datebox select{
-    width:100%;
-    min-width:0;
-    max-width:220px;
+  .trips-add-btn{
+    border-radius:12px;
     font-size:.78rem;
+    font-weight:700;
+    padding:.65rem .95rem;
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
   }
 
-  .trip-filter-actions{
-    width:100%;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-
-  .trip-filter-actions .btn{
-    width:100%;
-    justify-content:center;
+  .trips-chip{
     display:inline-flex;
     align-items:center;
+    gap:.4rem;
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.45rem .72rem;
+    font-weight:700;
+    white-space:nowrap;
   }
 
-  .trip-table thead{ display:none; }
-
-  .trip-row{
-    display:block;
-    padding:.55rem .7rem;
+  .trips-chip strong{
+    color:#0f172a;
+    font-weight:800;
   }
 
-  .trip-table td{
+  .trips-filter-card,
+  .trips-table-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .trips-filter-card{
+    margin-bottom:1rem;
+  }
+
+  .trips-filter-body{
+    padding:1rem;
+  }
+
+  .trips-filter-card .form-control,
+  .trips-filter-card .form-select,
+  .trips-filter-card .btn{
+    min-height:42px;
+    border-radius:12px;
+    font-size:.79rem;
+  }
+
+  .trips-filter-card .btn{
+    font-weight:700;
+  }
+
+  .trips-search-wrap{
+    position:relative;
+  }
+
+  .trips-search-icon{
+    position:absolute;
+    left:.85rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:.78rem;
+    pointer-events:none;
+  }
+
+  .trips-search{
+    padding-left:2.25rem;
+  }
+
+  .trips-current-filter{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    padding:.7rem .8rem;
+    font-weight:700;
+  }
+
+  .trips-current-filter strong{
+    color:#0f172a;
+  }
+
+  .trips-table-head{
     display:flex;
+    align-items:center;
     justify-content:space-between;
-    gap:10px;
-    padding:.42rem 0;
-    white-space:normal;
-    max-width:none;
-    border-bottom:1px dashed rgba(15,23,42,.08);
+    gap:.8rem;
+    padding:.9rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    flex-wrap:wrap;
+  }
+
+  .trips-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .trips-table-note{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.35rem .65rem;
+    font-weight:700;
+  }
+
+  .trips-table{
+    margin:0;
+    width:100%;
+  }
+
+  .trips-table thead th{
+    font-size:.70rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#64748b;
+    background:#f8fafc;
+    border-bottom:1px solid #e2e8f0;
+    white-space:nowrap;
+    padding:.85rem .9rem;
+  }
+
+  .trips-table tbody td{
+    font-size:.79rem;
+    color:#0f172a;
+    vertical-align:middle;
+    padding:.82rem .9rem;
+    border-top:1px solid #eef2f7;
+  }
+
+  .trips-table tbody tr{
+    transition:background .16s ease;
+  }
+
+  .trips-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .trip-row-link{
+    cursor:pointer;
+  }
+
+  .trip-row-link:focus,
+  .trip-row-link:focus-within{
+    outline:3px solid rgba(37,99,235,.14);
+    outline-offset:-3px;
+  }
+
+  .trip-date{
+    font-size:.76rem;
+    font-weight:700;
+    color:#334155;
+  }
+
+  .trip-phone{
+    color:#0369a1;
+    font-weight:700;
     font-size:.77rem;
   }
-  .trip-table td:last-child{ border-bottom:0; }
 
-  .td-label{
-    display:inline-block;
-    color:var(--muted);
-    font-weight:800;
-    font-size:.73rem;
-    min-width:36%;
-    flex-shrink:0;
+  .trip-muted{
+    color:#64748b;
+    font-size:.77rem;
   }
 
-  .trip-amount{ text-align:left; }
-}
+  .trip-amount{
+    text-align:right;
+  }
 
-.me-1{ margin-right:6px; }
+  .amount-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.35rem .6rem;
+    border-radius:999px;
+    border:1px solid rgba(14,165,233,.20);
+    background:rgba(14,165,233,.10);
+    color:#075985;
+    font-size:.71rem;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+
+  .amount-pill .tzs{
+    font-size:.68rem;
+    opacity:.9;
+  }
+
+  .trip-empty{
+    text-align:center;
+    padding:2rem 1rem;
+    color:#64748b;
+    font-size:.8rem;
+    background:#fff;
+  }
+
+  .trip-empty i{
+    display:block;
+    font-size:1.15rem;
+    margin-bottom:.45rem;
+    color:#94a3b8;
+  }
+
+  .td-label{
+    display:none;
+  }
+
+  @media (max-width: 991.98px){
+    .trips-hero{
+      padding:.9rem;
+    }
+
+    .trips-title{
+      font-size:.98rem;
+    }
+
+    .trips-subtitle{
+      font-size:.73rem;
+    }
+
+    .trips-filter-body{
+      padding:.85rem;
+    }
+
+    .trips-hero-actions{
+      width:100%;
+    }
+
+    .trips-search{
+      width:100%;
+    }
+
+    .trips-chip{
+      width:100%;
+      justify-content:center;
+    }
+
+    .trips-add-btn{
+      width:100%;
+      justify-content:center;
+    }
+
+    .trips-table thead{
+      display:none;
+    }
+
+    .trips-table,
+    .trips-table tbody,
+    .trips-table tr,
+    .trips-table td{
+      display:block;
+      width:100%;
+    }
+
+    .trips-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.3rem 0;
+    }
+
+    .trips-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .85rem;
+      white-space:normal;
+    }
+
+    .trips-table tbody td::before{
+      content:attr(data-label);
+      min-width:92px;
+      font-size:.67rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:#64748b;
+    }
+
+    .trip-amount{
+      text-align:left;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="trip-card">
-  <div class="trip-head">
-    <div>
-      <h1 class="trip-title">
-        <i class="fa-solid fa-road"></i>
-        Trips
-      </h1>
-      <div class="trip-sub">Filter by date and vehicle, then search quickly.</div>
-    </div>
+<div class="trips-page">
 
-    <div class="trip-actions">
-      <div class="trip-search" title="Search trips">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="tripSearch" type="search" placeholder="Search vehicle, driver, phone, from, to..." aria-label="Search trips">
+  <div class="trips-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h3 class="trips-title">
+          <i class="fa-solid fa-road text-primary"></i>
+          Trips
+        </h3>
+        <div class="trips-subtitle">
+          Filter by date and vehicle, then search trips quickly.
+        </div>
       </div>
 
-      <span class="trip-chip" title="Visible rows">
-        Showing <strong id="visibleTrips">0</strong> / <strong id="totalTrips">0</strong>
-      </span>
+      <div class="trips-hero-actions">
+        <span class="trips-chip" title="Visible rows">
+          Showing <strong id="visibleTrips">0</strong> / <strong id="totalTrips">0</strong>
+        </span>
 
-      <a href="{% url 'transport:trip_create' %}" class="btn btn-primary">
-        <i class="fa-solid fa-plus me-1"></i> Record Trip
-      </a>
+        <a href="{% url 'transport:trip_create' %}" class="btn btn-primary trips-add-btn">
+          <i class="fa-solid fa-plus me-1"></i> Record Trip
+        </a>
+      </div>
     </div>
   </div>
 
-  <form method="get" class="trip-filterbar" aria-label="Filter trips">
-    <div class="trip-filter-left">
-      <span class="trip-chip" title="Current filter">
-        <i class="fa-regular fa-calendar"></i>
-        Date:
-        <strong>
-          {% if selected_date %}
-            {{ selected_date|date:"d M Y" }}
-          {% else %}
-            All
-          {% endif %}
-        </strong>
-      </span>
+  <div class="trips-filter-card">
+    <div class="trips-filter-body">
+      <form method="get" aria-label="Filter trips">
+        <div class="row g-2">
+          <div class="col-12">
+            <div class="trips-search-wrap">
+              <i class="fa-solid fa-magnifying-glass trips-search-icon"></i>
+              <input id="tripSearch" type="search" class="form-control trips-search"
+                     placeholder="Search vehicle, driver, phone, from, to..."
+                     aria-label="Search trips">
+            </div>
+          </div>
 
-      <div class="trip-datebox">
-        <label for="tripDate">
-          <i class="fa-solid fa-calendar-day"></i> Date
-        </label>
-        <input id="tripDate" type="date" name="date" value="{{ selected_date }}" aria-label="Select date">
+          <div class="col-md-4">
+            <input id="tripDate" type="date" name="date" value="{{ selected_date }}" class="form-control" aria-label="Select date">
+          </div>
+
+          <div class="col-md-4">
+            <select id="tripVehicle" name="vehicle" class="form-select" aria-label="Select vehicle">
+              <option value="">All Vehicles</option>
+              {% for v in vehicles %}
+                <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
+                  {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4 d-flex gap-2">
+            <button class="btn btn-outline-primary flex-fill" type="submit">
+              <i class="fa-solid fa-filter me-1"></i> Apply
+            </button>
+
+            <a class="btn btn-light flex-fill" href="{% url 'transport:trip_list' %}">
+              <i class="fa-solid fa-rotate-left me-1"></i> Clear
+            </a>
+          </div>
+
+          <div class="col-12">
+            <div class="trips-current-filter">
+              Date:
+              <strong>
+                {% if selected_date %}
+                  {{ selected_date|date:"d M Y" }}
+                {% else %}
+                  All
+                {% endif %}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="trips-table-card">
+    <div class="trips-table-head">
+      <h4 class="trips-table-title">
+        <i class="fa-solid fa-list-ul text-primary"></i>
+        Trip List
+      </h4>
+      <div class="trips-table-note">Transport trip overview</div>
+    </div>
+
+    {% if trips %}
+      <div class="table-responsive" role="region" aria-label="Trips list">
+        <table class="table trips-table align-middle mb-0" id="tripsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>Driver</th>
+              <th>Customer Phone</th>
+              <th>From</th>
+              <th>To</th>
+              <th class="text-end">Amount</th>
+              <th>Branch</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for t in trips %}
+            <tr class="trip-row-link trip-row-js"
+                {% if t.get_absolute_url %}data-href="{{ t.get_absolute_url }}"{% endif %}
+                tabindex="0"
+                aria-label="Trip row">
+              <td data-label="Date">
+                <span class="trip-date">{{ t.trip_date|date:"d M Y" }}</span>
+              </td>
+
+              <td data-label="Vehicle">
+                <span>{{ t.vehicle|default:"—" }}</span>
+              </td>
+
+              <td data-label="Driver">
+                <span class="trip-muted">{{ t.driver|default:"—" }}</span>
+              </td>
+
+              <td data-label="Customer Phone">
+                <span class="trip-phone">{{ t.customer_phone|default:"—" }}</span>
+              </td>
+
+              <td data-label="From">
+                <span class="trip-muted">{{ t.origin|default:"—" }}</span>
+              </td>
+
+              <td data-label="To">
+                <span class="trip-muted">{{ t.destination|default:"—" }}</span>
+              </td>
+
+              <td data-label="Amount" class="trip-amount">
+                <span class="amount-pill amount-badge" data-raw="{{ t.amount_charged }}">
+                  <span class="tzs">TZS</span>
+                  <span class="amt">{{ t.amount_charged|floatformat:2|intcomma }}</span>
+                </span>
+              </td>
+
+              <td data-label="Branch">
+                <span class="trip-muted">{{ t.branch|default:"—" }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-
-      <div class="trip-datebox">
-        <label for="tripVehicle">
-          <i class="fa-solid fa-truck"></i> Vehicle
-        </label>
-        <select id="tripVehicle" name="vehicle" aria-label="Select vehicle">
-          <option value="">All Vehicles</option>
-          {% for v in vehicles %}
-            <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
-              {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
-            </option>
-          {% endfor %}
-        </select>
+    {% else %}
+      <div class="trip-empty">
+        <i class="fa-solid fa-road-circle-xmark"></i>
+        No trips found for this filter.
       </div>
-    </div>
+    {% endif %}
+  </div>
 
-    <div class="trip-filter-actions">
-      <button class="btn btn-outline-primary btn-sm" type="submit">
-        <i class="fa-solid fa-filter me-1"></i> Apply
-      </button>
-
-      <a class="btn btn-light btn-sm" href="{% url 'transport:trip_list' %}">
-        <i class="fa-solid fa-rotate-left me-1"></i> Clear
-      </a>
-    </div>
-  </form>
-
-  {% if trips %}
-    <div class="table-responsive trip-table-wrap" role="region" aria-label="Trips list">
-      <table class="trip-table" id="tripsTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Vehicle</th>
-            <th>Driver</th>
-            <th>Customer Phone</th>
-            <th>From</th>
-            <th>To</th>
-            <th class="text-end">Amount</th>
-            <th>Branch</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for t in trips %}
-          <tr class="trip-row trip-row-js {% if t.get_absolute_url %}trip-clickable{% endif %}"
-              {% if t.get_absolute_url %}data-href="{{ t.get_absolute_url }}"{% endif %}
-              tabindex="0"
-              aria-label="Trip row">
-            <td data-label="Date">
-              <span class="td-label">Date</span>
-              <span class="trip-date">{{ t.trip_date|date:"d M Y" }}</span>
-            </td>
-
-            <td data-label="Vehicle">
-              <span class="td-label">Vehicle</span>
-              <span>{{ t.vehicle|default:"—" }}</span>
-            </td>
-
-            <td data-label="Driver">
-              <span class="td-label">Driver</span>
-              <span class="trip-muted">{{ t.driver|default:"—" }}</span>
-            </td>
-
-            <td data-label="Customer Phone">
-              <span class="td-label">Phone</span>
-              <span class="trip-phone">{{ t.customer_phone|default:"—" }}</span>
-            </td>
-
-            <td data-label="From">
-              <span class="td-label">From</span>
-              <span class="trip-muted">{{ t.origin|default:"—" }}</span>
-            </td>
-
-            <td data-label="To">
-              <span class="td-label">To</span>
-              <span class="trip-muted">{{ t.destination|default:"—" }}</span>
-            </td>
-
-            <td data-label="Amount" class="trip-amount">
-              <span class="td-label">Amount</span>
-              <span class="amount-pill amount-badge" data-raw="{{ t.amount_charged }}">
-                <span class="tzs">TZS</span>
-                <span class="amt">{{ t.amount_charged|floatformat:2|intcomma }}</span>
-              </span>
-            </td>
-
-            <td data-label="Branch">
-              <span class="td-label">Branch</span>
-              <span class="trip-muted">{{ t.branch|default:"—" }}</span>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="trip-empty">
-      No trips found for this filter.
-    </div>
-  {% endif %}
 </div>
 {% endblock %}
 
@@ -520,7 +527,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const href = row.dataset.href;
     if (!href) return;
 
-    row.addEventListener('click', function () {
+    row.addEventListener('click', function (e) {
+      const interactive = e.target.closest('a, button, input, select, textarea');
+      if (interactive) return;
       window.location.assign(href);
     });
 
@@ -533,15 +542,19 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   const search = document.getElementById('tripSearch');
+
   function applyFilter(){
     if (!table) return;
     const q = (search?.value || '').trim().toLowerCase();
+
     table.querySelectorAll('tbody tr').forEach(r => {
       const text = r.textContent.trim().toLowerCase();
       r.style.display = (!q || text.includes(q)) ? '' : 'none';
     });
+
     updateCounts();
   }
+
   if (search) search.addEventListener('input', applyFilter);
 
   document.querySelectorAll('.amount-badge').forEach(function (pill) {

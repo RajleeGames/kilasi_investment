@@ -1,105 +1,485 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Stock Transfers{% endblock %}
+{% block title %}Stock Transfers — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --st-card:#ffffff;
+    --st-text:#0f172a;
+    --st-muted:#64748b;
+    --st-line:#e2e8f0;
+    --st-line-soft:#eef2f7;
+    --st-primary:#2563eb;
+    --st-primary-soft:rgba(37,99,235,.08);
+    --st-success:#16a34a;
+    --st-warning:#f59e0b;
+    --st-dark:#334155;
+    --st-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .st-wrap{
+    max-width:1180px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--st-text);
+  }
+
+  .st-hero,
+  .st-filter-card,
+  .st-table-card{
+    background:var(--st-card);
+    border:1px solid var(--st-line);
+    border-radius:20px;
+    box-shadow:var(--st-shadow);
+  }
+
+  .st-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .st-hero-top,
+  .st-table-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .st-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .st-sub{
+    font-size:.75rem;
+    color:var(--st-muted);
+    margin:.22rem 0 0;
+  }
+
+  .st-btn,
+  .st-btn-light{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.77rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .st-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .st-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .st-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--st-line);
+  }
+
+  .st-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .st-filter-card{
+    margin-bottom:1rem;
+    overflow:hidden;
+  }
+
+  .st-filter-body,
+  .st-table-body{
+    padding:1rem;
+  }
+
+  .st-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .st-control{
+    width:100%;
+    height:40px;
+    border-radius:12px;
+    border:1px solid var(--st-line);
+    background:#fff;
+    color:var(--st-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+  }
+
+  .st-control:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .st-table-card{
+    overflow:hidden;
+  }
+
+  .st-table-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--st-line-soft);
+  }
+
+  .st-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .st-table-note{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid var(--st-line);
+  }
+
+  .st-table-wrap{
+    overflow:auto;
+  }
+
+  .st-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:940px;
+    margin:0;
+  }
+
+  .st-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    padding:.82rem .95rem;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    white-space:nowrap;
+    border-bottom:1px solid var(--st-line);
+  }
+
+  .st-table tbody td{
+    padding:.82rem .95rem;
+    border-top:1px solid var(--st-line-soft);
+    font-size:.79rem;
+    color:var(--st-text);
+    vertical-align:middle;
+  }
+
+  .st-table tbody tr:nth-child(even){
+    background:#fbfdff;
+  }
+
+  .st-table tbody tr:hover{
+    background:#f8fafc;
+  }
+
+  .st-id{
+    font-weight:700;
+  }
+
+  .st-route{
+    font-weight:700;
+    font-size:.81rem;
+  }
+
+  .st-meta{
+    font-size:.69rem;
+    color:var(--st-muted);
+    margin-top:.15rem;
+  }
+
+  .st-count{
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .st-date{
+    font-size:.74rem;
+    color:#475569;
+    line-height:1.4;
+  }
+
+  .st-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.32rem .58rem;
+    border-radius:999px;
+    font-size:.71rem;
+    font-weight:700;
+    border:1px solid transparent;
+    text-transform:uppercase;
+  }
+
+  .st-badge.draft{
+    background:rgba(100,116,139,.10);
+    color:#475569;
+    border-color:rgba(100,116,139,.14);
+  }
+
+  .st-badge.posted{
+    background:rgba(22,163,74,.10);
+    color:var(--st-success);
+    border-color:rgba(22,163,74,.14);
+  }
+
+  .st-badge.cancelled{
+    background:rgba(51,65,85,.10);
+    color:var(--st-dark);
+    border-color:rgba(51,65,85,.14);
+  }
+
+  .st-action{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:34px;
+    padding:0 .82rem;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:.73rem;
+    font-weight:700;
+    color:var(--st-primary);
+    background:rgba(37,99,235,.06);
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .st-action:hover{
+    color:#1d4ed8;
+    background:rgba(37,99,235,.10);
+  }
+
+  .st-empty{
+    background:#fff;
+    border:1px dashed var(--st-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--st-muted);
+    margin:1rem;
+  }
+
+  .st-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .st-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--st-text);
+    margin-bottom:.12rem;
+  }
+
+  .st-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  @media (max-width:768px){
+    .st-wrap{
+      padding:0 .7rem;
+    }
+
+    .st-hero,
+    .st-filter-body,
+    .st-table-body{
+      padding:.9rem;
+    }
+
+    .st-table-head{
+      padding:.9rem;
+    }
+
+    .st-btn,
+    .st-btn-light{
+      width:100%;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
+<div class="st-wrap">
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h4 class="mb-0">Stock Transfers</h4>
-      <small class="text-muted">History of transfers between branches (who, when, from → to).</small>
+  <div class="st-hero">
+    <div class="st-hero-top">
+      <div>
+        <h2 class="st-title">
+          <i class="fa-solid fa-arrow-right-arrow-left text-primary"></i>
+          Stock Transfers
+        </h2>
+        <div class="st-sub">
+          History of transfers between branches, showing route, status, creator, posting time and item count.
+        </div>
+      </div>
+
+      <a href="{% url 'sales:stock_transfer_create' %}" class="st-btn">
+        <i class="fa-solid fa-plus"></i>
+        New Transfer
+      </a>
     </div>
-    <a href="{% url 'sales:stock_transfer_create' %}" class="btn btn-primary btn-sm">
-      <i class="fa-solid fa-plus me-1"></i> New Transfer
-    </a>
   </div>
 
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body">
-      <form method="get" class="row g-2 align-items-end">
+  <div class="st-filter-card">
+    <div class="st-filter-body">
+      <form method="get" class="row g-3 align-items-end">
         <div class="col-12 col-md-5">
-          <label class="form-label fw-semibold mb-1">Branch (from or to)</label>
-          <select class="form-select" name="branch">
-            <option value="">All</option>
-            {% for b in branches %}
-              <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
-                {{ b.name }}
-              </option>
-            {% endfor %}
-          </select>
+          <div class="st-field">
+            <label>Branch (From or To)</label>
+            <select class="form-select st-control" name="branch">
+              <option value="">All</option>
+              {% for b in branches %}
+                <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                  {{ b.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
 
         <div class="col-12 col-md-4">
-          <label class="form-label fw-semibold mb-1">Status</label>
-          <select class="form-select" name="status">
-            <option value="">All</option>
-            <option value="draft" {% if selected_status == "draft" %}selected{% endif %}>Draft</option>
-            <option value="posted" {% if selected_status == "posted" %}selected{% endif %}>Posted</option>
-            <option value="cancelled" {% if selected_status == "cancelled" %}selected{% endif %}>Cancelled</option>
-          </select>
+          <div class="st-field">
+            <label>Status</label>
+            <select class="form-select st-control" name="status">
+              <option value="">All</option>
+              <option value="draft" {% if selected_status == "draft" %}selected{% endif %}>Draft</option>
+              <option value="posted" {% if selected_status == "posted" %}selected{% endif %}>Posted</option>
+              <option value="cancelled" {% if selected_status == "cancelled" %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
         </div>
 
         <div class="col-12 col-md-3 d-flex gap-2">
-          <button class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i> Filter</button>
-          <a class="btn btn-outline-secondary w-100" href="{% url 'sales:stock_transfer_list' %}">Reset</a>
+          <button class="st-btn w-100">
+            <i class="fa-solid fa-filter"></i>
+            Filter
+          </button>
+          <a class="st-btn-light w-100" href="{% url 'sales:stock_transfer_list' %}">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
         </div>
       </form>
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>From → To</th>
-            <th>Status</th>
-            <th class="text-end">Items</th>
-            <th>Created</th>
-            <th>Posted</th>
-            <th class="text-end">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in transfers %}
-          <tr>
-            <td class="fw-bold">#{{ t.id }}</td>
-            <td>
-              <div class="fw-semibold">{{ t.from_branch.name }} → {{ t.to_branch.name }}</div>
-              <div class="text-muted small">By: {{ t.created_by.username }}</div>
-            </td>
-            <td>
-              {% if t.status == "draft" %}
-                <span class="badge bg-secondary">Draft</span>
-              {% elif t.status == "posted" %}
-                <span class="badge bg-success">Posted</span>
-              {% else %}
-                <span class="badge bg-dark">Cancelled</span>
-              {% endif %}
-            </td>
-            <td class="text-end fw-bold">{{ t.items_count|intcomma }}</td>
-            <td class="text-muted small">
-              {{ t.created_at|date:"Y-m-d H:i" }}
-            </td>
-            <td class="text-muted small">
-              {% if t.posted_at %}{{ t.posted_at|date:"Y-m-d H:i" }} ({{ t.posted_by.username }}){% else %}—{% endif %}
-            </td>
-            <td class="text-end">
-              <a href="{% url 'sales:stock_transfer_detail' t.id %}" class="btn btn-outline-primary btn-sm">
-                <i class="fa-solid fa-eye me-1"></i> View
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="text-center text-muted py-4">No transfers found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="st-table-card">
+    <div class="st-table-head">
+      <h3 class="st-table-title">
+        <i class="fa-solid fa-list"></i>
+        Transfer Records
+      </h3>
+      <div class="st-table-note">
+        <i class="fa-solid fa-clock"></i>
+        Latest history
+      </div>
     </div>
+
+    {% if transfers %}
+      <div class="st-table-wrap">
+        <table class="st-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>From → To</th>
+              <th>Status</th>
+              <th class="text-end">Items</th>
+              <th>Created</th>
+              <th>Posted</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transfers %}
+            <tr>
+              <td class="st-id">#{{ t.id }}</td>
+
+              <td>
+                <div class="st-route">{{ t.from_branch.name }} → {{ t.to_branch.name }}</div>
+                <div class="st-meta">By: {{ t.created_by.username }}</div>
+              </td>
+
+              <td>
+                <span class="st-badge {{ t.status }}">
+                  {{ t.status }}
+                </span>
+              </td>
+
+              <td class="text-end st-count">{{ t.items_count|intcomma }}</td>
+
+              <td>
+                <div class="st-date">{{ t.created_at|date:"Y-m-d H:i" }}</div>
+              </td>
+
+              <td>
+                {% if t.posted_at %}
+                  <div class="st-date">
+                    {{ t.posted_at|date:"Y-m-d H:i" }}<br>
+                    <span class="st-meta">{{ t.posted_by.username }}</span>
+                  </div>
+                {% else %}
+                  <span class="st-meta">—</span>
+                {% endif %}
+              </td>
+
+              <td class="text-end">
+                <a href="{% url 'sales:stock_transfer_detail' t.id %}" class="st-action">
+                  <i class="fa-solid fa-eye"></i>
+                  View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="st-empty">
+        <i class="fa-regular fa-face-frown"></i>
+        <h6>No transfers found</h6>
+        <p>Try another branch or status filter.</p>
+      </div>
+    {% endif %}
   </div>
 
 </div>

@@ -1,38 +1,286 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .contact-form-wrap{
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .contact-form-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .9rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
+  }
+
+  .contact-form-title{
+    margin:0;
+    font-size:1.03rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+  }
+
+  .contact-form-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.18rem;
+  }
+
+  .contact-back-btn{
+    border-radius:12px;
+    font-size:.77rem;
+    font-weight:700;
+    padding:.62rem .9rem;
+  }
+
+  .contact-form-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .contact-form-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  .contact-form-head h4{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .contact-form-body{
+    padding:1rem;
+  }
+
+  .contact-form-card label{
+    display:block;
+    margin-bottom:.4rem;
+    font-size:.69rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#64748b;
+  }
+
+  .contact-form-card input,
+  .contact-form-card select,
+  .contact-form-card textarea{
+    width:100%;
+    border:1px solid #dbe4f0;
+    border-radius:12px;
+    min-height:42px;
+    padding:.68rem .85rem;
+    font-size:.79rem;
+    color:#0f172a;
+    background:#fff;
+    transition:.18s ease;
+    box-shadow:none;
+  }
+
+  .contact-form-card textarea{
+    min-height:110px;
+    resize:vertical;
+  }
+
+  .contact-form-card input:focus,
+  .contact-form-card select:focus,
+  .contact-form-card textarea:focus{
+    outline:none;
+    border-color:rgba(37,99,235,.40);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10);
+  }
+
+  .contact-form-card .helptext{
+    display:block;
+    margin-top:.35rem;
+    font-size:.68rem;
+    color:#94a3b8;
+  }
+
+  .contact-form-card ul.errorlist{
+    list-style:none;
+    margin:0 0 .4rem 0;
+    padding:0;
+  }
+
+  .contact-form-card ul.errorlist li{
+    background:rgba(239,68,68,.08);
+    color:#b91c1c;
+    border:1px solid rgba(239,68,68,.14);
+    border-radius:10px;
+    padding:.5rem .65rem;
+    font-size:.72rem;
+    margin-bottom:.35rem;
+  }
+
+  .contact-form-actions{
+    display:flex;
+    gap:.65rem;
+    flex-wrap:wrap;
+    padding-top:.35rem;
+  }
+
+  .contact-form-actions .btn{
+    border-radius:12px;
+    min-height:42px;
+    padding:.62rem 1rem;
+    font-size:.78rem;
+    font-weight:700;
+  }
+
+  .contact-save-btn{
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
+
+  .contact-form-note{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    padding:.7rem .8rem;
+    margin-top:.9rem;
+  }
+
+  @media (max-width: 767.98px){
+    .contact-form-hero{
+      padding:.9rem;
+    }
+
+    .contact-form-title{
+      font-size:.97rem;
+    }
+
+    .contact-form-subtitle{
+      font-size:.73rem;
+    }
+
+    .contact-form-body{
+      padding:.9rem;
+    }
+
+    .contact-form-actions .btn{
+      width:100%;
+      justify-content:center;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3 class="mb-0">{{ title }}</h3>
-  <a href="{% url 'contacts:contact_list' %}" class="btn btn-outline-secondary">
-    <i class="fa-solid fa-arrow-left me-1"></i> Back
-  </a>
-</div>
+<div class="contact-form-wrap">
 
-<div class="card shadow-sm" style="border-radius:14px;">
-  <div class="card-body">
-    <form method="post" class="row g-3">
-      {% csrf_token %}
-
-      <div class="col-md-6">{{ form.full_name.label_tag }} {{ form.full_name }}</div>
-      <div class="col-md-6">{{ form.role.label_tag }} {{ form.role }}</div>
-
-      <div class="col-md-6">{{ form.phone.label_tag }} {{ form.phone }}</div>
-      <div class="col-md-6">{{ form.whatsapp.label_tag }} {{ form.whatsapp }}</div>
-
-      <div class="col-md-6">{{ form.email.label_tag }} {{ form.email }}</div>
-      <div class="col-md-6">{{ form.company.label_tag }} {{ form.company }}</div>
-
-      <div class="col-12">{{ form.address.label_tag }} {{ form.address }}</div>
-      <div class="col-12">{{ form.notes.label_tag }} {{ form.notes }}</div>
-
-      <div class="col-12 d-flex gap-2">
-        <button class="btn btn-primary">
-          <i class="fa-solid fa-floppy-disk me-1"></i> Save
-        </button>
-        <a class="btn btn-outline-secondary" href="{% url 'contacts:contact_list' %}">Cancel</a>
+  <div class="contact-form-hero">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <h3 class="contact-form-title">
+          <i class="fa-solid fa-address-card me-1 text-primary"></i>
+          {{ title }}
+        </h3>
+        <div class="contact-form-subtitle">
+          Add and manage important contact details in a clean organized way.
+        </div>
       </div>
-    </form>
+
+      <a href="{% url 'contacts:contact_list' %}" class="btn btn-outline-secondary contact-back-btn">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back
+      </a>
+    </div>
   </div>
+
+  <div class="contact-form-card">
+    <div class="contact-form-head">
+      <h4>
+        <i class="fa-solid fa-pen-to-square text-primary"></i>
+        Contact Details
+      </h4>
+    </div>
+
+    <div class="contact-form-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <div class="col-md-6">
+          {{ form.full_name.label_tag }}
+          {{ form.full_name }}
+          {{ form.full_name.errors }}
+        </div>
+
+        <div class="col-md-6">
+          {{ form.role.label_tag }}
+          {{ form.role }}
+          {{ form.role.errors }}
+        </div>
+
+        <div class="col-md-6">
+          {{ form.phone.label_tag }}
+          {{ form.phone }}
+          {{ form.phone.errors }}
+        </div>
+
+        <div class="col-md-6">
+          {{ form.whatsapp.label_tag }}
+          {{ form.whatsapp }}
+          {{ form.whatsapp.errors }}
+        </div>
+
+        <div class="col-md-6">
+          {{ form.email.label_tag }}
+          {{ form.email }}
+          {{ form.email.errors }}
+        </div>
+
+        <div class="col-md-6">
+          {{ form.company.label_tag }}
+          {{ form.company }}
+          {{ form.company.errors }}
+        </div>
+
+        <div class="col-12">
+          {{ form.address.label_tag }}
+          {{ form.address }}
+          {{ form.address.errors }}
+        </div>
+
+        <div class="col-12">
+          {{ form.notes.label_tag }}
+          {{ form.notes }}
+          {{ form.notes.errors }}
+        </div>
+
+        <div class="col-12">
+          <div class="contact-form-actions">
+            <button class="btn btn-primary contact-save-btn">
+              <i class="fa-solid fa-floppy-disk me-1"></i> Save
+            </button>
+            <a class="btn btn-outline-secondary" href="{% url 'contacts:contact_list' %}">
+              Cancel
+            </a>
+          </div>
+
+          <div class="contact-form-note">
+            Keep contact information short, clean, and easy to search later.
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

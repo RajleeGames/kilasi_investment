@@ -860,13 +860,12 @@ def lookup_product(request):
         }
     })
 
-
 @login_required
 @role_required(["seller", "admin"])
 def submit_sale(request):
     """
     Seller handles everything:
-      - cash/bank sale => paid=True immediately
+      - cash/bank/ebt sale => paid=True immediately
       - debt => paid=False and appears in debts list
       - stock updates ONLY via StockEntry
       - branch-aware: seller sells only from their branch
@@ -890,15 +889,16 @@ def submit_sale(request):
 
     customer = None
 
-# save contact for ANY sale if entered
-    if     customer_name or customer_phone:
-       customer = _save_customer_contact(customer_name, customer_phone)
+    # Save customer for any sale if name/phone was entered
+    if customer_name or customer_phone:
+        customer = _save_customer_contact(customer_name, customer_phone)
 
-# if debt and blank info, still create default customer
+    # For debt, make sure customer exists even if blank
     if payment == "debt" and customer is None:
-      customer = _save_customer_contact("Customer", customer_phone or "")
+        customer = _save_customer_contact("Customer", customer_phone or "")
 
-      paid_flag = payment in ("cash", "bank", "ebt")
+    # IMPORTANT: always define paid_flag
+    paid_flag = payment in ("cash", "bank", "ebt")
 
     try:
         with transaction.atomic():
@@ -942,7 +942,6 @@ def submit_sale(request):
                 selling = _product_selling_price(prod)
                 buying = _product_buying_price(prod)
 
-                # InvoiceItem snapshot (new fields preferred, fallback old unit_price)
                 item_kwargs = {
                     "invoice": inv,
                     "product": prod,
@@ -955,12 +954,10 @@ def submit_sale(request):
                     if hasattr(InvoiceItem, "buying_cost"):
                         item_kwargs["buying_cost"] = buying
                 else:
-                    # legacy
                     item_kwargs["unit_price"] = selling
 
                 InvoiceItem.objects.create(**item_kwargs)
 
-                # Stock change ONLY via StockEntry
                 StockEntry.objects.create(
                     product=prod,
                     branch=branch if branch else None,
@@ -979,8 +976,6 @@ def submit_sale(request):
     request.session["cart"] = {}
     request.session.modified = True
     return redirect("sales:invoice_detail", pk=inv.pk)
-
-
 # ───────────────────────────────────────────────────────────────
 
 from decimal import Decimal
@@ -1170,34 +1165,49 @@ def invoice_receipt(request, pk):
         "balance_value": _safe_balance(inv),
     })
 
-# ───────────────────────────────────────────────────────────────
-# SELLER DEBTS + PAYMENTS
 @login_required
-@role_required(["seller", "admin"])
+@role_required(["seller", "admin", "cashier"])
 def outstanding_debts(request):
     q = (request.GET.get("q") or "").strip()
+    selected = _selected_branch(request)
 
     qs = _invoice_scope_qs(request).filter(status="debt")
+
+    if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
+        qs = qs.filter(branch=selected)
+
     if q:
         qs = qs.filter(customer__name__icontains=q)
 
-    # ✅ only show invoices that still have effective balance > 0
-    debts_all = list(qs.order_by("-created_at"))
-    debts = [inv for inv in debts_all if _invoice_balance(inv) > 0]
+    debts_rows = []
+    for inv in qs.order_by("-created_at"):
+        bal = _invoice_balance(inv)
+        if bal > 0:
+            debts_rows.append({
+                "invoice": inv,
+                "balance": bal,
+            })
 
-    total_outstanding = sum(_invoice_balance(inv) for inv in debts)
-    top_debtor = max(debts, key=_invoice_balance) if debts else None
-    least_debtor = min(debts, key=_invoice_balance) if debts else None
+    total_outstanding = sum(r["balance"] for r in debts_rows)
+    top_debtor = max(debts_rows, key=lambda x: x["balance"]) if debts_rows else None
+    least_debtor = min(debts_rows, key=lambda x: x["balance"]) if debts_rows else None
 
     return _render(request, ["sales/outstanding_debts.html", "outstanding_debts.html"], {
-        "debts": debts,
+        "debts": debts_rows,
         "query": q,
         "total_outstanding": total_outstanding,
         "top_debtor": top_debtor,
         "least_debtor": least_debtor,
-        "_invoice_balance": _invoice_balance,
-    })
 
+        "branches": _branches_for_sales_dropdown() if _can_filter_branch(request) else [],
+        "selected_branch": str(selected.id) if selected else "",
+        "selected_branch_obj": selected,
+
+        "is_admin": _is_admin(request),
+        "is_cashier": _is_cashier(request),
+        "is_seller": _is_seller(request),
+        "branch": selected,
+    })
 
 @login_required
 @role_required(["seller", "admin"])
@@ -1373,13 +1383,14 @@ from users.utils import role_required
 from inventory.models import Product
 from .models import Invoice, InvoiceItem, Payment, Expense
 
-
 @login_required
 @role_required(["admin", "cashier"])
 def admin_dashboard(request):
     today = localdate()
 
-    # ✅ branches dropdown
+    # -------------------------------------------------
+    # Branch filter
+    # -------------------------------------------------
     branches_qs = _branches_for_sales_dropdown()
     branch_id = (request.GET.get("branch") or "").strip()
     selected_branch = branches_qs.filter(pk=branch_id).first() if branch_id else None
@@ -1388,7 +1399,6 @@ def admin_dashboard(request):
     pay_qs = Payment.objects.select_related("invoice")
     exp_qs = Expense.objects.all()
 
-    # ✅ apply branch filter
     if selected_branch:
         if hasattr(Invoice, "branch_id"):
             inv_qs = inv_qs.filter(branch=selected_branch)
@@ -1396,13 +1406,81 @@ def admin_dashboard(request):
         if hasattr(Expense, "branch_id"):
             exp_qs = exp_qs.filter(branch=selected_branch)
 
-    # ✅ month/year filters
-    month = _safe_int(request.GET.get("month"))
-    year = _safe_int(request.GET.get("year"))
+    # -------------------------------------------------
+    # DATE RANGE FILTER
+    # default => today
+    # -------------------------------------------------
+    raw_from = (request.GET.get("date_from") or "").strip()
+    raw_to = (request.GET.get("date_to") or "").strip()
 
-    # -----------------------------------------
-    # CASHFLOW (today)
-    # -----------------------------------------
+    def _parse_ymd(v):
+        try:
+            return datetime.strptime(v, "%Y-%m-%d").date()
+        except Exception:
+            return None
+
+    date_from = _parse_ymd(raw_from)
+    date_to = _parse_ymd(raw_to)
+
+    if not date_from and not date_to:
+        date_from = today
+        date_to = today
+    elif date_from and not date_to:
+        date_to = date_from
+    elif date_to and not date_from:
+        date_from = date_to
+
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
+
+    is_today_range = (date_from == today and date_to == today)
+
+    if is_today_range:
+        range_label = "Today"
+    elif date_from == date_to:
+        range_label = date_from.strftime("%d %b %Y")
+    else:
+        range_label = f"{date_from.strftime('%d %b %Y')} → {date_to.strftime('%d %b %Y')}"
+
+    # -------------------------------------------------
+    # Period querysets
+    # -------------------------------------------------
+    period_inv_qs = inv_qs.filter(created_at__date__range=[date_from, date_to])
+    period_pay_qs = pay_qs.filter(timestamp__date__range=[date_from, date_to])
+    period_exp_qs = exp_qs.filter(date__range=[date_from, date_to])
+
+    # -------------------------------------------------
+    # CASHFLOW (selected period)
+    # -------------------------------------------------
+    total_cash_period = (
+        period_inv_qs.filter(status="cash", paid=True)
+        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    )
+    total_bank_period = (
+        period_inv_qs.filter(status="bank", paid=True)
+        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    )
+    total_ebt_period = (
+        period_inv_qs.filter(status="ebt", paid=True)
+        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    )
+
+    total_debt_payments = (
+        period_pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    )
+
+    expenses_period = (
+        period_exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    )
+
+    total_received_period = (
+        total_cash_period + total_bank_period + total_ebt_period + total_debt_payments
+    )
+    net_period_cashflow = total_received_period - expenses_period
+
+    # -------------------------------------------------
+    # TODAY SNAPSHOT
+    # -------------------------------------------------
     total_cash_today = (
         inv_qs.filter(created_at__date=today, status="cash", paid=True)
         .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
@@ -1415,104 +1493,180 @@ def admin_dashboard(request):
         inv_qs.filter(created_at__date=today, status="ebt", paid=True)
         .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
     )
-    total_today_cashflow = total_cash_today + total_bank_today + total_ebt_today
+    total_today = total_cash_today + total_bank_today + total_ebt_today
 
-    # -----------------------------------------
-    # CASHFLOW (overall / selected month-year)
-    # -----------------------------------------
-    if month and year:
-        cash = inv_qs.filter(status="cash", paid=True, created_at__month=month, created_at__year=year)\
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    expenses_today = (
+        exp_qs.filter(date=today).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    )
+    net_today_cashflow = total_today - expenses_today
 
-        bank = inv_qs.filter(status="bank", paid=True, created_at__month=month, created_at__year=year)\
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    # -------------------------------------------------
+    # OVERALL CASHFLOW (branch-aware)
+    # -------------------------------------------------
+    overall_cash = inv_qs.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    overall_bank = inv_qs.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    overall_ebt = inv_qs.filter(status="ebt", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    overall_debt_payments = pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    expenses_total = exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
-        ebt = inv_qs.filter(status="ebt", paid=True, created_at__month=month, created_at__year=year)\
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-
-        debt_payments = pay_qs.filter(timestamp__month=month, timestamp__year=year)\
-            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-
-        expenses_total = exp_qs.filter(date__month=month, date__year=year)\
-            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-    else:
-        cash = inv_qs.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        bank = inv_qs.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        ebt  = inv_qs.filter(status="ebt",  paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-
-        debt_payments = pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-        expenses_total = exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-
-    overall_sales_cashflow = cash + bank + ebt + debt_payments
-
-    expenses_today = exp_qs.filter(date=today).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-    net_today_cashflow = total_today_cashflow - expenses_today
+    overall_sales_cashflow = overall_cash + overall_bank + overall_ebt + overall_debt_payments
     net_overall_cashflow = overall_sales_cashflow - expenses_total
 
-    # -----------------------------------------
-    # ✅ PROFIT
-    # -----------------------------------------
+    # -------------------------------------------------
+    # PROFIT
+    # -------------------------------------------------
     revenue_field = "subtotal" if hasattr(Invoice, "subtotal") else "total_amount"
 
-    inv_today_all = inv_qs.filter(created_at__date=today)
-    if month and year:
-        inv_period_all = inv_qs.filter(created_at__month=month, created_at__year=year)
-        exp_period = exp_qs.filter(date__month=month, date__year=year)
-    else:
-        inv_period_all = inv_qs
-        exp_period = exp_qs
-
-    revenue_today = inv_today_all.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
-    revenue_period = inv_period_all.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
+    revenue_period = (
+        period_inv_qs.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
+    )
 
     cost_expr, cost_field_used = _product_cost_expr()
     profit_enabled = cost_expr is not None
 
-    cogs_today = Decimal("0.00")
     cogs_period = Decimal("0.00")
+    cogs_today = Decimal("0.00")
 
     if profit_enabled:
         out = DecimalField(max_digits=18, decimal_places=2)
         cogs_line = ExpressionWrapper(F("quantity") * cost_expr, output_field=out)
 
-        items_today = InvoiceItem.objects.filter(invoice__in=inv_today_all)
-        items_period = InvoiceItem.objects.filter(invoice__in=inv_period_all)
-
-        cogs_today = items_today.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
+        items_period = InvoiceItem.objects.filter(invoice__in=period_inv_qs)
         cogs_period = items_period.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
 
-    gross_profit_today = revenue_today - cogs_today
+        inv_today_all = inv_qs.filter(created_at__date=today)
+        items_today = InvoiceItem.objects.filter(invoice__in=inv_today_all)
+        cogs_today = items_today.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
+    else:
+        inv_today_all = inv_qs.filter(created_at__date=today)
+
+    revenue_today = inv_today_all.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
+
     gross_profit_period = revenue_period - cogs_period
+    net_profit_period = gross_profit_period - expenses_period
 
-    expenses_today_for_profit = exp_qs.filter(date=today).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-    expenses_period_for_profit = exp_period.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    gross_profit_today = revenue_today - cogs_today
+    net_profit_today = gross_profit_today - expenses_today
 
-    net_profit_today = gross_profit_today - expenses_today_for_profit
-    net_profit_period = gross_profit_period - expenses_period_for_profit
-
-    # -----------------------------------------
-    # ✅ DEBTS (REAL FIX: subtract returns + payments)
-    # -----------------------------------------
+    # -------------------------------------------------
+    # DEBTS
+    # -------------------------------------------------
     num_debts, total_outstanding_debt, total_customer_credit = compute_debt_stats(
-        inv_qs, selected_branch=selected_branch, month=month, year=year
+        period_inv_qs,
+        selected_branch=selected_branch,
     )
 
-    # -----------------------------------------
-    # counts
-    # -----------------------------------------
-    num_cash_sales = inv_qs.filter(status="cash", paid=True).count()
-    num_bank_sales = inv_qs.filter(status="bank", paid=True).count()
-    num_ebt_sales  = inv_qs.filter(status="ebt",  paid=True).count()
-    total_transactions = inv_qs.count()
+    # -------------------------------------------------
+    # COUNTS (selected period)
+    # -------------------------------------------------
+    num_cash_sales = period_inv_qs.filter(status="cash", paid=True).count()
+    num_bank_sales = period_inv_qs.filter(status="bank", paid=True).count()
+    num_ebt_sales = period_inv_qs.filter(status="ebt", paid=True).count()
+    total_transactions = period_inv_qs.count()
 
-    # recent products
+    # -------------------------------------------------
+    # RECENT PRODUCTS
+    # -------------------------------------------------
     all_products = Product.objects.order_by("-id")
     paginator = Paginator(all_products, 6)
     recent_products = paginator.get_page(request.GET.get("recent_page", 1))
 
-    months = list(range(1, 13))
-    current_year = date.today().year
-    years = list(range(current_year - 5, current_year + 1))
+    # -------------------------------------------------
+    # CHART 1: Daily trend inside selected period
+    # SQLite-safe for Expense.date
+    # -------------------------------------------------
+    sales_daily_raw = (
+        period_inv_qs.filter(status__in=["cash", "bank", "ebt"], paid=True)
+        .annotate(day=TruncDate("created_at"))
+        .values("day")
+        .annotate(total=Sum("total_amount"))
+        .order_by("day")
+    )
+
+    expenses_daily_raw = (
+        period_exp_qs.values("date")
+        .annotate(total=Sum("amount"))
+        .order_by("date")
+    )
+
+    sales_daily_map = {r["day"]: float(r["total"] or 0) for r in sales_daily_raw}
+    exp_daily_map = {r["date"]: float(r["total"] or 0) for r in expenses_daily_raw}
+
+    chart_labels = []
+    chart_sales = []
+    chart_expenses = []
+
+    cursor = date_from
+    while cursor <= date_to:
+        chart_labels.append(cursor.strftime("%d %b"))
+        chart_sales.append(sales_daily_map.get(cursor, 0))
+        chart_expenses.append(exp_daily_map.get(cursor, 0))
+        cursor += timedelta(days=1)
+
+    # -------------------------------------------------
+    # CHART 2: Payment mix (selected period)
+    # -------------------------------------------------
+    payment_mix_labels = ["Cash", "Bank", "EBT", "Debt Payments"]
+    payment_mix_values = [
+        float(total_cash_period),
+        float(total_bank_period),
+        float(total_ebt_period),
+        float(total_debt_payments),
+    ]
+
+    # -------------------------------------------------
+    # CHART 3: Last 6 months revenue vs expenses
+    # -------------------------------------------------
+    month_labels = []
+    month_received_values = []
+    month_expense_values = []
+
+    month_cursor = date(today.year, today.month, 1)
+    month_starts = []
+
+    for offset in range(5, -1, -1):
+        y = month_cursor.year
+        m = month_cursor.month - offset
+
+        while m <= 0:
+            m += 12
+            y -= 1
+        while m > 12:
+            m -= 12
+            y += 1
+
+        month_starts.append(date(y, m, 1))
+
+    for mstart in month_starts:
+        if mstart.month == 12:
+            mend = date(mstart.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            mend = date(mstart.year, mstart.month + 1, 1) - timedelta(days=1)
+
+        month_labels.append(mstart.strftime("%b %Y"))
+
+        m_cash = inv_qs.filter(
+            created_at__date__range=[mstart, mend], status="cash", paid=True
+        ).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+
+        m_bank = inv_qs.filter(
+            created_at__date__range=[mstart, mend], status="bank", paid=True
+        ).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+
+        m_ebt = inv_qs.filter(
+            created_at__date__range=[mstart, mend], status="ebt", paid=True
+        ).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+
+        m_debt_pay = pay_qs.filter(
+            timestamp__date__range=[mstart, mend]
+        ).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+
+        m_exp = exp_qs.filter(
+            date__range=[mstart, mend]
+        ).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+
+        month_received_values.append(float(m_cash + m_bank + m_ebt + m_debt_pay))
+        month_expense_values.append(float(m_exp))
 
     return render(request, "sales/admin_dashboard.html", {
         "is_admin": _is_admin(request),
@@ -1522,21 +1676,30 @@ def admin_dashboard(request):
         "selected_branch": str(selected_branch.id) if selected_branch else "",
         "selected_branch_obj": selected_branch,
 
-        # cashflow
+        # filters
+        "date_from": date_from.isoformat(),
+        "date_to": date_to.isoformat(),
+        "today_str": today.isoformat(),
+        "last7_from": (today - timedelta(days=6)).isoformat(),
+        "month_start_str": today.replace(day=1).isoformat(),
+        "range_label": range_label,
+        "is_today_range": is_today_range,
+
+        # selected period
+        "total_cash_period": total_cash_period,
+        "total_bank_period": total_bank_period,
+        "total_ebt_period": total_ebt_period,
+        "total_received_period": total_received_period,
+        "total_debt_payments": total_debt_payments,
+        "expenses_period": expenses_period,
+        "net_period_cashflow": net_period_cashflow,
+
+        # today snapshot
         "total_cash_today": total_cash_today,
         "total_bank_today": total_bank_today,
         "total_ebt_today": total_ebt_today,
-        "total_today": total_today_cashflow,
-
-        "selected_month": month or "",
-        "selected_year": year or "",
-
-        "total_debt_payments": debt_payments,
-        "overall_sales": overall_sales_cashflow,
-
+        "total_today": total_today,
         "expenses_today": expenses_today,
-        "expenses_total": expenses_total,
-
         "net_today_cashflow": net_today_cashflow,
         "net_overall_cashflow": net_overall_cashflow,
 
@@ -1552,20 +1715,31 @@ def admin_dashboard(request):
         "gross_profit_period": gross_profit_period,
         "net_profit_period": net_profit_period,
 
-        # ✅ NEW debt stats
+        # debts
         "num_debts": num_debts,
         "total_outstanding_debt": total_outstanding_debt,
         "total_customer_credit": total_customer_credit,
 
+        # counts
         "num_cash_sales": num_cash_sales,
         "num_bank_sales": num_bank_sales,
         "num_ebt_sales": num_ebt_sales,
         "total_transactions": total_transactions,
 
+        # products
         "recent_products": recent_products,
-        "months": months,
-        "years": years,
-        "today_str": today.isoformat(),
+
+        # charts
+        "chart_labels_json": json.dumps(chart_labels),
+        "chart_sales_json": json.dumps(chart_sales),
+        "chart_expenses_json": json.dumps(chart_expenses),
+
+        "payment_mix_labels_json": json.dumps(payment_mix_labels),
+        "payment_mix_values_json": json.dumps(payment_mix_values),
+
+        "month_labels_json": json.dumps(month_labels),
+        "month_received_values_json": json.dumps(month_received_values),
+        "month_expense_values_json": json.dumps(month_expense_values),
     })
 
 
@@ -2232,31 +2406,43 @@ def product_detail(request, pk):
         "branch_stocks": branch_stocks,
     })
 
-
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def top_selling_products(request):
     q = (request.GET.get("q") or "").strip()
-
-    role = _role_lower(request)
-    branch = _get_user_branch(request) if role == _role_const("SELLER", "seller") else None
+    selected = _selected_branch(request)   # ✅ seller locked, admin/cashier optional
 
     qs = InvoiceItem.objects.select_related("product", "invoice")
 
-    if branch and hasattr(Invoice, "branch_id"):
-        qs = qs.filter(invoice__branch=branch)
-    if branch and not hasattr(Invoice, "branch_id"):
+    # ✅ apply branch scope
+    if selected and hasattr(Invoice, "branch_id"):
+        qs = qs.filter(invoice__branch=selected)
+    elif _is_seller(request) and not hasattr(Invoice, "branch_id"):
+        # fallback if Invoice has no branch field
         qs = qs.filter(invoice__seller=request.user)
 
     if q:
         qs = qs.filter(product__name__icontains=q)
 
-    aggregated = qs.values("product_id").annotate(total_sold=Sum("quantity")).order_by("-total_sold")
+    aggregated = (
+        qs.values("product_id")
+        .annotate(total_sold=Sum("quantity"))
+        .order_by("-total_sold", "product_id")
+    )
 
     product_ids = [r["product_id"] for r in aggregated]
-    product_map = {p.id: p for p in Product.objects.filter(id__in=product_ids)}
+    product_map = {
+        p.id: p for p in Product.objects.filter(id__in=product_ids)
+    }
 
-    items = [{"product": product_map.get(r["product_id"]), "total_sold": r["total_sold"] or 0} for r in aggregated]
+    items = [
+        {
+            "product": product_map.get(r["product_id"]),
+            "total_sold": r["total_sold"] or 0
+        }
+        for r in aggregated
+        if product_map.get(r["product_id"])
+    ]
 
     paginator = Paginator(items, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -2267,10 +2453,16 @@ def top_selling_products(request):
         "page_obj": page_obj,
         "paginator": paginator,
         "query": q,
-        "branch": branch,
-        "role": role,
-    })
 
+        # ✅ branch filter context
+        "branches": _branches_for_sales_dropdown() if _can_filter_branch(request) else [],
+        "selected_branch": str(selected.id) if selected else "",
+        "selected_branch_obj": selected,
+
+        "is_admin": _is_admin(request),
+        "is_cashier": _is_cashier(request),
+        "is_seller": _is_seller(request),
+    })
 
 # ───────────────────────────────────────────────────────────────
 # ADMIN ONLY PAGES

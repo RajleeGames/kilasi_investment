@@ -1,109 +1,556 @@
 {% extends "base.html" %}
-{% block title %}Debtor Detail{% endblock %}
+{% block title %}Debtor Detail — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --dd-card:#ffffff;
+    --dd-text:#0f172a;
+    --dd-muted:#64748b;
+    --dd-line:#e2e8f0;
+    --dd-line-soft:#eef2f7;
+    --dd-primary:#2563eb;
+    --dd-primary-soft:rgba(37,99,235,.08);
+    --dd-success:#16a34a;
+    --dd-danger:#dc2626;
+    --dd-dark:#334155;
+    --dd-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .dd-wrap{
+    max-width:1120px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--dd-text);
+  }
+
+  .dd-hero,
+  .dd-stat,
+  .dd-card{
+    background:var(--dd-card);
+    border:1px solid var(--dd-line);
+    border-radius:20px;
+    box-shadow:var(--dd-shadow);
+  }
+
+  .dd-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .dd-hero-top,
+  .dd-card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .dd-title{
+    margin:0;
+    font-size:1.08rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .dd-sub{
+    font-size:.75rem;
+    color:var(--dd-muted);
+    margin:.22rem 0 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .dd-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    font-size:.71rem;
+    font-weight:700;
+    border:1px solid transparent;
+    text-transform:uppercase;
+  }
+
+  .dd-badge.active{
+    background:rgba(22,163,74,.10);
+    color:var(--dd-success);
+    border-color:rgba(22,163,74,.14);
+  }
+
+  .dd-badge.closed{
+    background:rgba(51,65,85,.10);
+    color:var(--dd-dark);
+    border-color:rgba(51,65,85,.14);
+  }
+
+  .dd-btn,
+  .dd-btn-light,
+  .dd-btn-danger{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.77rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .dd-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .dd-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .dd-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--dd-line);
+  }
+
+  .dd-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .dd-btn-danger{
+    background:#fff;
+    color:var(--dd-danger);
+    border:1px solid rgba(220,38,38,.18);
+  }
+
+  .dd-btn-danger:hover{
+    color:#b91c1c;
+    border-color:rgba(220,38,38,.28);
+  }
+
+  .dd-stat{
+    padding:.95rem;
+    height:100%;
+  }
+
+  .dd-stat-row{
+    display:flex;
+    align-items:center;
+    gap:.8rem;
+  }
+
+  .dd-stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  .dd-stat-icon.primary{ background:rgba(37,99,235,.10); color:var(--dd-primary); }
+  .dd-stat-icon.success{ background:rgba(22,163,74,.10); color:var(--dd-success); }
+  .dd-stat-icon.danger{ background:rgba(220,38,38,.10); color:var(--dd-danger); }
+
+  .dd-stat-label{
+    color:var(--dd-muted);
+    font-size:.72rem;
+    margin-bottom:.08rem;
+  }
+
+  .dd-stat-value{
+    font-size:1.16rem;
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .dd-card{
+    overflow:hidden;
+    margin-bottom:1rem;
+  }
+
+  .dd-card-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--dd-line-soft);
+  }
+
+  .dd-card-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .dd-card-body{
+    padding:1rem;
+  }
+
+  .dd-note{
+    font-size:.79rem;
+    color:var(--dd-text);
+    line-height:1.65;
+  }
+
+  .dd-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .dd-field input,
+  .dd-field select,
+  .dd-field textarea{
+    width:100%;
+    min-height:40px;
+    border-radius:12px;
+    border:1px solid var(--dd-line);
+    background:#fff;
+    color:var(--dd-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+    padding:.65rem .85rem;
+  }
+
+  .dd-field textarea{
+    min-height:96px;
+    resize:vertical;
+  }
+
+  .dd-field input:focus,
+  .dd-field select:focus,
+  .dd-field textarea:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .dd-help{
+    margin-top:.35rem;
+    font-size:.68rem;
+    color:var(--dd-muted);
+  }
+
+  .dd-table-wrap{
+    overflow:auto;
+  }
+
+  .dd-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:760px;
+    margin:0;
+  }
+
+  .dd-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    padding:.82rem .95rem;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    white-space:nowrap;
+    border-bottom:1px solid var(--dd-line);
+  }
+
+  .dd-table tbody td{
+    padding:.82rem .95rem;
+    border-top:1px solid var(--dd-line-soft);
+    font-size:.79rem;
+    color:var(--dd-text);
+    vertical-align:middle;
+  }
+
+  .dd-table tbody tr:nth-child(even){
+    background:#fbfdff;
+  }
+
+  .dd-table tbody tr:hover{
+    background:#f8fafc;
+  }
+
+  .dd-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:700;
+  }
+
+  .dd-meta{
+    font-size:.74rem;
+    color:var(--dd-muted);
+  }
+
+  .dd-empty{
+    background:#fff;
+    border:1px dashed var(--dd-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--dd-muted);
+    margin:1rem;
+  }
+
+  .dd-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .dd-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--dd-text);
+    margin-bottom:.12rem;
+  }
+
+  .dd-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  @media(max-width:768px){
+    .dd-wrap{
+      padding:0 .7rem;
+    }
+
+    .dd-hero,
+    .dd-card-body{
+      padding:.9rem;
+    }
+
+    .dd-card-head{
+      padding:.9rem;
+    }
+
+    .dd-btn,
+    .dd-btn-light,
+    .dd-btn-danger{
+      width:100%;
+    }
+
+    .dd-table{
+      min-width:100%;
+    }
+
+    .dd-table thead{
+      display:none;
+    }
+
+    .dd-table,
+    .dd-table tbody,
+    .dd-table tr,
+    .dd-table td{
+      display:block;
+      width:100%;
+    }
+
+    .dd-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .dd-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .75rem;
+    }
+
+    .dd-table tbody td::before{
+      content:attr(data-label);
+      font-size:.68rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:88px;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width:1100px;">
+<div class="dd-wrap">
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h4 class="mb-0">{{ debtor.name }}</h4>
-      <small class="text-muted">
-        {% if debtor.phone %}{{ debtor.phone }}{% endif %}
-        {% if debtor.location %} • {{ debtor.location }}{% endif %}
-      </small>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="{% url 'sales:debtor_list' %}" class="btn btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-1"></i> Back
-      </a>
-      <a href="{% url 'sales:debtor_update' debtor.id %}" class="btn btn-outline-primary">
-        <i class="fa-solid fa-pen me-1"></i> Edit
-      </a>
+  <div class="dd-hero">
+    <div class="dd-hero-top">
+      <div>
+        <h2 class="dd-title">
+          <i class="fa-solid fa-user text-primary"></i>
+          {{ debtor.name }}
+        </h2>
+
+        <div class="dd-sub">
+          {% if debtor.phone %}
+            <span><i class="fa-solid fa-phone me-1"></i>{{ debtor.phone }}</span>
+          {% endif %}
+          {% if debtor.location %}
+            <span><i class="fa-solid fa-location-dot me-1"></i>{{ debtor.location }}</span>
+          {% endif %}
+          {% if debtor.is_active %}
+            <span class="dd-badge active">Active</span>
+          {% else %}
+            <span class="dd-badge closed">Closed</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'sales:debtor_list' %}" class="dd-btn-light">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
+        </a>
+        <a href="{% url 'sales:debtor_update' debtor.id %}" class="dd-btn">
+          <i class="fa-solid fa-pen"></i>
+          Edit
+        </a>
+      </div>
     </div>
   </div>
 
   <div class="row g-3 mb-3">
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Total Owed</div>
-          <div class="h4 mb-0 fw-bold">{{ debtor.amount_owed|floatformat:2 }} TZS</div>
+      <div class="dd-stat">
+        <div class="dd-stat-row">
+          <div class="dd-stat-icon primary">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+          <div>
+            <div class="dd-stat-label">Total Owed</div>
+            <div class="dd-stat-value">{{ debtor.amount_owed|floatformat:2 }} TZS</div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Total Paid</div>
-          <div class="h4 mb-0 fw-bold">{{ total_paid|floatformat:2 }} TZS</div>
+      <div class="dd-stat">
+        <div class="dd-stat-row">
+          <div class="dd-stat-icon success">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+          </div>
+          <div>
+            <div class="dd-stat-label">Total Paid</div>
+            <div class="dd-stat-value">{{ total_paid|floatformat:2 }} TZS</div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted small">Balance</div>
-          <div class="h4 mb-0 fw-bold">{{ balance|floatformat:2 }} TZS</div>
-          {% if debtor.is_active %}
-            <span class="badge bg-success mt-2">ACTIVE</span>
-          {% else %}
-            <span class="badge bg-secondary mt-2">CLOSED</span>
-          {% endif %}
+      <div class="dd-stat">
+        <div class="dd-stat-row">
+          <div class="dd-stat-icon danger">
+            <i class="fa-solid fa-scale-balanced"></i>
+          </div>
+          <div>
+            <div class="dd-stat-label">Balance</div>
+            <div class="dd-stat-value">{{ balance|floatformat:2 }} TZS</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   {% if debtor.note %}
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body">
-      <div class="text-muted small mb-1">Note</div>
-      <div>{{ debtor.note }}</div>
+  <div class="dd-card">
+    <div class="dd-card-head">
+      <h3 class="dd-card-title">
+        <i class="fa-solid fa-note-sticky"></i>
+        Note
+      </h3>
+    </div>
+    <div class="dd-card-body">
+      <div class="dd-note">{{ debtor.note }}</div>
     </div>
   </div>
   {% endif %}
 
-  <!-- Add Payment -->
   {% if debtor.is_active and balance > 0 %}
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-white fw-bold">Record Payment</div>
-    <div class="card-body">
+  <div class="dd-card">
+    <div class="dd-card-head">
+      <h3 class="dd-card-title">
+        <i class="fa-solid fa-plus"></i>
+        Record Payment
+      </h3>
+    </div>
+
+    <div class="dd-card-body">
       <form method="post" action="{% url 'sales:debtor_add_payment' debtor.id %}">
         {% csrf_token %}
-        <div class="row g-2">
+
+        <div class="row g-3">
           <div class="col-md-4">
-            <label class="fw-semibold mb-1">Amount</label>
-            {{ pay_form.amount }}
+            <div class="dd-field">
+              <label>Amount</label>
+              {{ pay_form.amount }}
+            </div>
           </div>
+
           <div class="col-md-4">
-            <label class="fw-semibold mb-1">Method</label>
-            {{ pay_form.method }}
+            <div class="dd-field">
+              <label>Method</label>
+              {{ pay_form.method }}
+            </div>
           </div>
+
           <div class="col-md-4">
-            <label class="fw-semibold mb-1">Note</label>
-            {{ pay_form.note }}
+            <div class="dd-field">
+              <label>Note</label>
+              {{ pay_form.note }}
+            </div>
           </div>
         </div>
 
-        <div class="mt-3">
-          <button class="btn btn-primary">
-            <i class="fa-solid fa-plus me-1"></i> Save Payment
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <button class="dd-btn" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Payment
           </button>
         </div>
+
+        <div class="dd-help">
+          When balance becomes 0, this debtor will auto change to CLOSED.
+        </div>
       </form>
-      <div class="small text-muted mt-2">When balance becomes 0, this debtor will auto change to CLOSED.</div>
     </div>
   </div>
   {% endif %}
 
-  <!-- Payments history -->
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-bold">Payment History</div>
-    <div class="table-responsive">
-      <table class="table align-middle mb-0">
-        <thead class="table-light">
+  <div class="dd-card">
+    <div class="dd-card-head">
+      <h3 class="dd-card-title">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        Payment History
+      </h3>
+    </div>
+
+    {% if payments %}
+    <div class="dd-table-wrap">
+      <table class="dd-table">
+        <thead>
           <tr>
             <th>Date</th>
             <th>Method</th>
@@ -115,25 +562,31 @@
         <tbody>
           {% for p in payments %}
           <tr>
-            <td>{{ p.timestamp|date:"Y-m-d H:i" }}</td>
-            <td>{{ p.method|default:"—" }}</td>
-            <td>{{ p.note|default:"—" }}</td>
-            <td class="text-end fw-bold">{{ p.amount|floatformat:2 }}</td>
-            <td>
+            <td data-label="Date">{{ p.timestamp|date:"Y-m-d H:i" }}</td>
+            <td data-label="Method">{{ p.method|default:"—" }}</td>
+            <td data-label="Note" class="dd-meta">{{ p.note|default:"—" }}</td>
+            <td data-label="Amount" class="text-end dd-money">{{ p.amount|floatformat:2 }}</td>
+            <td data-label="Action">
               <form method="post" action="{% url 'sales:debtor_delete_payment' debtor.id p.id %}">
                 {% csrf_token %}
-                <button class="btn btn-sm btn-outline-danger" type="submit">
+                <button class="dd-btn-danger" type="submit">
+                  <i class="fa-solid fa-trash"></i>
                   Delete
                 </button>
               </form>
             </td>
           </tr>
-          {% empty %}
-          <tr><td colspan="5" class="text-center text-muted py-4">No payments yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% else %}
+    <div class="dd-empty">
+      <i class="fa-regular fa-face-smile"></i>
+      <h6>No payments yet</h6>
+      <p>This debtor has no recorded payment history yet.</p>
+    </div>
+    {% endif %}
   </div>
 
 </div>

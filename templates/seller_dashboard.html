@@ -2,280 +2,697 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Seller Dashboard — KILASI INVESTMENT{% endblock %}
+{% block title %}Seller Dashboard — Kilasi Investment{% endblock %}
 
 {% block extra_css %}
 <style>
   :root{
-    --ink:#0f172a;
-    --muted:#64748b;
-    --line:rgba(15,23,42,.10);
-    --soft:#f8fafc;
-    --card:#ffffff;
-    --shadow: 0 14px 34px rgba(2,6,23,.08);
-    --shadow2: 0 10px 24px rgba(2,6,23,.08);
-    --radius:18px;
+    --sd-bg:#f8fafc;
+    --sd-card:#ffffff;
+    --sd-line:#e2e8f0;
+    --sd-line-soft:#eef2f7;
+    --sd-text:#0f172a;
+    --sd-muted:#64748b;
+    --sd-primary:#2563eb;
+    --sd-primary-soft:rgba(37,99,235,.08);
+    --sd-success:#16a34a;
+    --sd-danger:#dc2626;
+    --sd-warning:#f59e0b;
+    --sd-info:#0891b2;
+    --sd-purple:#7c3aed;
+    --sd-shadow:0 10px 30px rgba(15,23,42,.06);
+    --sd-radius:18px;
   }
-  .k-wrap{max-width:1400px;margin:1.25rem auto 2rem;padding:0 1rem;}
-  .k-hero{
-    border-radius:var(--radius);
-    border:1px solid var(--line);
-    box-shadow:var(--shadow);
-    padding:14px;
+
+  .sd-wrap{
+    max-width:1400px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--sd-text);
+  }
+
+  .sd-hero{
+    border:1px solid var(--sd-line);
+    border-radius:22px;
+    box-shadow:var(--sd-shadow);
+    padding:1rem;
     background:
-      radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
-      radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
-      linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    margin-bottom:1rem;
   }
-  @media(min-width:768px){ .k-hero{ padding:18px; } }
 
-  .k-title{font-weight:900;letter-spacing:.2px;margin:0;color:var(--ink);display:flex;align-items:center;gap:10px;}
-  .k-sub{color:var(--muted);font-size:.92rem;margin-top:6px;}
-
-  .pill{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:.35rem .6rem;border-radius:999px;
-    border:1px solid rgba(15,23,42,.10);
-    background:rgba(255,255,255,.8);
-    font-weight:800;color:var(--ink);white-space:nowrap;
+  .sd-top{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.9rem;
   }
-  .pill i{opacity:.9;}
 
-  .k-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow2);overflow:hidden;}
-  .k-card-h{
-    padding:14px 16px;border-bottom:1px solid rgba(15,23,42,.07);
-    background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:space-between;gap:10px;
+  .sd-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    margin-bottom:.55rem;
   }
-  .k-card-b{padding:14px 16px;}
-  @media(min-width:768px){ .k-card-h{padding:16px 18px;} .k-card-b{padding:16px 18px;} }
 
-  .k-h{font-weight:900;color:var(--ink);margin:0;display:flex;align-items:center;gap:10px;}
-  .k-h small{font-weight:700;color:var(--muted);}
-
-  .picker-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;}
-  @media(min-width:992px){ .picker-grid{grid-template-columns:1fr 1fr 1fr;} }
-
-  .k-field label{font-weight:800;color:var(--ink);margin-bottom:6px;display:block;font-size:.92rem;}
-  .k-field .form-control,.k-field .form-select{
-    border-radius:14px;height:44px;border:1px solid rgba(15,23,42,.12);
+  .sd-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.34rem .62rem;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid var(--sd-line);
+    color:#475569;
+    font-size:.72rem;
+    font-weight:700;
   }
-  .k-field .form-control:focus,.k-field .form-select:focus{
-    box-shadow:0 0 0 .2rem rgba(13,110,253,.15);border-color:rgba(13,110,253,.35);
+
+  .sd-pill.primary{
+    background:var(--sd-primary-soft);
+    color:var(--sd-primary);
+    border-color:rgba(37,99,235,.12);
+  }
+
+  .sd-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .sd-sub{
+    margin-top:.25rem;
+    color:var(--sd-muted);
+    font-size:.74rem;
+  }
+
+  .sd-top-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.55rem;
+  }
+
+  .sd-link-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    height:36px;
+    padding:0 .82rem;
+    border-radius:12px;
+    border:1px solid var(--sd-line);
+    background:#fff;
+    color:#334155;
+    text-decoration:none;
+    font-size:.74rem;
+    font-weight:700;
+  }
+
+  .sd-link-btn:hover{
+    color:var(--sd-text);
+    border-color:#cbd5e1;
+  }
+
+  .sd-picker-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:.75rem;
+    margin-top:.95rem;
+  }
+
+  @media(min-width:992px){
+    .sd-picker-grid{
+      grid-template-columns:1fr 1fr 1fr;
+    }
+  }
+
+  .sd-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .sd-input-wrap{
+    position:relative;
+  }
+
+  .sd-input-icon{
+    position:absolute;
+    top:50%;
+    left:.78rem;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:.8rem;
+    pointer-events:none;
+  }
+
+  .sd-control{
+    width:100%;
+    height:40px;
+    border-radius:12px;
+    border:1px solid var(--sd-line);
+    background:#fff;
+    color:var(--sd-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+  }
+
+  .sd-control.ps-icon{
+    padding-left:2.2rem;
+  }
+
+  .sd-control:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
   }
 
   #searchResults{
-    position:absolute;top:100%;left:0;right:0;background:#fff;
-    border:1px solid rgba(15,23,42,.12);border-top:none;
-    max-height:260px;overflow-y:auto;z-index:1050;
-    border-bottom-left-radius:14px;border-bottom-right-radius:14px;
-    box-shadow:0 12px 30px rgba(2,6,23,.10);
-  }
-  #searchResults li{padding:.6rem .9rem;cursor:pointer;border-top:1px solid rgba(15,23,42,.06);}
-  #searchResults li:hover{background:#f1f5f9;}
-
-  .selected-empty{color:var(--muted);font-size:.95rem;}
-  .sel-row{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;margin-top:10px;}
-  .sel-badge{
-    display:inline-flex;gap:8px;align-items:center;padding:.3rem .6rem;border-radius:999px;
-    border:1px solid rgba(15,23,42,.10);background:rgba(248,250,252,.9);
-    font-weight:800;color:var(--ink);font-size:.88rem;
-  }
-  .mono{font-variant-numeric:tabular-nums;}
-
-  .qtybar{display:flex;gap:10px;align-items:center;width:100%;max-width:420px;}
-  .qtybar .form-control{height:44px;border-radius:14px;}
-  .btn-k{
-    height:44px;border-radius:14px;font-weight:900;white-space:nowrap;
-    display:inline-flex;align-items:center;gap:8px;
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    background:#fff;
+    border:1px solid var(--sd-line);
+    border-top:none;
+    max-height:260px;
+    overflow-y:auto;
+    z-index:1050;
+    border-bottom-left-radius:12px;
+    border-bottom-right-radius:12px;
+    box-shadow:0 12px 30px rgba(15,23,42,.10);
   }
 
-  .k-table thead th{font-size:.82rem;color:#334155;white-space:nowrap;border-bottom:1px solid rgba(15,23,42,.10);}
-  .k-table tbody td{vertical-align:middle;border-top:1px solid rgba(15,23,42,.06);}
-
-  .prod-name{font-weight:900;color:var(--ink);}
-  .prod-sub{color:var(--muted);font-size:.85rem;}
-
-  .disc-wrap{min-width:150px;}
-  .disc-input{height:40px;border-radius:12px;border:1px solid rgba(15,23,42,.12);padding-left:40px;}
-  .disc-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b;font-size:.95rem;}
-  .disc-help{display:block;margin-top:4px;font-size:.75rem;color:var(--muted);}
-
-  @media(max-width:576px){
-    .hide-xs{display:none!important;}
-    .k-card-b{padding:12px;}
-    .qtybar{max-width:100%;}
-    .disc-wrap{min-width:130px;}
+  #searchResults li{
+    padding:.62rem .8rem;
+    cursor:pointer;
+    border-top:1px solid var(--sd-line-soft);
+    font-size:.78rem;
   }
 
-  #lowStockToast{position:fixed;top:1rem;right:1rem;z-index:1100;min-width:280px;}
+  #searchResults li:hover{
+    background:#f8fafc;
+  }
+
+  .sd-card{
+    background:var(--sd-card);
+    border:1px solid var(--sd-line);
+    border-radius:20px;
+    box-shadow:var(--sd-shadow);
+    overflow:hidden;
+    height:100%;
+  }
+
+  .sd-card-h{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--sd-line-soft);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.65rem;
+    background:#fff;
+  }
+
+  .sd-card-title{
+    margin:0;
+    font-size:.86rem;
+    font-weight:800;
+    color:var(--sd-text);
+    display:flex;
+    align-items:center;
+    gap:.48rem;
+  }
+
+  .sd-card-sub{
+    font-size:.7rem;
+    color:var(--sd-muted);
+  }
+
+  .sd-card-b{
+    padding:1rem;
+  }
+
+  .sd-empty{
+    color:var(--sd-muted);
+    font-size:.77rem;
+  }
+
+  .sd-empty small{
+    display:block;
+    margin-top:.35rem;
+    font-size:.72rem;
+  }
+
+  .sd-sel-name{
+    font-weight:800;
+    color:var(--sd-text);
+    font-size:.92rem;
+    line-height:1.3;
+  }
+
+  .sd-sel-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    margin-top:.6rem;
+  }
+
+  .sd-sel-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    padding:.32rem .58rem;
+    border-radius:999px;
+    border:1px solid var(--sd-line);
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .sd-qtybar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.6rem;
+    align-items:center;
+    width:100%;
+    max-width:420px;
+    margin-top:.85rem;
+  }
+
+  .sd-btn{
+    height:40px;
+    border:none;
+    border-radius:12px;
+    padding:0 .9rem;
+    font-size:.76rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    white-space:nowrap;
+  }
+
+  .sd-btn-primary{
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .sd-btn-success{
+    background:linear-gradient(135deg, #16a34a, #22c55e);
+    color:#fff;
+  }
+
+  .sd-btn-outline-danger{
+    background:#fff;
+    color:var(--sd-danger);
+    border:1px solid rgba(220,38,38,.16);
+  }
+
+  .sd-btn:hover{
+    transform:translateY(-1px);
+  }
+
+  .sd-help{
+    margin-top:.55rem;
+    color:var(--sd-muted);
+    font-size:.72rem;
+  }
+
+  .sd-table{
+    margin:0;
+  }
+
+  .sd-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    font-size:.7rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    border-bottom:1px solid var(--sd-line);
+    padding:.78rem .8rem;
+    white-space:nowrap;
+  }
+
+  .sd-table tbody td{
+    padding:.78rem .8rem;
+    vertical-align:middle;
+    border-top:1px solid var(--sd-line-soft);
+    font-size:.77rem;
+    color:var(--sd-text);
+  }
+
+  .sd-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .sd-prod-name{
+    font-weight:700;
+    color:var(--sd-text);
+    font-size:.79rem;
+    line-height:1.25;
+  }
+
+  .sd-prod-sub{
+    color:var(--sd-muted);
+    font-size:.69rem;
+    margin-top:.15rem;
+  }
+
+  .sd-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:700;
+  }
+
+  .sd-cart-total{
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    font-size:.8rem;
+  }
+
+  .sd-inline-input{
+    height:38px;
+    border-radius:11px;
+    border:1px solid var(--sd-line);
+    font-size:.76rem;
+    box-shadow:none !important;
+  }
+
+  .sd-inline-input:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .16rem rgba(37,99,235,.10) !important;
+  }
+
+  .sd-disc-wrap{
+    position:relative;
+    min-width:145px;
+  }
+
+  .sd-disc-icon{
+    position:absolute;
+    left:.7rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:.78rem;
+  }
+
+  .sd-disc-input{
+    padding-left:2rem;
+  }
+
+  .sd-disc-help{
+    display:block;
+    margin-top:.22rem;
+    font-size:.66rem;
+    color:var(--sd-muted);
+    line-height:1.25;
+  }
+
+  .sd-submit-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:.7rem;
+  }
+
+  .sd-submit-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:.75rem;
+    align-items:end;
+  }
+
+  @media(min-width:992px){
+    .sd-submit-grid{
+      grid-template-columns:1fr 1.2fr auto;
+    }
+  }
+
+  .sd-submit-label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .sd-submit-help{
+    font-size:.69rem;
+    color:var(--sd-muted);
+    margin-top:.3rem;
+  }
+
+  .sd-note{
+    font-size:.71rem;
+    color:var(--sd-muted);
+  }
+
+  #debtFields{
+    display:none;
+    gap:.55rem;
+    align-items:center;
+  }
+
+  @media(max-width:768px){
+    #debtFields{
+      flex-direction:column;
+    }
+  }
+
+  #lowStockToast{
+    position:fixed;
+    top:1rem;
+    right:1rem;
+    z-index:1100;
+    min-width:280px;
+  }
+
+  @media(max-width:768px){
+    .sd-wrap{
+      padding:0 .65rem;
+    }
+
+    .sd-card-b,
+    .sd-card-h{
+      padding:.85rem;
+    }
+
+    .sd-table thead{
+      display:none;
+    }
+
+    .sd-table,
+    .sd-table tbody,
+    .sd-table tr,
+    .sd-table td{
+      display:block;
+      width:100%;
+    }
+
+    .sd-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .sd-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .sd-table tbody td::before{
+      content:attr(data-label);
+      font-size:.66rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:84px;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="k-wrap">
+<div class="sd-wrap">
 
-  <!-- HERO -->
-  <div class="k-hero mb-3">
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+  <div class="sd-hero mb-3">
+    <div class="sd-top">
       <div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-          <span class="pill"><i class="fa-solid fa-store"></i> POS — Seller</span>
+        <div class="sd-badges">
+          <span class="sd-pill primary"><i class="fa-solid fa-store"></i> POS Seller</span>
           {% if branch %}
-            <span class="pill"><i class="fa-solid fa-building"></i> {{ branch.name }}</span>
+            <span class="sd-pill"><i class="fa-solid fa-building"></i> {{ branch.name }}</span>
           {% endif %}
         </div>
-        <h2 class="k-title mt-2">
-          <i class="fa-solid fa-cart-shopping"></i>
+
+        <h2 class="sd-title">
+          <i class="fa-solid fa-cart-shopping text-primary"></i>
           Seller Dashboard
         </h2>
-        <div class="k-sub">
-          Search / Scan • Add to cart • Discount per item • Submit (Cash / Bank / EBT / Debt)
+
+        <div class="sd-sub">
+          Search, scan, add items, apply discount per item, then submit cash, bank, EBT or debt.
         </div>
       </div>
 
-      <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-outline-dark btn-k" href="{% url 'sales:kilasi_sales_history' %}">
-          <i class="fa-solid fa-clock-rotate-left"></i> <span class="d-none d-sm-inline">History</span>
+      <div class="sd-top-actions">
+        <a class="sd-link-btn" href="{% url 'sales:kilasi_sales_history' %}">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          History
         </a>
-        <a class="btn btn-outline-primary btn-k" href="{% url 'sales:outstanding_debts' %}">
-          <i class="fa-solid fa-hand-holding-dollar"></i> <span class="d-none d-sm-inline">Debts</span>
+        <a class="sd-link-btn" href="{% url 'sales:outstanding_debts' %}">
+          <i class="fa-solid fa-hand-holding-dollar"></i>
+          Debts
         </a>
       </div>
     </div>
 
-    <!-- PICKERS -->
-    <div class="picker-grid">
-      <div class="k-field">
-        <label for="categoryFilter"><i class="fa-solid fa-layer-group me-1"></i> Category</label>
-        <select id="categoryFilter" class="form-select">
-          <option value="">All Categories</option>
-          {% for id,name in categories %}
-            <option value="{{ id }}" {% if selected_cat and selected_cat|stringformat:"s" == id|stringformat:"s" %}selected{% endif %}>
-              {{ name }}
-            </option>
-          {% endfor %}
-        </select>
+    <div class="sd-picker-grid">
+      <div class="sd-field">
+        <label for="categoryFilter">Category</label>
+        <div class="sd-input-wrap">
+          <i class="fa-solid fa-layer-group sd-input-icon"></i>
+          <select id="categoryFilter" class="form-select sd-control ps-icon">
+            <option value="">All Categories</option>
+            {% for id,name in categories %}
+              <option value="{{ id }}" {% if selected_cat and selected_cat|stringformat:"s" == id|stringformat:"s" %}selected{% endif %}>
+                {{ name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
-      <div class="k-field position-relative">
-        <label for="textSearch"><i class="fa-solid fa-magnifying-glass me-1"></i> Search Products</label>
-        <div class="position-relative">
-          <i class="fa-solid fa-magnifying-glass position-absolute"
-             style="top:50%; left:14px; transform:translateY(-50%); color:#94a3b8;"></i>
-          <input type="text" id="textSearch" class="form-control ps-5"
+      <div class="sd-field position-relative">
+        <label for="textSearch">Search Products</label>
+        <div class="sd-input-wrap">
+          <i class="fa-solid fa-magnifying-glass sd-input-icon"></i>
+          <input type="text" id="textSearch" class="form-control sd-control ps-icon"
                  value="{{ search_q|default:'' }}"
-                 placeholder="Type product name…" autocomplete="off">
+                 placeholder="Type product name..."
+                 autocomplete="off">
         </div>
         <ul id="searchResults" class="list-unstyled d-none mb-0"></ul>
       </div>
 
-      <div class="k-field">
-        <label for="barcodeInput"><i class="fa-solid fa-barcode me-1"></i> Scan Barcode</label>
-        <div class="position-relative">
-          <i class="fa-solid fa-barcode position-absolute"
-             style="top:50%; left:14px; transform:translateY(-50%); color:#94a3b8;"></i>
-          <input type="text" id="barcodeInput" class="form-control ps-5"
-                 placeholder="Scan code then press Enter…" autocomplete="off">
+      <div class="sd-field">
+        <label for="barcodeInput">Scan Barcode</label>
+        <div class="sd-input-wrap">
+          <i class="fa-solid fa-barcode sd-input-icon"></i>
+          <input type="text" id="barcodeInput" class="form-control sd-control ps-icon"
+                 placeholder="Scan then press Enter..."
+                 autocomplete="off">
         </div>
       </div>
     </div>
   </div>
 
   <div class="row gy-3">
-    <!-- SELECTED PRODUCT -->
     <div class="col-lg-6">
-      <div class="k-card h-100">
-        <div class="k-card-h">
-          <div class="k-h">
-            <i class="fa-solid fa-cube"></i> Selected Product
-          </div>
-          <small class="text-muted d-none d-md-inline">Add quickly to cart</small>
+      <div class="sd-card h-100">
+        <div class="sd-card-h">
+          <h3 class="sd-card-title">
+            <i class="fa-solid fa-cube"></i>
+            Selected Product
+          </h3>
+          <div class="sd-card-sub d-none d-md-block">Quick add to cart</div>
         </div>
 
-        <div class="k-card-b">
-          <div id="selectedDetails" class="selected-empty">
+        <div class="sd-card-b">
+          <div id="selectedDetails" class="sd-empty">
             Pick a product by searching or scanning.
+            <small>Product info and add-to-cart controls will appear here.</small>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- CART -->
     <div class="col-lg-6">
-      <div class="k-card h-100">
-        <div class="k-card-h">
-          <div class="k-h">
-            <i class="fa-solid fa-basket-shopping"></i> Cart Summary
+      <div class="sd-card h-100">
+        <div class="sd-card-h">
+          <h3 class="sd-card-title">
+            <i class="fa-solid fa-basket-shopping"></i>
+            Cart Summary
             {% if cart_items %}
-              <small class="ms-2">({{ cart_items|length }} item{{ cart_items|length|pluralize }})</small>
+              <span class="sd-card-sub">({{ cart_items|length }} item{{ cart_items|length|pluralize }})</span>
             {% endif %}
-          </div>
+          </h3>
         </div>
 
-        <div class="k-card-b">
+        <div class="sd-card-b">
           {% if cart_items %}
 
             <div class="table-responsive mb-3">
-              <table class="table table-sm align-middle mb-0 k-table">
-                <thead class="table-light">
+              <table class="table sd-table align-middle mb-0">
+                <thead>
                   <tr>
                     <th>Product</th>
-                    <th class="text-center" style="width:92px;">Qty</th>
-                    <th style="width:190px;">Discount</th>
-                    <th class="text-end" style="width:140px;">Total</th>
-                    <th class="text-end" style="width:110px;">Actions</th>
+                    <th class="text-center" style="width:88px;">Qty</th>
+                    <th style="width:180px;">Discount</th>
+                    <th class="text-end" style="width:130px;">Total</th>
+                    <th class="text-end" style="width:104px;">Actions</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {% for it in cart_items %}
                   <tr>
-                    <td>
-                      <div class="prod-name">{{ it.product.name }}</div>
-                      <div class="prod-sub">
+                    <td data-label="Product">
+                      <div class="sd-prod-name">{{ it.product.name }}</div>
+                      <div class="sd-prod-sub">
                         Unit: Tsh {{ it.unit_price|floatformat:0|intcomma }}
                         {% if it.visible_stock is not None %}
-                          • Stock: <span class="mono">{{ it.visible_stock }}</span>
+                          • Stock: {{ it.visible_stock }}
                         {% endif %}
                       </div>
                     </td>
 
-                    <td class="text-center">
+                    <td data-label="Qty" class="text-center">
                       <form method="post" action="{% url 'sales:update_cart_qty' it.product.id %}"
                             class="d-flex flex-column gap-2 align-items-center">
                         {% csrf_token %}
                         <input type="number" name="quantity"
                                value="{{ it.quantity }}" min="1"
-                               class="form-control form-control-sm text-center mono"
-                               style="width:84px; height:40px; border-radius:12px;">
+                               class="form-control sd-inline-input text-center"
+                               style="width:78px;">
                     </td>
 
-                    <td>
-                        <div class="position-relative disc-wrap">
-                          <i class="fa-solid fa-tags disc-icon"></i>
+                    <td data-label="Discount">
+                        <div class="sd-disc-wrap">
+                          <i class="fa-solid fa-tags sd-disc-icon"></i>
                           <input type="number" name="discount"
                                  value="{{ it.discount }}" min="0" step="1"
-                                 class="form-control form-control-sm disc-input mono"
+                                 class="form-control sd-inline-input sd-disc-input"
                                  placeholder="0">
                         </div>
-                        <small class="disc-help">Per unit (Tsh). Example: 500 means -500 each.</small>
+                        <small class="sd-disc-help">Per unit in Tsh.</small>
                     </td>
 
-                    <td class="text-end">
-                      <div class="fw-bold mono">Tsh {{ it.total_price|floatformat:0|intcomma }}</div>
+                    <td data-label="Total" class="text-end">
+                      <div class="sd-cart-total">Tsh {{ it.total_price|floatformat:0|intcomma }}</div>
                     </td>
 
-                    <td class="text-end">
+                    <td data-label="Actions" class="text-end">
                       <div class="d-flex justify-content-end gap-2">
-                        <button type="submit" class="btn btn-success btn-sm btn-k" style="height:40px;">
+                        <button type="submit" class="sd-btn sd-btn-success" style="height:38px;">
                           <i class="fa-solid fa-rotate"></i>
-                          <span class="d-none d-md-inline">Update</span>
                         </button>
                       </form>
 
                         <form method="post" action="{% url 'sales:remove_from_cart' it.product.id %}">
                           {% csrf_token %}
-                          <button type="submit" class="btn btn-outline-danger btn-sm btn-k" style="height:40px;">
+                          <button type="submit" class="sd-btn sd-btn-outline-danger" style="height:38px;">
                             <i class="fa-solid fa-trash"></i>
                           </button>
                         </form>
@@ -287,18 +704,15 @@
               </table>
             </div>
 
-            <!-- SUBMIT -->
             <form method="post" action="{% url 'sales:submit_sale' %}">
               {% csrf_token %}
 
-              <div class="d-flex flex-column gap-2">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
+              <div class="sd-submit-wrap">
+                <div class="sd-submit-grid">
 
-                  <div class="flex-grow-1" style="min-width:180px;">
-                    <label class="form-label fw-bold mb-1">Payment</label>
-
-                    {# ✅ ADDED EBT HERE #}
-                    <select name="payment_method" id="paymentMethod" class="form-select" style="height:44px;border-radius:14px;">
+                  <div>
+                    <label class="sd-submit-label">Payment</label>
+                    <select name="payment_method" id="paymentMethod" class="form-select sd-control">
                       <option value="cash">Cash</option>
                       <option value="bank">Bank</option>
                       <option value="ebt">EBT (Mobile/Transfer)</option>
@@ -306,34 +720,35 @@
                     </select>
                   </div>
 
-                  <div class="flex-grow-1" style="min-width:220px;">
-                    <label class="form-label fw-bold mb-1">Customer (Only for debt)</label>
-                    <div id="debtFields" class="d-flex gap-2 align-items-center" style="display:none;">
-                      <input name="customer_name" type="text" class="form-control" style="height:44px;border-radius:14px;" placeholder="Customer Name">
-                      <input name="customer_phone" type="tel" class="form-control mono" style="height:44px;border-radius:14px;" placeholder="Phone">
+                  <div>
+                    <label class="sd-submit-label">Customer (only for debt)</label>
+                    <div id="debtFields">
+                      <input name="customer_name" type="text" class="form-control sd-control" placeholder="Customer name">
+                      <input name="customer_phone" type="tel" class="form-control sd-control" placeholder="Phone">
                     </div>
-                    <small class="text-muted d-block mt-1">Cash/Bank/EBT can be Walk-in.</small>
+                    <div class="sd-submit-help">Cash, bank and EBT can stay walk-in.</div>
                   </div>
 
-                  <div class="ms-auto" style="min-width:200px;">
-                    <label class="form-label fw-bold mb-1 d-none d-md-block">&nbsp;</label>
-                    <button type="submit" class="btn btn-success btn-k w-100">
-                      <i class="fa-solid fa-circle-check"></i> Submit Sale
+                  <div>
+                    <label class="sd-submit-label d-none d-lg-block">&nbsp;</label>
+                    <button type="submit" class="sd-btn sd-btn-success w-100">
+                      <i class="fa-solid fa-circle-check"></i>
+                      Submit Sale
                     </button>
                   </div>
 
                 </div>
 
-                <div class="small text-muted">
-                  ✅ You can add multiple items before submitting. The invoice/receipt will include ALL cart items.
+                <div class="sd-note">
+                  You can add multiple items before submitting. The invoice will include all cart items.
                 </div>
               </div>
             </form>
 
           {% else %}
-            <div class="text-muted">
-              <i class="fa-regular fa-face-smile me-1"></i> Your cart is empty.
-              <div class="small mt-2">Search a product above and add it to cart.</div>
+            <div class="sd-empty">
+              Your cart is empty.
+              <small>Search a product above and add it to cart.</small>
             </div>
           {% endif %}
         </div>
@@ -341,7 +756,6 @@
     </div>
   </div>
 
-  <!-- Low-stock Toast -->
   <div id="lowStockToast" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="d-flex">
       <div class="toast-body">
@@ -354,7 +768,6 @@
   </div>
 
   <audio id="notifSound" src="{% static 'sounds/notifications.mp3' %}" preload="auto"></audio>
-
 </div>
 {% endblock %}
 
@@ -412,25 +825,22 @@
 
     details.innerHTML = `
       <div class="d-flex flex-column gap-2">
-        <div style="font-weight:950;color:#0f172a;font-size:1.05rem;">
-          ${p.display}
-        </div>
-        <div class="sel-row">
-          ${stock !== "" ? `<span class="sel-badge"><i class="fa-solid fa-box"></i><span class="mono">Stock: ${stock}</span></span>` : ``}
-          <span class="sel-badge"><i class="fa-solid fa-triangle-exclamation"></i><span class="mono">Reorder: ${rl}</span></span>
-          <span class="sel-badge"><i class="fa-solid fa-tags"></i> Discount is per unit</span>
+        <div class="sd-sel-name">${p.display}</div>
+
+        <div class="sd-sel-badges">
+          ${stock !== "" ? `<span class="sd-sel-badge"><i class="fa-solid fa-box"></i> Stock: ${stock}</span>` : ``}
+          <span class="sd-sel-badge"><i class="fa-solid fa-triangle-exclamation"></i> Reorder: ${rl}</span>
+          <span class="sd-sel-badge"><i class="fa-solid fa-tags"></i> Discount per unit</span>
         </div>
 
-        <div class="qtybar mt-2">
-          <input id="qtyInput" type="number" min="1" value="1" class="form-control mono" placeholder="Qty">
-          <button id="addBtn" class="btn btn-success btn-k">
+        <div class="sd-qtybar">
+          <input id="qtyInput" type="number" min="1" value="1" class="form-control sd-control" placeholder="Qty">
+          <button id="addBtn" class="sd-btn sd-btn-success">
             <i class="fa-solid fa-plus"></i> Add
           </button>
         </div>
 
-        <small class="text-muted">
-          Tip: Barcode scanner → auto select product.
-        </small>
+        <div class="sd-help">Tip: barcode scanner will auto-select the product.</div>
       </div>
     `;
 
@@ -530,7 +940,6 @@
   });
 </script>
 
-<!-- Hidden add-to-cart form -->
 <form id="addForm" method="post" action="{% url 'sales:add_selected_product_to_cart' %}" style="display:none;">
   {% csrf_token %}
   <input type="hidden" name="product_id" id="addFormProduct">

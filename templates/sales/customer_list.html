@@ -1,239 +1,429 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Customers{% endblock %}
+{% block title %}Customers — Kilasi Investment{% endblock %}
 
 {% block extra_css %}
 <style>
 :root{
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --line:rgba(15,23,42,.08);
-  --line2:rgba(15,23,42,.05);
-  --shadow:0 10px 28px rgba(2,6,23,.06);
-  --radius:16px;
-  --blue:#0ea5e9;
-  --blue2:#0284c7;
+  --cu-card:#ffffff;
+  --cu-text:#0f172a;
+  --cu-muted:#64748b;
+  --cu-line:#e2e8f0;
+  --cu-line-soft:#eef2f7;
+  --cu-shadow:0 10px 30px rgba(15,23,42,.06);
+  --cu-primary:#2563eb;
+  --cu-primary-soft:rgba(37,99,235,.08);
+  --cu-radius:18px;
 }
 
-.cwrap{max-width:1100px;margin:0 auto;}
-.chead{
+.cu-wrap{
+  max-width:1120px;
+  margin:1rem auto 1.5rem;
+  padding:0 .85rem;
+  color:var(--cu-text);
+}
+
+.cu-hero,
+.cu-table-card{
+  background:var(--cu-card);
+  border:1px solid var(--cu-line);
+  border-radius:20px;
+  box-shadow:var(--cu-shadow);
+}
+
+.cu-hero{
+  background:
+    linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+    linear-gradient(180deg, #ffffff, #fbfdff);
+  padding:1rem 1rem .95rem;
+  margin-bottom:1rem;
+}
+
+.cu-hero-top{
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
-  gap:12px;
+  gap:.8rem;
   flex-wrap:wrap;
-  margin-bottom:14px;
 }
-.ctitle{
+
+.cu-title{
   margin:0;
-  font-size:1.15rem;
-  font-weight:900;
-  color:var(--text);
-}
-.csub{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:.88rem;
-}
-.csearch{
+  font-size:1.06rem;
+  font-weight:700;
+  letter-spacing:-.02em;
   display:flex;
-  gap:8px;
+  align-items:center;
+  gap:.55rem;
+}
+
+.cu-sub{
+  font-size:.75rem;
+  color:var(--cu-muted);
+  margin:.22rem 0 0;
+}
+
+.cu-search{
+  display:flex;
+  gap:.55rem;
   flex-wrap:wrap;
+  width:100%;
+  max-width:470px;
 }
-.cinput{
-  min-width:260px;
-  height:42px;
-  border:1px solid var(--line);
+
+.cu-search-wrap{
+  position:relative;
+  flex:1 1 260px;
+  min-width:220px;
+}
+
+.cu-search-icon{
+  position:absolute;
+  left:.78rem;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:.78rem;
+  color:#94a3b8;
+  pointer-events:none;
+}
+
+.cu-input{
+  width:100%;
+  height:40px;
+  border:1px solid var(--cu-line);
   border-radius:12px;
-  padding:0 12px;
+  padding:0 .85rem 0 2.15rem;
   outline:none;
+  font-size:.78rem;
+  background:#fff;
+  box-shadow:none !important;
 }
-.cbtn{
-  height:42px;
-  padding:0 14px;
-  border:none;
+
+.cu-input:focus{
+  border-color:rgba(37,99,235,.38);
+  box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+}
+
+.cu-btn,
+.cu-btn-light{
+  height:40px;
+  padding:0 .95rem;
   border-radius:12px;
-  background:linear-gradient(135deg,var(--blue),var(--blue2));
-  color:#fff;
-  font-weight:800;
+  font-size:.77rem;
+  font-weight:700;
   text-decoration:none;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
+  gap:.42rem;
+  white-space:nowrap;
 }
-.cbtn-light{
+
+.cu-btn{
+  border:none;
+  background:linear-gradient(135deg, #2563eb, #3b82f6);
+  color:#fff;
+}
+
+.cu-btn:hover{
+  color:#fff;
+  transform:translateY(-1px);
+}
+
+.cu-btn-light{
   background:#fff;
-  color:#0f172a;
-  border:1px solid var(--line);
+  color:#475569;
+  border:1px solid var(--cu-line);
 }
-.ccard{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  box-shadow:var(--shadow);
+
+.cu-btn-light:hover{
+  color:#0f172a;
+  border-color:#cbd5e1;
+}
+
+.cu-table-card{
   overflow:hidden;
 }
-.ccard-head{
-  padding:13px 16px;
-  border-bottom:1px solid var(--line2);
+
+.cu-table-head{
+  padding:.95rem 1rem;
+  border-bottom:1px solid var(--cu-line-soft);
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:10px;
+  gap:.7rem;
   flex-wrap:wrap;
 }
-.cbadge{
+
+.cu-table-title{
+  margin:0;
+  font-size:.84rem;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+}
+
+.cu-table-note{
   display:inline-flex;
   align-items:center;
-  justify-content:center;
-  padding:6px 10px;
+  gap:.35rem;
+  padding:.3rem .58rem;
   border-radius:999px;
-  background:#eef6ff;
-  color:#075985;
-  border:1px solid #dbeafe;
-  font-size:.74rem;
-  font-weight:800;
+  background:#f8fafc;
+  color:#475569;
+  font-size:.72rem;
+  font-weight:600;
+  border:1px solid var(--cu-line);
 }
-.ctable-wrap{overflow:auto;}
-.ctable{
+
+.cu-table-wrap{
+  overflow:auto;
+}
+
+.cu-table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
   min-width:760px;
+  margin:0;
 }
-.ctable thead th{
-  background:#0f172a;
-  color:#e2e8f0;
-  padding:11px 10px;
+
+.cu-table thead th{
+  background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+  color:#475569;
+  padding:.82rem .95rem;
   font-size:.72rem;
   text-transform:uppercase;
   letter-spacing:.05em;
   white-space:nowrap;
+  border-bottom:1px solid var(--cu-line);
 }
-.ctable tbody td{
-  padding:11px 10px;
-  border-top:1px solid var(--line2);
-  font-size:.87rem;
-  color:var(--text);
+
+.cu-table tbody td{
+  padding:.82rem .95rem;
+  border-top:1px solid var(--cu-line-soft);
+  font-size:.79rem;
+  color:var(--cu-text);
+  vertical-align:middle;
 }
-.ctable tbody tr:nth-child(even){background:#fbfdff;}
-.ctable tbody tr:hover{background:#f8fafc;}
-.cname{font-weight:800;}
-.cphone{font-weight:700;}
-.csource{
+
+.cu-table tbody tr:nth-child(even){
+  background:#fbfdff;
+}
+
+.cu-table tbody tr:hover{
+  background:#f8fafc;
+}
+
+.cu-index{
+  color:var(--cu-muted);
+  font-variant-numeric:tabular-nums;
+}
+
+.cu-name{
+  font-weight:700;
+  font-size:.81rem;
+}
+
+.cu-phone{
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+
+.cu-source{
   display:inline-flex;
-  padding:5px 9px;
+  padding:.3rem .58rem;
   border-radius:999px;
   background:#f8fafc;
   color:#475569;
-  border:1px solid #e2e8f0;
-  font-size:.72rem;
-  font-weight:800;
-}
-.empty-row{
-  text-align:center;
-  color:var(--muted);
-  padding:20px 12px !important;
+  border:1px solid var(--cu-line);
+  font-size:.71rem;
   font-weight:700;
 }
-.pager{
-  padding:14px;
-  display:flex;
-  gap:8px;
-  justify-content:center;
-  flex-wrap:wrap;
-  border-top:1px solid var(--line2);
+
+.cu-empty{
+  background:#fff;
+  border:1px dashed var(--cu-line);
+  border-radius:16px;
+  padding:1.8rem 1rem;
+  text-align:center;
+  color:var(--cu-muted);
+  margin:1rem;
 }
-.pager a,.pager span{
+
+.cu-empty i{
+  font-size:1.15rem;
+  color:#94a3b8;
+  margin-bottom:.45rem;
+}
+
+.cu-empty h6{
+  font-size:.88rem;
+  font-weight:700;
+  color:var(--cu-text);
+  margin-bottom:.12rem;
+}
+
+.cu-empty p{
+  font-size:.74rem;
+  margin:0;
+}
+
+.cu-pager{
+  padding:.95rem 1rem;
+  border-top:1px solid var(--cu-line-soft);
+  display:flex;
+  gap:.45rem;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.cu-pager a,
+.cu-pager span{
   min-width:36px;
-  height:34px;
-  padding:0 10px;
+  height:36px;
+  padding:0 12px;
   border-radius:10px;
-  border:1px solid var(--line);
+  border:1px solid var(--cu-line);
   display:inline-flex;
   align-items:center;
   justify-content:center;
   text-decoration:none;
   color:#0f172a;
   background:#fff;
-  font-weight:800;
-  font-size:.84rem;
+  font-weight:700;
+  font-size:.75rem;
 }
-.pager .disabled{opacity:.6;pointer-events:none;}
-@media (max-width:700px){
-  .csearch{width:100%;}
-  .cinput,.cbtn,.cbtn-light{width:100%;}
+
+.cu-pager .disabled{
+  opacity:.6;
+  pointer-events:none;
+}
+
+.cu-pager .current{
+  background:#f8fafc;
+  color:#475569;
+}
+
+@media (max-width:768px){
+  .cu-wrap{
+    padding:0 .7rem;
+  }
+
+  .cu-hero{
+    padding:.9rem;
+  }
+
+  .cu-search{
+    max-width:100%;
+  }
+
+  .cu-search-wrap,
+  .cu-btn,
+  .cu-btn-light{
+    width:100%;
+  }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="cwrap">
-  <div class="chead">
-    <div>
-      <h3 class="ctitle">Customers</h3>
-      <div class="csub">Combined contacts from sales, genji, customers table, and other saved records</div>
-    </div>
+<div class="cu-wrap">
 
-    <form method="get" class="csearch">
-      <input type="text" name="q" value="{{ query }}" class="cinput" placeholder="Search name, phone or source...">
-      <button class="cbtn">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        Search
-      </button>
-      {% if query %}
-        <a class="cbtn cbtn-light" href="{% url 'sales:customer_list' %}">Reset</a>
-      {% endif %}
-    </form>
+  <div class="cu-hero">
+    <div class="cu-hero-top">
+      <div>
+        <h2 class="cu-title">
+          <i class="fa-solid fa-users text-primary"></i>
+          Customers
+        </h2>
+        <div class="cu-sub">
+          Combined contacts from sales, genji, customers table, bookings, trips and other saved records
+        </div>
+      </div>
+
+      <form method="get" class="cu-search">
+        <div class="cu-search-wrap">
+          <i class="fa-solid fa-magnifying-glass cu-search-icon"></i>
+          <input type="text"
+                 name="q"
+                 value="{{ query }}"
+                 class="cu-input"
+                 placeholder="Search name, phone or source..."
+                 autocomplete="off">
+        </div>
+
+        <button class="cu-btn">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          Search
+        </button>
+
+        {% if query %}
+          <a class="cu-btn-light" href="{% url 'sales:customer_list' %}">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
+        {% endif %}
+      </form>
+    </div>
   </div>
 
-  <div class="ccard">
-    <div class="ccard-head">
-      <strong>Customer Contacts</strong>
-      <span class="cbadge">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  <div class="cu-table-card">
+    <div class="cu-table-head">
+      <h3 class="cu-table-title">
+        <i class="fa-solid fa-address-book"></i>
+        Customer Contacts
+      </h3>
+
+      <div class="cu-table-note">
+        <i class="fa-solid fa-file-lines"></i>
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </div>
     </div>
 
-    <div class="ctable-wrap">
-      <table class="ctable">
-        <thead>
-          <tr>
-            <th style="width:90px;">#</th>
-            <th>Name</th>
-            <th style="width:190px;">Phone</th>
-            <th style="width:220px;">Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in customers %}
+    {% if customers %}
+      <div class="cu-table-wrap">
+        <table class="cu-table">
+          <thead>
             <tr>
-              <td class="text-muted">#{{ forloop.counter0|add:page_obj.start_index }}</td>
-              <td class="cname">{{ c.name|default:"Customer" }}</td>
-              <td class="cphone">{{ c.phone|default:"—" }}</td>
-              <td><span class="csource">{{ c.source|default:"System" }}</span></td>
+              <th style="width:90px;">#</th>
+              <th>Name</th>
+              <th style="width:190px;">Phone</th>
+              <th style="width:220px;">Source</th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="4" class="empty-row">
-                <i class="fa-regular fa-face-frown me-1"></i> No customers found.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {% for c in customers %}
+              <tr>
+                <td class="cu-index">#{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                <td class="cu-name">{{ c.name|default:"Customer" }}</td>
+                <td class="cu-phone">{{ c.phone|default:"—" }}</td>
+                <td><span class="cu-source">{{ c.source|default:"System" }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="cu-empty">
+        <i class="fa-regular fa-face-frown"></i>
+        <h6>No customers found</h6>
+        <p>Try another search text or check saved records.</p>
+      </div>
+    {% endif %}
 
     {% if is_paginated %}
-      <div class="pager">
+      <div class="cu-pager">
         {% if page_obj.has_previous %}
           <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
         {% else %}
           <span class="disabled">‹ Prev</span>
         {% endif %}
 
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
         {% if page_obj.has_next %}
           <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
@@ -243,5 +433,6 @@
       </div>
     {% endif %}
   </div>
+
 </div>
 {% endblock %}

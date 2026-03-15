@@ -5,286 +5,322 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --card:#fff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --border:rgba(15,23,42,.08);
-  --border2:rgba(15,23,42,.06);
-  --shadow:0 10px 24px rgba(2,6,23,.06);
-  --radius:14px;
-  --focus:rgba(14,165,233,.18);
-  --danger:#ef4444;
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-}
-
-.exp-form-card{
-  width:100%;
-  max-width:860px;
-  margin:12px auto;
-  background:var(--card);
-  border-radius:var(--radius);
-  border:1px solid var(--border2);
-  box-shadow:var(--shadow);
-  padding:12px;
-  box-sizing:border-box;
-  font-family:var(--font);
-  color:var(--text);
-}
-
-.exp-form-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-  padding:2px 2px 10px 2px;
-}
-
-.exp-form-title{
-  margin:0;
-  font-size:.98rem;
-  font-weight:900;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.exp-form-sub{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:.78rem;
-  font-weight:700;
-}
-
-.exp-form-back .btn{
-  border-radius:10px;
-  font-size:.78rem;
-  font-weight:800;
-  padding:.48rem .72rem;
-}
-
-.exp-panel{
-  background:linear-gradient(180deg,#ffffff,#fbfdff);
-  border:1px solid var(--border2);
-  border-radius:12px;
-  padding:12px;
-}
-
-.exp-grid{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:10px;
-}
-
-.exp-field{ min-width:0; }
-
-.exp-label{
-  font-weight:800;
-  display:block;
-  margin:0 0 6px 0;
-  color:var(--text);
-  font-size:.8rem;
-}
-
-.exp-panel input,
-.exp-panel select,
-.exp-panel textarea{
-  width:100%;
-  box-sizing:border-box;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:#fff;
-  padding:10px 12px;
-  font-size:.82rem;
-  min-height:42px;
-  transition:box-shadow .12s ease, border-color .12s ease;
-  font-family:var(--font);
-}
-
-.exp-panel input:focus,
-.exp-panel select:focus,
-.exp-panel textarea:focus{
-  outline:none;
-  border-color:rgba(14,165,233,.45);
-  box-shadow:0 0 0 3px var(--focus);
-}
-
-.exp-panel textarea{
-  min-height:96px;
-  resize:vertical;
-}
-
-.exp-panel select{
-  -webkit-appearance:none;
-  -moz-appearance:none;
-  appearance:none;
-  padding-right:40px;
-  background-image:
-    linear-gradient(45deg, transparent 50%, #64748b 50%),
-    linear-gradient(135deg, #64748b 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) 50%,
-    calc(100% - 12px) 50%;
-  background-size:6px 6px, 6px 6px;
-  background-repeat:no-repeat;
-}
-
-.exp-help{
-  font-size:.72rem;
-  color:var(--muted);
-  margin-top:5px;
-  font-weight:700;
-}
-
-.exp-error{
-  font-size:.74rem;
-  color:var(--danger);
-  margin-top:5px;
-  font-weight:800;
-}
-
-.exp-alert{
-  border:1px solid rgba(239,68,68,.18);
-  background:rgba(239,68,68,.06);
-  color:#7f1d1d;
-  padding:9px 11px;
-  border-radius:10px;
-  margin-bottom:10px;
-  font-weight:700;
-  font-size:.78rem;
-}
-
-.exp-actions{
-  display:flex;
-  gap:8px;
-  justify-content:flex-end;
-  margin-top:12px;
-  flex-wrap:wrap;
-}
-.exp-actions .btn{
-  border-radius:10px;
-  padding:.58rem .85rem;
-  font-weight:800;
-  font-size:.78rem;
-}
-
-.exp-note{
-  margin-top:10px;
-  padding:10px 12px;
-  border-radius:10px;
-  background:rgba(2,6,23,.03);
-  border:1px solid rgba(15,23,42,.06);
-  color:#475569;
-  font-size:.74rem;
-  font-weight:700;
-}
-
-@media (max-width: 767.98px){
-  .exp-grid{ grid-template-columns:1fr; }
-  .exp-form-card{
-    margin:10px 6px;
-    padding:10px;
+  .expense-form-page{
+    max-width: 980px;
+    margin: 0 auto;
   }
-  .exp-form-head{
-    flex-direction:column;
-    align-items:flex-start;
+
+  .expense-form-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
   }
-  .exp-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-  .exp-actions .btn{
-    width:100%;
-    justify-content:center;
-    display:inline-flex;
+
+  .expense-form-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    display:flex;
     align-items:center;
+    gap:.5rem;
   }
-}
 
-.me-1{ margin-right:6px; }
-.me-2{ margin-right:8px; }
-.mt-2{ margin-top:.5rem; }
+  .expense-form-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
+  }
+
+  .expense-back-btn{
+    border-radius:12px;
+    font-size:.77rem;
+    font-weight:700;
+    padding:.62rem .9rem;
+  }
+
+  .expense-form-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .expense-form-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  .expense-form-head h4{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .expense-form-body{
+    padding:1rem;
+  }
+
+  .expense-alert{
+    border:1px solid rgba(239,68,68,.18);
+    background:rgba(239,68,68,.07);
+    color:#b91c1c;
+    padding:.78rem .9rem;
+    border-radius:12px;
+    font-size:.75rem;
+    font-weight:700;
+    margin-bottom:1rem;
+  }
+
+  .expense-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:.95rem;
+  }
+
+  .expense-field{
+    min-width:0;
+  }
+
+  .expense-field.full{
+    grid-column:1 / -1;
+  }
+
+  .expense-label{
+    display:block;
+    margin:0 0 .42rem 0;
+    font-size:.69rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#64748b;
+  }
+
+  .expense-form-body input,
+  .expense-form-body select,
+  .expense-form-body textarea{
+    width:100%;
+    box-sizing:border-box;
+    border-radius:12px;
+    border:1px solid #dbe4f0;
+    background:#fff;
+    padding:.7rem .85rem;
+    font-size:.79rem;
+    min-height:42px;
+    color:#0f172a;
+    transition:.18s ease;
+    box-shadow:none;
+    font-family:inherit;
+  }
+
+  .expense-form-body textarea{
+    min-height:110px;
+    resize:vertical;
+  }
+
+  .expense-form-body input:focus,
+  .expense-form-body select:focus,
+  .expense-form-body textarea:focus{
+    outline:none;
+    border-color:rgba(37,99,235,.40);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10);
+  }
+
+  .expense-form-body select{
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    appearance:none;
+    padding-right:44px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%),
+      linear-gradient(to right, rgba(15,23,42,.10), rgba(15,23,42,.10));
+    background-position:
+      calc(100% - 18px) 50%,
+      calc(100% - 13px) 50%,
+      calc(100% - 2.65rem) 50%;
+    background-size:6px 6px, 6px 6px, 1px 22px;
+    background-repeat:no-repeat;
+  }
+
+  .expense-help{
+    font-size:.68rem;
+    color:#94a3b8;
+    margin-top:.35rem;
+  }
+
+  .expense-error{
+    font-size:.72rem;
+    color:#dc2626;
+    margin-top:.35rem;
+    font-weight:700;
+  }
+
+  .expense-note{
+    margin-top:.95rem;
+    padding:.75rem .85rem;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .expense-actions{
+    display:flex;
+    gap:.65rem;
+    justify-content:flex-end;
+    margin-top:1rem;
+    flex-wrap:wrap;
+  }
+
+  .expense-actions .btn{
+    border-radius:12px;
+    min-height:42px;
+    padding:.62rem 1rem;
+    font-size:.78rem;
+    font-weight:700;
+  }
+
+  .expense-save-btn{
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
+
+  @media (max-width: 767.98px){
+    .expense-grid{
+      grid-template-columns:1fr;
+    }
+
+    .expense-form-hero{
+      padding:.9rem;
+    }
+
+    .expense-form-title{
+      font-size:.98rem;
+    }
+
+    .expense-form-subtitle{
+      font-size:.73rem;
+    }
+
+    .expense-form-body{
+      padding:.9rem;
+    }
+
+    .expense-actions .btn{
+      width:100%;
+      justify-content:center;
+      display:inline-flex;
+      align-items:center;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="exp-form-card">
-  <div class="exp-form-head">
-    <div>
-      <h2 class="exp-form-title">
-        <i class="fa-solid fa-receipt"></i>
-        Add Expense
-      </h2>
-      <div class="exp-form-sub">Enter expense details clearly.</div>
-    </div>
+<div class="expense-form-page">
 
-    <div class="exp-form-back">
-      <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">
+  <div class="expense-form-hero">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <h3 class="expense-form-title">
+          <i class="fa-solid fa-receipt text-primary"></i>
+          Add Expense
+        </h3>
+        <div class="expense-form-subtitle">
+          Enter transport or general office expense details clearly.
+        </div>
+      </div>
+
+      <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary expense-back-btn">
         <i class="fa-solid fa-arrow-left me-1"></i> Back
       </a>
     </div>
   </div>
 
-  <div class="exp-panel">
-    <form method="post" enctype="multipart/form-data" novalidate id="expenseForm">
-      {% csrf_token %}
+  <div class="expense-form-card">
+    <div class="expense-form-head">
+      <h4>
+        <i class="fa-solid fa-pen-to-square text-primary"></i>
+        Expense Details
+      </h4>
+    </div>
 
-      {% if form.non_field_errors %}
-        <div class="exp-alert">{{ form.non_field_errors }}</div>
-      {% endif %}
+    <div class="expense-form-body">
+      <form method="post" enctype="multipart/form-data" novalidate id="expenseForm">
+        {% csrf_token %}
 
-      <div class="exp-grid">
-        <div class="exp-field">
-          <label class="exp-label" for="{{ form.expense_date.id_for_label }}">Date</label>
-          {{ form.expense_date }}
-          {% if form.expense_date.errors %}<div class="exp-error">{{ form.expense_date.errors|striptags }}</div>{% endif %}
+        {% if form.non_field_errors %}
+          <div class="expense-alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="expense-grid">
+          <div class="expense-field">
+            <label class="expense-label" for="{{ form.expense_date.id_for_label }}">Date</label>
+            {{ form.expense_date }}
+            {% if form.expense_date.errors %}<div class="expense-error">{{ form.expense_date.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="expense-field">
+            <label class="expense-label" for="{{ form.expense_type.id_for_label }}">Type</label>
+            {{ form.expense_type }}
+            {% if form.expense_type.errors %}<div class="expense-error">{{ form.expense_type.errors|striptags }}</div>{% endif %}
+            <div class="expense-help">Fuel, repair, and service can use a vehicle. Office costs can stay general.</div>
+          </div>
+
+          <div class="expense-field">
+            <label class="expense-label" for="{{ form.vehicle.id_for_label }}">Vehicle</label>
+            {{ form.vehicle }}
+            {% if form.vehicle.errors %}<div class="expense-error">{{ form.vehicle.errors|striptags }}</div>{% endif %}
+            <div class="expense-help">Leave empty for general or office expenses.</div>
+          </div>
+
+          <div class="expense-field">
+            <label class="expense-label" for="{{ form.amount.id_for_label }}">Amount</label>
+            {{ form.amount }}
+            {% if form.amount.errors %}<div class="expense-error">{{ form.amount.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="expense-field full">
+            <label class="expense-label" for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="expense-error">{{ form.description.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="expense-field full">
+            <label class="expense-label" for="{{ form.branch.id_for_label }}">Branch</label>
+            {{ form.branch }}
+            {% if form.branch.errors %}<div class="expense-error">{{ form.branch.errors|striptags }}</div>{% endif %}
+          </div>
         </div>
 
-        <div class="exp-field">
-          <label class="exp-label" for="{{ form.expense_type.id_for_label }}">Type</label>
-          {{ form.expense_type }}
-          {% if form.expense_type.errors %}<div class="exp-error">{{ form.expense_type.errors|striptags }}</div>{% endif %}
-          <div class="exp-help">Fuel/repair/service can use a vehicle. Office costs can stay general.</div>
+        <div class="expense-note">
+          Vehicle selected = vehicle expense. No vehicle selected = general or office expense.
         </div>
 
-        <div class="exp-field">
-          <label class="exp-label" for="{{ form.vehicle.id_for_label }}">Vehicle</label>
-          {{ form.vehicle }}
-          {% if form.vehicle.errors %}<div class="exp-error">{{ form.vehicle.errors|striptags }}</div>{% endif %}
-          <div class="exp-help">Leave empty for general or office expenses.</div>
+        <div class="expense-actions">
+          <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary expense-save-btn">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Save Expense
+          </button>
         </div>
-
-        <div class="exp-field">
-          <label class="exp-label" for="{{ form.amount.id_for_label }}">Amount</label>
-          {{ form.amount }}
-          {% if form.amount.errors %}<div class="exp-error">{{ form.amount.errors|striptags }}</div>{% endif %}
-        </div>
-      </div>
-
-      <div class="mt-2">
-        <label class="exp-label" for="{{ form.description.id_for_label }}">Description</label>
-        {{ form.description }}
-        {% if form.description.errors %}<div class="exp-error">{{ form.description.errors|striptags }}</div>{% endif %}
-      </div>
-
-      <div class="mt-2">
-        <label class="exp-label" for="{{ form.branch.id_for_label }}">Branch</label>
-        {{ form.branch }}
-        {% if form.branch.errors %}<div class="exp-error">{{ form.branch.errors|striptags }}</div>{% endif %}
-      </div>
-
-      <div class="exp-note">
-        Vehicle selected = car expense. No vehicle selected = general / office expense.
-      </div>
-
-      <div class="exp-actions">
-        <a href="{% url 'transport:expense_list' %}" class="btn btn-outline-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">
-          <i class="fa-solid fa-floppy-disk me-1"></i> Save Expense
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
+
 </div>
 {% endblock %}
 
@@ -295,8 +331,17 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!form) return;
 
   const controls = form.querySelectorAll('input, select, textarea');
+
   controls.forEach(el => {
     if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
+
+    const id = el.id || el.name;
+    const tag = el.tagName.toLowerCase();
+
+    if (!el.placeholder && tag !== 'select' && id) {
+      const label = form.querySelector('label[for="' + id + '"]');
+      if (label) el.placeholder = label.textContent.trim();
+    }
 
     const name = (el.name || '').toLowerCase();
     if (name.includes('amount')) {
@@ -306,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  document.querySelectorAll('#expenseForm input, #expenseForm select').forEach((el) => {
+  form.querySelectorAll('input, select').forEach((el) => {
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const tag = e.target.tagName.toLowerCase();

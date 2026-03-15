@@ -4,240 +4,410 @@
   {% if is_edit %}Edit Booking{% else %}Add Booking{% endif %}
 {% endblock %}
 
-{% block page_title %}
-  {% if is_edit %}Edit Booking{% else %}Add Booking{% endif %}
-{% endblock %}
-
-{% block page_subtitle %}
-  {% if is_edit %}Update booking details{% else %}Create customer booking{% endif %}
-{% endblock %}
-
 {% block extra_css %}
 <style>
-  .booking-wrap{
-    max-width: 760px;
+  .booking-page{
+    max-width: 980px;
     margin: 0 auto;
   }
 
-  .booking-card{
-    background:#fff;
-    border:1px solid rgba(15,23,42,.08);
-    border-radius:18px;
-    box-shadow:0 10px 26px rgba(2,6,23,.06);
-    padding:18px;
-  }
-
-  .booking-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-    margin-bottom:16px;
-  }
-
-  .booking-head h3{
-    margin:0;
-    font-size:1rem;
-    font-weight:800;
-  }
-
-  .booking-head p{
-    margin:.2rem 0 0;
-    color:#64748b;
-    font-size:.82rem;
-  }
-
-  .booking-actions-top{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-
-  .booking-actions-top .btn,
-  .booking-actions-bottom .btn{
-    border-radius:12px;
-    font-weight:700;
-  }
-
-  .field-box{
+  .booking-hero{
     border:1px solid rgba(15,23,42,.06);
-    border-radius:14px;
-    padding:12px;
-    background:#fff;
-    height:100%;
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
   }
 
-  .field-box label{
-    display:block;
-    margin-bottom:8px;
-    font-size:.82rem;
-    font-weight:700;
+  .booking-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
     color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
   }
 
-  .booking-card .form-control,
-  .booking-card .form-select,
-  .booking-card textarea,
-  .booking-card input,
-  .booking-card select{
-    border-radius:12px !important;
-    min-height:42px;
-    border:1px solid rgba(15,23,42,.12);
-    font-size:.9rem;
-    box-shadow:none !important;
+  .booking-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
   }
 
-  .booking-card textarea{
-    min-height:95px;
-    resize:vertical;
+  .booking-top-actions{
+    display:flex;
+    gap:.6rem;
+    flex-wrap:wrap;
   }
 
-  .booking-card .form-control:focus,
-  .booking-card .form-select:focus,
-  .booking-card textarea:focus,
-  .booking-card input:focus,
-  .booking-card select:focus{
-    border-color:rgba(37,99,235,.35);
-    box-shadow:0 0 0 .15rem rgba(37,99,235,.08) !important;
+  .booking-top-actions .btn{
+    border-radius:12px;
+    font-size:.77rem;
+    font-weight:700;
+    padding:.62rem .9rem;
   }
 
-  .error-text{
-    margin-top:6px;
-    color:#dc2626;
-    font-size:.76rem;
-    font-weight:600;
+  .booking-form-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
   }
 
-  .top-errors{
-    margin-bottom:14px;
-    padding:10px 12px;
+  .booking-form-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  .booking-form-head h4{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .booking-form-body{
+    padding:1rem;
+  }
+
+  .booking-alert{
+    margin-bottom:1rem;
+    padding:.78rem .9rem;
     border-radius:12px;
     border:1px solid rgba(239,68,68,.16);
     background:rgba(239,68,68,.06);
     color:#b91c1c;
-    font-size:.82rem;
-    font-weight:600;
+    font-size:.75rem;
+    font-weight:700;
   }
 
-  .booking-actions-bottom{
-    margin-top:16px;
+  .booking-field-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:14px;
+    padding:.85rem;
+    background:#fff;
+    height:100%;
+  }
+
+  .booking-label{
+    display:block;
+    margin-bottom:.42rem;
+    font-size:.69rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#64748b;
+  }
+
+  .booking-form-card .form-control,
+  .booking-form-card .form-select,
+  .booking-form-card textarea,
+  .booking-form-card input,
+  .booking-form-card select{
+    border-radius:12px !important;
+    min-height:42px;
+    border:1px solid #dbe4f0;
+    font-size:.79rem;
+    color:#0f172a;
+    box-shadow:none !important;
+    background:#fff;
+  }
+
+  .booking-form-card textarea{
+    min-height:110px;
+    resize:vertical;
+  }
+
+  .booking-form-card .form-control:focus,
+  .booking-form-card .form-select:focus,
+  .booking-form-card textarea:focus,
+  .booking-form-card input:focus,
+  .booking-form-card select:focus{
+    border-color:rgba(37,99,235,.40);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .booking-form-card select{
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    appearance:none;
+    padding-right:44px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%),
+      linear-gradient(to right, rgba(15,23,42,.10), rgba(15,23,42,.10));
+    background-position:
+      calc(100% - 18px) 50%,
+      calc(100% - 13px) 50%,
+      calc(100% - 2.65rem) 50%;
+    background-size:6px 6px, 6px 6px, 1px 22px;
+    background-repeat:no-repeat;
+  }
+
+  .booking-help{
+    margin-top:.35rem;
+    font-size:.68rem;
+    color:#94a3b8;
+  }
+
+  .booking-error{
+    margin-top:.35rem;
+    color:#dc2626;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .booking-actions{
+    margin-top:1rem;
     display:flex;
     justify-content:flex-end;
-    gap:10px;
+    gap:.65rem;
     flex-wrap:wrap;
+  }
+
+  .booking-actions .btn{
+    border-radius:12px;
+    min-height:42px;
+    padding:.62rem 1rem;
+    font-size:.78rem;
+    font-weight:700;
+  }
+
+  .booking-save-btn{
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
+
+  .booking-note{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    padding:.7rem .8rem;
+    margin-top:.95rem;
+  }
+
+  @media (max-width: 767.98px){
+    .booking-hero{
+      padding:.9rem;
+    }
+
+    .booking-title{
+      font-size:.98rem;
+    }
+
+    .booking-subtitle{
+      font-size:.73rem;
+    }
+
+    .booking-form-body{
+      padding:.9rem;
+    }
+
+    .booking-top-actions{
+      width:100%;
+    }
+
+    .booking-top-actions .btn{
+      flex:1 1 100%;
+      justify-content:center;
+    }
+
+    .booking-actions .btn{
+      width:100%;
+      justify-content:center;
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="booking-wrap">
-  <div class="booking-card">
+<div class="booking-page">
 
-    <div class="booking-head">
+  <div class="booking-hero">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
       <div>
-        <h3>{% if is_edit %}Edit Booking{% else %}New Booking{% endif %}</h3>
-        <p>{% if is_edit %}Change booking info{% else %}Add customer booking details{% endif %}</p>
+        <h3 class="booking-title">
+          <i class="fa-solid fa-calendar-check text-primary"></i>
+          {% if is_edit %}Edit Booking{% else %}Add Booking{% endif %}
+        </h3>
+        <div class="booking-subtitle">
+          {% if is_edit %}Update booking details quickly and clearly.{% else %}Create a customer transport booking in a clean form.{% endif %}
+        </div>
       </div>
 
-      <div class="booking-actions-top">
-        <a href="{% url 'transport:booking_list' %}" class="btn btn-light btn-sm">
+      <div class="booking-top-actions">
+        <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-secondary">
           <i class="fa-solid fa-arrow-left me-1"></i> Back
         </a>
+
         {% if is_edit and booking %}
-          <a href="{% url 'transport:booking_delete' booking.pk %}" class="btn btn-outline-danger btn-sm">
+          <a href="{% url 'transport:booking_delete' booking.pk %}" class="btn btn-outline-danger">
             <i class="fa-solid fa-trash me-1"></i> Delete
           </a>
         {% endif %}
       </div>
     </div>
-
-    {% if form.non_field_errors %}
-      <div class="top-errors">
-        {{ form.non_field_errors }}
-      </div>
-    {% endif %}
-
-    <form method="post">
-      {% csrf_token %}
-
-      <div class="row g-3">
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Branch</label>
-            {{ form.branch }}
-            {% if form.branch.errors %}<div class="error-text">{{ form.branch.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Booking Date & Time</label>
-            {{ form.booking_datetime }}
-            {% if form.booking_datetime.errors %}<div class="error-text">{{ form.booking_datetime.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Customer Name</label>
-            {{ form.customer_name }}
-            {% if form.customer_name.errors %}<div class="error-text">{{ form.customer_name.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Phone Number</label>
-            {{ form.customer_phone }}
-            {% if form.customer_phone.errors %}<div class="error-text">{{ form.customer_phone.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Pickup Area</label>
-            {{ form.pickup_area }}
-            {% if form.pickup_area.errors %}<div class="error-text">{{ form.pickup_area.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Destination</label>
-            {{ form.destination }}
-            {% if form.destination.errors %}<div class="error-text">{{ form.destination.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="field-box">
-            <label>Status</label>
-            {{ form.status }}
-            {% if form.status.errors %}<div class="error-text">{{ form.status.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="field-box">
-            <label>Notes</label>
-            {{ form.notes }}
-            {% if form.notes.errors %}<div class="error-text">{{ form.notes.errors }}</div>{% endif %}
-          </div>
-        </div>
-      </div>
-
-      <div class="booking-actions-bottom">
-        <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-secondary">
-          Cancel
-        </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="fa-solid fa-floppy-disk me-1"></i>
-          {% if is_edit %}Update{% else %}Save{% endif %}
-        </button>
-      </div>
-    </form>
-
   </div>
+
+  <div class="booking-form-card">
+    <div class="booking-form-head">
+      <h4>
+        <i class="fa-solid fa-pen-to-square text-primary"></i>
+        Booking Details
+      </h4>
+    </div>
+
+    <div class="booking-form-body">
+      {% if form.non_field_errors %}
+        <div class="booking-alert">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <form method="post" id="bookingForm" novalidate>
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Branch</label>
+              {{ form.branch }}
+              {% if form.branch.help_text %}<div class="booking-help">{{ form.branch.help_text }}</div>{% endif %}
+              {% if form.branch.errors %}<div class="booking-error">{{ form.branch.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Booking Date & Time</label>
+              {{ form.booking_datetime }}
+              {% if form.booking_datetime.help_text %}<div class="booking-help">{{ form.booking_datetime.help_text }}</div>{% endif %}
+              {% if form.booking_datetime.errors %}<div class="booking-error">{{ form.booking_datetime.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Customer Name</label>
+              {{ form.customer_name }}
+              {% if form.customer_name.help_text %}<div class="booking-help">{{ form.customer_name.help_text }}</div>{% endif %}
+              {% if form.customer_name.errors %}<div class="booking-error">{{ form.customer_name.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Phone Number</label>
+              {{ form.customer_phone }}
+              <div class="booking-help">Example: +2557XXXXXXXX</div>
+              {% if form.customer_phone.errors %}<div class="booking-error">{{ form.customer_phone.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Pickup Area</label>
+              {{ form.pickup_area }}
+              {% if form.pickup_area.help_text %}<div class="booking-help">{{ form.pickup_area.help_text }}</div>{% endif %}
+              {% if form.pickup_area.errors %}<div class="booking-error">{{ form.pickup_area.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Destination</label>
+              {{ form.destination }}
+              {% if form.destination.help_text %}<div class="booking-help">{{ form.destination.help_text }}</div>{% endif %}
+              {% if form.destination.errors %}<div class="booking-error">{{ form.destination.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="booking-field-card">
+              <label class="booking-label">Status</label>
+              {{ form.status }}
+              {% if form.status.help_text %}<div class="booking-help">{{ form.status.help_text }}</div>{% endif %}
+              {% if form.status.errors %}<div class="booking-error">{{ form.status.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="booking-field-card">
+              <label class="booking-label">Notes</label>
+              {{ form.notes }}
+              {% if form.notes.help_text %}<div class="booking-help">{{ form.notes.help_text }}</div>{% endif %}
+              {% if form.notes.errors %}<div class="booking-error">{{ form.notes.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="booking-actions">
+          <a href="{% url 'transport:booking_list' %}" class="btn btn-outline-secondary">
+            Cancel
+          </a>
+
+          <button type="submit" class="btn btn-primary booking-save-btn">
+            <i class="fa-solid fa-floppy-disk me-1"></i>
+            {% if is_edit %}Update Booking{% else %}Save Booking{% endif %}
+          </button>
+        </div>
+
+        <div class="booking-note">
+          Keep booking information accurate so pickup, destination, and follow-up stay easy to manage.
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('bookingForm');
+  if (!form) return;
+
+  const inputs = form.querySelectorAll('input, select, textarea');
+
+  inputs.forEach(el => {
+    if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
+
+    const tag = el.tagName.toLowerCase();
+
+    if (!el.placeholder && tag !== 'select' && el.type !== 'datetime-local') {
+      const id = el.id || el.name;
+      if (id) {
+        const label = form.querySelector('label[for="' + id + '"]');
+        if (label) el.placeholder = label.textContent.trim();
+      }
+    }
+
+    const name = (el.name || '').toLowerCase();
+    if (/phone|tel|mobile/i.test(name)) {
+      el.setAttribute('inputmode', 'tel');
+      el.setAttribute('autocomplete', 'tel');
+    }
+  });
+
+  inputs.forEach(el => {
+    el.addEventListener('focus', () => {
+      setTimeout(() => {
+        try { el.scrollIntoView({ behavior:'smooth', block:'center' }); } catch(e) {}
+      }, 220);
+    });
+  });
+});
+</script>
 {% endblock %}

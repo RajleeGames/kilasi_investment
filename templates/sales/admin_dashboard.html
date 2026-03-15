@@ -5,264 +5,594 @@
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="container-fluid py-3">
+<style>
+  :root{
+    --dash-bg:#f8fafc;
+    --dash-card:#ffffff;
+    --dash-line:#e5e7eb;
+    --dash-line-soft:#eef2f7;
+    --dash-text:#0f172a;
+    --dash-muted:#64748b;
+    --dash-primary:#2563eb;
+    --dash-primary-2:#3b82f6;
+    --dash-success:#16a34a;
+    --dash-danger:#dc2626;
+    --dash-warning:#f59e0b;
+    --dash-purple:#7c3aed;
+    --dash-info:#0891b2;
+    --dash-dark:#111827;
+  }
 
-  <!-- Header -->
-  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <div>
-      <h4 class="mb-0">Dashboard</h4>
-      <small class="text-muted">
-        Sales • Debts • Payments • Expenses
-        {% if selected_branch_obj %} • <strong>{{ selected_branch_obj.name }}</strong>{% endif %}
-      </small>
+  .dash-shell{
+    color:var(--dash-text);
+  }
 
-      {% if not profit_enabled %}
-        <div class="small text-danger mt-1">
-          Profit is showing as revenue - 0 because product buying cost field was not found.
-          Add a cost field like <b>buying_price</b> in Product to get true profit.
+  .hero-card{
+    border:0;
+    border-radius:24px;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.03)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    box-shadow:0 12px 34px rgba(15,23,42,.07);
+    padding:1.15rem 1.15rem 1.05rem;
+    margin-bottom:1rem;
+  }
+
+  .hero-title{
+    font-size:1.15rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    margin:0;
+  }
+
+  .hero-sub{
+    font-size:.78rem;
+    color:var(--dash-muted);
+    margin-top:.18rem;
+  }
+
+  .hero-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.4rem .78rem;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:700;
+    background:rgba(37,99,235,.09);
+    color:var(--dash-primary);
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  /* FILTER AREA */
+  .filter-card{
+    border:0;
+    border-radius:24px;
+    background:linear-gradient(180deg,#ffffff,#fbfcff);
+    box-shadow:0 12px 30px rgba(15,23,42,.06);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+
+  .filter-main-grid{
+    display:grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap:.9rem;
+    align-items:end;
+  }
+
+  .filter-label{
+    font-size:.72rem;
+    font-weight:800;
+    color:#64748b;
+    margin-bottom:.38rem;
+    letter-spacing:.02em;
+  }
+
+  .filter-control{
+    height:44px;
+    border-radius:16px;
+    border:1px solid var(--dash-line);
+    font-size:.8rem;
+    padding:.55rem .9rem;
+    box-shadow:none !important;
+    background:#fff;
+  }
+
+  .filter-control:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .2rem rgba(37,99,235,.10) !important;
+  }
+
+  .filter-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    gap:.8rem;
+    margin-top:1rem;
+    padding-top:1rem;
+    border-top:1px solid var(--dash-line-soft);
+  }
+
+  .btn-filter-main{
+    min-width:132px;
+    height:46px;
+    border:none;
+    border-radius:16px;
+    padding:0 1.1rem;
+    font-size:.82rem;
+    font-weight:800;
+    color:#fff;
+    background:linear-gradient(135deg,var(--dash-primary),var(--dash-primary-2));
+    box-shadow:0 10px 24px rgba(37,99,235,.24);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.5rem;
+    transition:.18s ease;
+  }
+
+  .btn-filter-main:hover{
+    color:#fff;
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(37,99,235,.28);
+  }
+
+  .quick-filter{
+    min-width:118px;
+    height:46px;
+    border-radius:16px;
+    border:1px solid #dbe4f0;
+    background:#eef2ff;
+    color:#334155;
+    font-size:.8rem;
+    font-weight:800;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 1rem;
+    transition:.18s ease;
+  }
+
+  .quick-filter:hover{
+    background:#e0e7ff;
+    color:#1e293b;
+    transform:translateY(-1px);
+  }
+
+  .quick-filter.active{
+    background:linear-gradient(135deg,#dbeafe,#e0e7ff);
+    color:#1d4ed8;
+    border-color:#bfdbfe;
+    box-shadow:0 8px 20px rgba(59,130,246,.12);
+  }
+
+  .quick-reset{
+    min-width:100px;
+    height:46px;
+    border-radius:16px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#475569;
+    font-size:.8rem;
+    font-weight:800;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 .95rem;
+    transition:.18s ease;
+  }
+
+  .quick-reset:hover{
+    background:#f8fafc;
+    color:#0f172a;
+  }
+
+  .filter-note{
+    text-align:center;
+    margin-top:.75rem;
+    font-size:.74rem;
+    color:var(--dash-muted);
+  }
+
+  /* STAT CARDS */
+  .stat-card{
+    border:0;
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 10px 26px rgba(15,23,42,.06);
+    height:100%;
+    transition:.2s ease;
+    overflow:hidden;
+  }
+
+  .stat-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 16px 34px rgba(15,23,42,.09);
+  }
+
+  .stat-card .card-body{
+    padding:1rem;
+  }
+
+  .stat-icon{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.15rem;
+    flex-shrink:0;
+  }
+
+  .bg-soft-success{ background:rgba(22,163,74,.12); color:var(--dash-success); }
+  .bg-soft-primary{ background:rgba(37,99,235,.12); color:var(--dash-primary); }
+  .bg-soft-danger{ background:rgba(220,38,38,.12); color:var(--dash-danger); }
+  .bg-soft-warning{ background:rgba(245,158,11,.16); color:#b45309; }
+  .bg-soft-purple{ background:rgba(124,58,237,.13); color:var(--dash-purple); }
+  .bg-soft-info{ background:rgba(8,145,178,.13); color:var(--dash-info); }
+  .bg-soft-dark{ background:rgba(17,24,39,.10); color:var(--dash-dark); }
+
+  .stat-title{
+    font-size:.78rem;
+    color:var(--dash-muted);
+    font-weight:700;
+    margin-bottom:.2rem;
+  }
+
+  .stat-amount{
+    font-size:1.32rem;
+    font-weight:800;
+    line-height:1.15;
+    letter-spacing:-.02em;
+  }
+
+  .stat-note{
+    font-size:.72rem;
+    color:var(--dash-muted);
+  }
+
+  .section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.8rem;
+    margin:1.2rem 0 .7rem;
+  }
+
+  .section-title{
+    margin:0;
+    font-size:.95rem;
+    font-weight:800;
+    letter-spacing:-.01em;
+  }
+
+  .chart-card,
+  .list-card{
+    border:0;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:0 10px 26px rgba(15,23,42,.06);
+    height:100%;
+  }
+
+  .chart-card .card-body,
+  .list-card .card-body{
+    padding:1rem;
+  }
+
+  .chart-title{
+    font-size:.86rem;
+    font-weight:800;
+    margin-bottom:.15rem;
+  }
+
+  .chart-sub{
+    font-size:.72rem;
+    color:var(--dash-muted);
+    margin-bottom:.9rem;
+  }
+
+  .chart-box{
+    position:relative;
+    height:290px;
+  }
+
+  .mini-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:.8rem;
+  }
+
+  .mini-tile{
+    border-radius:18px;
+    padding:.95rem;
+    color:#fff;
+  }
+
+  .mini-tile small{
+    display:block;
+    opacity:.85;
+    font-size:.72rem;
+  }
+
+  .mini-tile strong{
+    display:block;
+    font-size:1.45rem;
+    line-height:1.1;
+    margin-top:.15rem;
+  }
+
+  .mini-dark{ background:linear-gradient(135deg,#111827,#1f2937); }
+  .mini-warn{ background:linear-gradient(135deg,#f59e0b,#fbbf24); }
+  .mini-info{ background:linear-gradient(135deg,#0891b2,#06b6d4); }
+
+  .product-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+    padding:.9rem 0;
+    border-bottom:1px solid #eef2f7;
+  }
+
+  .product-item:last-child{
+    border-bottom:0;
+  }
+
+  .product-name{
+    font-size:.84rem;
+    font-weight:700;
+    margin:0 0 .12rem;
+  }
+
+  .product-meta{
+    font-size:.72rem;
+    color:var(--dash-muted);
+  }
+
+  .stock-badge{
+    border-radius:999px;
+    padding:.3rem .6rem;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .pager-wrap .page-link{
+    border-radius:12px !important;
+    margin:0 .12rem;
+    border:1px solid #e5e7eb;
+    color:#334155;
+    font-size:.76rem;
+    font-weight:700;
+  }
+
+  .pager-wrap .page-item.active .page-link{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+
+  @media (max-width: 1200px){
+    .filter-main-grid{
+      grid-template-columns:1fr 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 768px){
+    .filter-main-grid{
+      grid-template-columns:1fr;
+    }
+
+    .filter-actions{
+      justify-content:center;
+    }
+
+    .btn-filter-main,
+    .quick-filter,
+    .quick-reset{
+      width:100%;
+    }
+
+    .chart-box{
+      height:250px;
+    }
+
+    .mini-grid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<div class="container-fluid py-3 dash-shell">
+
+  <div class="hero-card animate__animated animate__fadeInDown">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h4 class="hero-title">Dashboard</h4>
+        <div class="hero-sub">
+          Sales • Debts • Payments • Expenses
+          {% if selected_branch_obj %} • <strong>{{ selected_branch_obj.name }}</strong>{% endif %}
         </div>
-      {% else %}
-        <div class="small text-muted mt-1">
-          Profit uses Product.<b>{{ profit_cost_field }}</b> as buying cost (COGS).
+
+        <div class="mt-2 d-flex flex-wrap gap-2">
+          <span class="hero-chip">
+            <i class="fa-solid fa-calendar-day"></i>
+            {{ range_label }}
+          </span>
+          {% if selected_branch_obj %}
+          <span class="hero-chip">
+            <i class="fa-solid fa-building"></i>
+            {{ selected_branch_obj.name }}
+          </span>
+          {% endif %}
         </div>
-      {% endif %}
+
+        {% if not profit_enabled %}
+          <div class="small text-danger mt-2">
+            Profit is using revenue only because product cost field was not found.
+            Add <b>buying_price</b> to Product for real COGS.
+          </div>
+        {% else %}
+          <div class="small text-muted mt-2">
+            Profit uses Product.<b>{{ profit_cost_field }}</b> as buying cost (COGS).
+          </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 
-    <!-- Filters -->
-    <form method="get" class="d-flex flex-wrap align-items-center gap-2">
-      <div class="input-group input-group-sm" style="min-width:260px;">
-        <span class="input-group-text"><i class="fa-solid fa-building"></i></span>
-        <select name="branch" class="form-select">
-          <option value="">All Branches</option>
-          {% for b in branches %}
-            <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
-              {{ b.name }}
-            </option>
-          {% endfor %}
-        </select>
-        <button class="btn btn-outline-primary" type="submit">
-          <i class="fa-solid fa-filter me-1"></i>Filter
+  <div class="filter-card animate__animated animate__fadeInUp">
+    <form method="get">
+      <div class="filter-main-grid">
+        <div>
+          <label class="filter-label">Branch</label>
+          <select name="branch" class="form-select filter-control">
+            <option value="">All Branches</option>
+            {% for b in branches %}
+              <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                {{ b.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="filter-label">From</label>
+          <input type="date" name="date_from" value="{{ date_from }}" class="form-control filter-control">
+        </div>
+
+        <div>
+          <label class="filter-label">To</label>
+          <input type="date" name="date_to" value="{{ date_to }}" class="form-control filter-control">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-filter-main">
+          <i class="fa-solid fa-filter"></i>
+          Apply
         </button>
+
+        <a class="quick-filter {% if is_today_range %}active{% endif %}"
+           href="{% url 'sales:admin_dashboard' %}?date_from={{ today_str }}&date_to={{ today_str }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+          Today
+        </a>
+
+        <a class="quick-filter"
+           href="{% url 'sales:admin_dashboard' %}?date_from={{ last7_from }}&date_to={{ today_str }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+          Last 7 Days
+        </a>
+
+        <a class="quick-reset" href="{% url 'sales:admin_dashboard' %}">
+          Reset
+        </a>
       </div>
 
-      <div class="input-group input-group-sm" style="width:140px;">
-        <span class="input-group-text"><i class="fa-solid fa-calendar"></i></span>
-        <select class="form-select" name="month">
-          <option value="">Month</option>
-          {% for m in months %}
-            <option value="{{ m }}" {% if selected_month|stringformat:"s" == m|stringformat:"s" %}selected{% endif %}>
-              {{ m }}
-            </option>
-          {% endfor %}
-        </select>
+      <div class="filter-note">
+        Choose a branch and date range, then apply the filter.
       </div>
-
-      <div class="input-group input-group-sm" style="width:140px;">
-        <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
-        <select class="form-select" name="year">
-          <option value="">Year</option>
-          {% for y in years %}
-            <option value="{{ y }}" {% if selected_year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>
-              {{ y }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <a class="btn btn-sm btn-outline-secondary" href="{% url 'sales:admin_dashboard' %}">
-        <i class="fa-solid fa-rotate"></i>
-      </a>
     </form>
   </div>
 
-  <style>
-    .dash-card {
-      border: 0;
-      border-radius: 18px;
-      box-shadow: 0 .35rem 1rem rgba(0,0,0,.08);
-      height: 100%;
-      transition: .2s ease;
-    }
-    .dash-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 .6rem 1.4rem rgba(0,0,0,.12);
-    }
-    .dash-icon {
-      width: 54px;
-      height: 54px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.35rem;
-      flex-shrink: 0;
-    }
-    .dash-title {
-      font-size: .9rem;
-      font-weight: 600;
-      color: #6c757d;
-    }
-    .dash-amount {
-      font-size: 1.45rem;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .bg-soft-success { background: rgba(25,135,84,.12); color: #198754; }
-    .bg-soft-primary { background: rgba(13,110,253,.12); color: #0d6efd; }
-    .bg-soft-dark    { background: rgba(33,37,41,.10); color: #212529; }
-    .bg-soft-info    { background: rgba(13,202,240,.14); color: #0dcaf0; }
-    .bg-soft-warning { background: rgba(255,193,7,.18); color: #b58100; }
-    .bg-soft-danger  { background: rgba(220,53,69,.12); color: #dc3545; }
-    .bg-soft-purple  { background: rgba(111,66,193,.14); color: #6f42c1; }
-    .bg-soft-orange  { background: rgba(253,126,20,.14); color: #fd7e14; }
-
-    .dash-card .card-footer {
-      background: transparent;
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .section-title {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: .85rem;
-      color: #212529;
-    }
-  </style>
-
-  <!-- ROW 1 : MAIN MONEY CARDS -->
+  <!-- MAIN CARDS -->
   <div class="row g-3 mb-4">
-
-    <!-- Total Sales Today -->
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="dash-icon bg-soft-info">
-            <i class="fa-solid fa-chart-line"></i>
-          </div>
+          <div class="stat-icon bg-soft-info"><i class="fa-solid fa-chart-line"></i></div>
           <div>
-            <div class="dash-title">Total Sales Today</div>
-            <div class="dash-amount">Tsh {{ total_today|floatformat:0|intcomma }}</div>
-            <small class="text-muted">Cash + Bank + EBT</small>
+            <div class="stat-title">Received In Selected Period</div>
+            <div class="stat-amount">Tsh {{ total_received_period|floatformat:0|intcomma }}</div>
+            <div class="stat-note">Cash + Bank + EBT + Debt Payments</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Cash Today -->
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="dash-icon bg-soft-success">
-            <i class="fa-solid fa-money-bill-wave"></i>
-          </div>
+          <div class="stat-icon bg-soft-success"><i class="fa-solid fa-money-bill-wave"></i></div>
           <div>
-            <div class="dash-title">Cash Today</div>
-            <div class="dash-amount">Tsh {{ total_cash_today|floatformat:0|intcomma }}</div>
+            <div class="stat-title">Cash</div>
+            <div class="stat-amount">Tsh {{ total_cash_period|floatformat:0|intcomma }}</div>
+            <div class="stat-note">{{ range_label }}</div>
           </div>
-        </div>
-        <div class="card-footer">
-          <a class="small text-decoration-none"
-             href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=cash{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
-             View details →
-          </a>
         </div>
       </div>
     </div>
 
-    <!-- Bank Today -->
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="dash-icon bg-soft-primary">
-            <i class="fa-solid fa-building-columns"></i>
-          </div>
+          <div class="stat-icon bg-soft-primary"><i class="fa-solid fa-building-columns"></i></div>
           <div>
-            <div class="dash-title">Bank Today</div>
-            <div class="dash-amount">Tsh {{ total_bank_today|floatformat:0|intcomma }}</div>
+            <div class="stat-title">Bank</div>
+            <div class="stat-amount">Tsh {{ total_bank_period|floatformat:0|intcomma }}</div>
+            <div class="stat-note">{{ range_label }}</div>
           </div>
-        </div>
-        <div class="card-footer">
-          <a class="small text-decoration-none"
-             href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=bank{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
-             View details →
-          </a>
         </div>
       </div>
     </div>
 
-    <!-- EBT Today -->
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="dash-icon bg-soft-purple">
-            <i class="fa-solid fa-credit-card"></i>
-          </div>
+          <div class="stat-icon bg-soft-purple"><i class="fa-solid fa-credit-card"></i></div>
           <div>
-            <div class="dash-title">EBT Today</div>
-            <div class="dash-amount">Tsh {{ total_ebt_today|default:0|floatformat:0|intcomma }}</div>
-            <small class="text-muted">Mobile / Transfer</small>
+            <div class="stat-title">EBT</div>
+            <div class="stat-amount">Tsh {{ total_ebt_period|floatformat:0|intcomma }}</div>
+            <div class="stat-note">Mobile / Transfer</div>
           </div>
-        </div>
-        <div class="card-footer">
-          <a class="small text-decoration-none"
-             href="{% url 'sales:kilasi_sales_report' %}?date={{ today_str }}&status=ebt{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
-             View details →
-          </a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ROW 2 : PROFIT / EXPENSE / PAYMENTS -->
+  <!-- SECONDARY CARDS -->
   <div class="row g-3 mb-4">
-
-    <!-- Profit Today -->
     <div class="col-12 col-lg-6 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body">
           <div class="d-flex align-items-start justify-content-between gap-3">
             <div>
-              <div class="dash-title">Profit Today (Selling - Buying - Expenses)</div>
-              <div class="dash-amount">Tsh {{ net_profit_today|floatformat:0|intcomma }}</div>
-
-              <div class="small text-muted mt-2">
-                Revenue: Tsh {{ revenue_today|floatformat:0|intcomma }}
-                • COGS: Tsh {{ cogs_today|floatformat:0|intcomma }}
-                • Gross: Tsh {{ gross_profit_today|floatformat:0|intcomma }}
+              <div class="stat-title">Profit In Selected Period</div>
+              <div class="stat-amount">Tsh {{ net_profit_period|floatformat:0|intcomma }}</div>
+              <div class="stat-note mt-2">
+                Revenue: Tsh {{ revenue_period|floatformat:0|intcomma }} •
+                COGS: Tsh {{ cogs_period|floatformat:0|intcomma }} •
+                Gross: Tsh {{ gross_profit_period|floatformat:0|intcomma }}
               </div>
-
-              <div class="small text-muted mt-1">
-                Period Net Profit: Tsh {{ net_profit_period|floatformat:0|intcomma }}
-              </div>
-
-              <div class="small text-muted mt-2">
-                Cashflow Net Today: <b>Tsh {{ net_today_cashflow|floatformat:0|intcomma }}</b><br>
-                Cashflow Overall Net: <b>Tsh {{ net_overall_cashflow|floatformat:0|intcomma }}</b>
+              <div class="stat-note mt-2">
+                Today Profit: <b>Tsh {{ net_profit_today|floatformat:0|intcomma }}</b><br>
+                Today Cashflow Net: <b>Tsh {{ net_today_cashflow|floatformat:0|intcomma }}</b><br>
+                Overall Cashflow Net: <b>Tsh {{ net_overall_cashflow|floatformat:0|intcomma }}</b>
               </div>
             </div>
-            <div class="dash-icon bg-soft-dark">
-              <i class="fa-solid fa-chart-pie"></i>
-            </div>
+            <div class="stat-icon bg-soft-dark"><i class="fa-solid fa-chart-pie"></i></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Expenses Today -->
     <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="dash-icon bg-soft-danger">
-            <i class="fa-solid fa-receipt"></i>
-          </div>
+          <div class="stat-icon bg-soft-danger"><i class="fa-solid fa-receipt"></i></div>
           <div>
-            <div class="dash-title">Expenses Today</div>
-            <div class="dash-amount">Tsh {{ expenses_today|floatformat:0|intcomma }}</div>
+            <div class="stat-title">Expenses</div>
+            <div class="stat-amount">Tsh {{ expenses_period|floatformat:0|intcomma }}</div>
+            <div class="stat-note">{{ range_label }}</div>
           </div>
         </div>
-        <div class="card-footer">
+        <div class="px-3 pb-3">
           <a class="small text-decoration-none"
              href="{% url 'sales:expense_overview' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
              Open expenses →
@@ -271,181 +601,180 @@
       </div>
     </div>
 
-    <!-- Debt Payments -->
     <div class="col-12 col-md-6 col-lg-3 animate__animated animate__fadeInUp">
-      <div class="card dash-card">
+      <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="dash-icon bg-soft-warning">
-            <i class="fa-solid fa-hand-holding-dollar"></i>
-          </div>
+          <div class="stat-icon bg-soft-warning"><i class="fa-solid fa-hand-holding-dollar"></i></div>
           <div>
-            <div class="dash-title">Debt Payments</div>
-            <div class="dash-amount">Tsh {{ total_debt_payments|floatformat:0|intcomma }}</div>
+            <div class="stat-title">Debt Payments</div>
+            <div class="stat-amount">Tsh {{ total_debt_payments|floatformat:0|intcomma }}</div>
+            <div class="stat-note">{{ range_label }}</div>
           </div>
-        </div>
-        <div class="card-footer">
-          <a class="small text-decoration-none"
-             href="{% url 'sales:all_payments' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-             View payments →
-          </a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ROW 3 : DEBTS -->
-  <div class="row g-3 mb-4">
-    <div class="col-12">
-      <div class="section-title">Debt Overview</div>
+  <!-- MINI OVERVIEW -->
+  <div class="mini-grid mb-4">
+    <div class="mini-tile mini-dark">
+      <small>Unpaid Debts</small>
+      <strong>{{ num_debts|default:0 }}</strong>
+      <div class="small mt-1">Tsh {{ total_outstanding_debt|floatformat:0|intcomma }}</div>
     </div>
 
-    <!-- Outstanding Debts -->
-    <div class="col-12 col-md-6 col-xl-4">
-      <a class="text-decoration-none" href="{% url 'sales:outstanding_debts' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card dash-card text-white bg-dark">
-          <div class="card-body d-flex align-items-center justify-content-between">
-            <div>
-              <div class="small opacity-75">Unpaid Debts</div>
-              <div class="display-6 fw-bold mb-1">{{ num_debts|default:0 }}</div>
-              <div class="small opacity-75">
-                Tsh {{ total_outstanding_debt|default:0|floatformat:0|intcomma }}
-              </div>
-            </div>
-            <i class="fa-solid fa-hourglass-half fa-2x opacity-75"></i>
+    <div class="mini-tile mini-warn">
+      <small>Customer Credit</small>
+      <strong>Tsh {{ total_customer_credit|floatformat:0|intcomma }}</strong>
+      <div class="small mt-1">Amounts we owe customers</div>
+    </div>
+
+    <div class="mini-tile mini-info">
+      <small>Total Transactions</small>
+      <strong>{{ total_transactions|default:0 }}</strong>
+      <div class="small mt-1">{{ range_label }}</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section-head">
+    <h5 class="section-title">Charts & Trends</h5>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-xl-8">
+      <div class="card chart-card">
+        <div class="card-body">
+          <div class="chart-title">Daily Sales vs Expenses</div>
+          <div class="chart-sub">Inside the currently selected date range</div>
+          <div class="chart-box">
+            <canvas id="dailyTrendChart"></canvas>
           </div>
         </div>
-      </a>
+      </div>
     </div>
 
-    <!-- Customer Credit -->
-    <div class="col-12 col-md-6 col-xl-4">
-      <div class="card dash-card text-white bg-warning">
+    <div class="col-12 col-xl-4">
+      <div class="card chart-card">
+        <div class="card-body">
+          <div class="chart-title">Payment Mix</div>
+          <div class="chart-sub">Cash, Bank, EBT and debt collections</div>
+          <div class="chart-box">
+            <canvas id="paymentMixChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card chart-card">
+        <div class="card-body">
+          <div class="chart-title">Last 6 Months Revenue vs Expenses</div>
+          <div class="chart-sub">Branch-aware long-term trend</div>
+          <div class="chart-box">
+            <canvas id="monthlyTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTION TYPES -->
+  <div class="section-head">
+    <h5 class="section-title">Transaction Types</h5>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="card stat-card text-white" style="background:linear-gradient(135deg,#16a34a,#22c55e);">
         <div class="card-body d-flex align-items-center justify-content-between">
           <div>
-            <div class="small opacity-75">Customer Credit (We Owe)</div>
-            <div class="h3 mb-0">
-              Tsh {{ total_customer_credit|default:0|floatformat:0|intcomma }}
-            </div>
+            <div class="small opacity-75">Cash Transactions</div>
+            <div class="display-6 fw-bold mb-0">{{ num_cash_sales|default:0 }}</div>
           </div>
-          <i class="fa-solid fa-rotate-left fa-2x opacity-75"></i>
+          <i class="fa-solid fa-receipt fa-2x opacity-75"></i>
         </div>
       </div>
     </div>
 
-    <!-- All Transactions -->
-    <div class="col-12 col-md-6 col-xl-4">
-      <div class="card dash-card text-white bg-info">
+    <div class="col-12 col-md-4">
+      <div class="card stat-card text-white" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">
         <div class="card-body d-flex align-items-center justify-content-between">
           <div>
-            <div class="small opacity-75">All Transactions</div>
-            <div class="display-6 fw-bold mb-0">{{ total_transactions|default:0 }}</div>
+            <div class="small opacity-75">Bank Transactions</div>
+            <div class="display-6 fw-bold mb-0">{{ num_bank_sales|default:0 }}</div>
           </div>
-          <i class="fa-solid fa-layer-group fa-2x opacity-75"></i>
+          <i class="fa-solid fa-building-columns fa-2x opacity-75"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+      <div class="card stat-card text-white" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">EBT Transactions</div>
+            <div class="display-6 fw-bold mb-0">{{ num_ebt_sales|default:0 }}</div>
+          </div>
+          <i class="fa-solid fa-credit-card fa-2x opacity-75"></i>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ROW 4 : TRANSACTION COUNTS -->
-  <div class="row g-3 mb-4">
-    <div class="col-12">
-      <div class="section-title">Transaction Types</div>
-    </div>
-
-    <!-- Cash Transactions -->
-    <div class="col-12 col-md-4">
-      <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card dash-card text-white bg-success">
-          <div class="card-body d-flex align-items-center justify-content-between">
-            <div>
-              <div class="small opacity-75">Cash Transactions</div>
-              <div class="display-6 fw-bold mb-0">{{ num_cash_sales|default:0 }}</div>
-            </div>
-            <i class="fa-solid fa-receipt fa-2x opacity-75"></i>
-          </div>
-        </div>
-      </a>
-    </div>
-
-    <!-- Bank Transactions -->
-    <div class="col-12 col-md-4">
-      <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card dash-card text-white bg-primary">
-          <div class="card-body d-flex align-items-center justify-content-between">
-            <div>
-              <div class="small opacity-75">Bank Transactions</div>
-              <div class="display-6 fw-bold mb-0">{{ num_bank_sales|default:0 }}</div>
-            </div>
-            <i class="fa-solid fa-building-columns fa-2x opacity-75"></i>
-          </div>
-        </div>
-      </a>
-    </div>
-
-    <!-- EBT Transactions -->
-    <div class="col-12 col-md-4">
-      <a class="text-decoration-none" href="{% url 'sales:kilasi_sales_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-        <div class="card dash-card text-white" style="background:#6f42c1;">
-          <div class="card-body d-flex align-items-center justify-content-between">
-            <div>
-              <div class="small opacity-75">EBT Transactions</div>
-              <div class="display-6 fw-bold mb-0">{{ num_ebt_sales|default:0 }}</div>
-            </div>
-            <i class="fa-solid fa-credit-card fa-2x opacity-75"></i>
-          </div>
-        </div>
-      </a>
-    </div>
-  </div>
-
-  <!-- Recently Added Products -->
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h5 class="mb-0">Recently Added Products</h5>
-    <a href="{% url 'sales:product_list' %}" class="btn btn-outline-primary btn-sm">
+  <!-- RECENT PRODUCTS -->
+  <div class="section-head">
+    <h5 class="section-title">Recently Added Products</h5>
+    <a href="{% url 'sales:product_list' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
       <i class="fa-solid fa-list me-1"></i> View All
     </a>
   </div>
 
-  <ul class="list-group shadow-sm mb-2 rounded-4 overflow-hidden">
-    {% for prod in recent_products %}
-      {% with sp=prod.selling_price|default_if_none:0 %}
-      {% with st=prod.branch_qty|default_if_none:prod.stock|default_if_none:0 %}
-      {% with rl=prod.reorder_level|default_if_none:0 %}
+  <div class="card list-card mb-3">
+    <div class="card-body">
+      {% for prod in recent_products %}
+        {% with sp=prod.selling_price|default_if_none:0 %}
+        {% with st=prod.branch_qty|default_if_none:prod.stock|default_if_none:0 %}
+        {% with rl=prod.reorder_level|default_if_none:0 %}
+          <div class="product-item">
+            <div class="d-flex align-items-center gap-3">
+              <div class="stat-icon bg-soft-primary" style="width:42px;height:42px;border-radius:14px;font-size:1rem;">
+                <i class="fa-solid fa-box"></i>
+              </div>
+              <div>
+                <p class="product-name mb-0">
+                  <a href="{% url 'sales:product_detail' prod.pk %}" class="text-decoration-none">
+                    {{ prod.name }}
+                  </a>
+                </p>
+                <div class="product-meta">
+                  {% if prod.category %}{{ prod.category.name }}{% else %}—{% endif %}
+                </div>
+              </div>
+            </div>
 
-      <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-        <div class="d-flex align-items-center gap-3">
-          <i class="fa-solid fa-box text-primary"></i>
-          <div>
-            <a href="{% url 'sales:product_detail' prod.pk %}" class="text-decoration-none fw-semibold">
-              {{ prod.name }}
-            </a>
-            <div class="text-muted small">
-              {% if prod.category %}{{ prod.category.name }}{% else %}—{% endif %}
+            <div class="text-end">
+              <div class="fw-bold">Tsh {{ sp|floatformat:0|intcomma }}</div>
+              <span class="stock-badge {% if st|add:0 > rl|add:0 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
+                Stock: {{ st|default:0 }}
+              </span>
             </div>
           </div>
-        </div>
-        <div class="text-end">
-          <div class="fw-semibold">Tsh {{ sp|floatformat:0|intcomma }}</div>
-          <span class="badge {% if st|add:0 > rl|add:0 %}bg-success{% else %}bg-danger{% endif %}">
-            {{ st|default:0 }}
-          </span>
-        </div>
-      </li>
-
-      {% endwith %}
-      {% endwith %}
-      {% endwith %}
-    {% empty %}
-      <li class="list-group-item text-center text-muted">No recently added products.</li>
-    {% endfor %}
-  </ul>
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+      {% empty %}
+        <div class="text-center text-muted py-4">No recently added products.</div>
+      {% endfor %}
+    </div>
+  </div>
 
   {% if recent_products.has_other_pages %}
-    <nav>
+    <nav class="pager-wrap">
       <ul class="pagination justify-content-center mb-0">
         {% if recent_products.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?recent_page={{ recent_products.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">
+            <a class="page-link" href="?recent_page={{ recent_products.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}&date_from={{ date_from }}&date_to={{ date_to }}">
               « Prev
             </a>
           </li>
@@ -458,7 +787,7 @@
             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
           {% elif num >= recent_products.number|add:"-2" and num <= recent_products.number|add:"2" %}
             <li class="page-item">
-              <a class="page-link" href="?recent_page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">
+              <a class="page-link" href="?recent_page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}&date_from={{ date_from }}&date_to={{ date_to }}">
                 {{ num }}
               </a>
             </li>
@@ -467,7 +796,7 @@
 
         {% if recent_products.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?recent_page={{ recent_products.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">
+            <a class="page-link" href="?recent_page={{ recent_products.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}&date_from={{ date_from }}&date_to={{ date_to }}">
               Next »
             </a>
           </li>
@@ -477,6 +806,97 @@
       </ul>
     </nav>
   {% endif %}
-
 </div>
+
+<script>
+  const dailyLabels = {{ chart_labels_json|safe }};
+  const dailySales = {{ chart_sales_json|safe }};
+  const dailyExpenses = {{ chart_expenses_json|safe }};
+
+  const paymentMixLabels = {{ payment_mix_labels_json|safe }};
+  const paymentMixValues = {{ payment_mix_values_json|safe }};
+
+  const monthLabels = {{ month_labels_json|safe }};
+  const monthRevenue = {{ month_received_values_json|safe }};
+  const monthExpenses = {{ month_expense_values_json|safe }};
+
+  new Chart(document.getElementById('dailyTrendChart'), {
+    type: 'line',
+    data: {
+      labels: dailyLabels,
+      datasets: [
+        {
+          label: 'Sales Received',
+          data: dailySales,
+          tension: 0.35,
+          fill: true
+        },
+        {
+          label: 'Expenses',
+          data: dailyExpenses,
+          tension: 0.35,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top' }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('paymentMixChart'), {
+    type: 'doughnut',
+    data: {
+      labels: paymentMixLabels,
+      datasets: [{
+        data: paymentMixValues,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('monthlyTrendChart'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [
+        {
+          label: 'Revenue Received',
+          data: monthRevenue,
+          borderRadius: 8
+        },
+        {
+          label: 'Expenses',
+          data: monthExpenses,
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
 {% endblock %}

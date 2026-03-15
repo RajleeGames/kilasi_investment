@@ -5,489 +5,481 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --bg:#f8fafc;
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --border:rgba(15,23,42,.08);
-  --border2:rgba(15,23,42,.06);
-  --shadow:0 10px 24px rgba(2,6,23,.06);
-  --shadow2:0 8px 18px rgba(2,6,23,.05);
-  --radius:14px;
-  --focus:rgba(14,165,233,.22);
-  --accent:#0ea5e9;
-  --good:#10b981;
-  --danger:#ef4444;
-  --small:.82rem;
-  --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font:system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-}
-
-.exp-card{
-  max-width:1120px;
-  margin:12px auto;
-  background:var(--card);
-  border:1px solid var(--border2);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:12px;
-  font-family:var(--font);
-  color:var(--text);
-}
-
-.exp-top{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-  padding:2px 2px 10px 2px;
-}
-
-.exp-title{
-  margin:0;
-  font-size:.98rem;
-  font-weight:900;
-  letter-spacing:.1px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.exp-sub{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:.78rem;
-  font-weight:700;
-}
-
-.exp-actions{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.exp-search{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:7px 10px;
-  min-width:250px;
-  box-shadow:0 6px 14px rgba(2,6,23,.04);
-}
-.exp-search i{ color:var(--muted); font-size:.8rem; }
-.exp-search input{
-  border:none;
-  outline:none;
-  width:100%;
-  font-size:.82rem;
-  font-weight:700;
-  background:transparent;
-}
-.exp-search input::placeholder{ color:#94a3b8; }
-
-.exp-chip{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  background:linear-gradient(180deg,#ffffff,#fbfdff);
-  color:var(--muted);
-  font-size:.76rem;
-  font-weight:700;
-  user-select:none;
-}
-.exp-chip strong{
-  color:var(--text);
-  font-weight:900;
-  font-variant-numeric:tabular-nums;
-  font-family:var(--mono);
-}
-
-.exp-filterbar{
-  width:100%;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  justify-content:space-between;
-  padding:10px;
-  border-radius:14px;
-  border:1px solid var(--border2);
-  background:linear-gradient(180deg,#ffffff,#fbfdff);
-  box-shadow:0 8px 18px rgba(2,6,23,.04);
-  margin-top:4px;
-}
-
-.exp-filter-left{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
-.exp-datebox{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:7px 10px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:#fff;
-}
-.exp-datebox label{
-  margin:0;
-  font-weight:800;
-  font-size:.75rem;
-  color:#334155;
-  display:flex;
-  gap:6px;
-  align-items:center;
-  white-space:nowrap;
-}
-.exp-datebox input[type="date"],
-.exp-datebox select{
-  border:none;
-  outline:none;
-  background:transparent;
-  font-weight:800;
-  font-size:.8rem;
-  color:#0f172a;
-  min-width:130px;
-}
-
-.exp-filter-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-.exp-filter-actions .btn,
-.exp-actions .btn{
-  font-size:.78rem;
-  font-weight:800;
-  border-radius:10px;
-  padding:.48rem .72rem;
-}
-
-.exp-table-wrap{ padding-top:6px; }
-
-.exp-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0 8px;
-}
-
-.exp-table thead th{
-  padding:.55rem .75rem;
-  font-size:.68rem;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  color:#475569;
-  border:0;
-  background:transparent;
-  font-weight:900;
-}
-
-.exp-row{
-  background:#fff;
-  border:1px solid var(--border2);
-  box-shadow:var(--shadow2);
-  border-radius:12px;
-  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-.exp-row:hover{
-  transform:translateY(-1px);
-  box-shadow:0 12px 22px rgba(2,6,23,.08);
-  border-color:rgba(14,165,233,.18);
-}
-
-.exp-table td{
-  padding:.62rem .75rem;
-  border:0;
-  vertical-align:middle;
-  font-size:var(--small);
-  color:var(--text);
-  max-width:260px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.exp-muted{ color:var(--muted); }
-.exp-date{
-  font-family:var(--mono);
-  font-size:.76rem;
-  color:#0b1220;
-}
-.exp-amount{
-  text-align:right;
-  font-weight:900;
-  font-family:var(--mono);
-  font-variant-numeric:tabular-nums;
-}
-.amount-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:5px 9px;
-  border-radius:999px;
-  border:1px solid rgba(16,185,129,.18);
-  background:rgba(16,185,129,.08);
-  color:#065f46;
-}
-.amount-pill .tzs{
-  font-weight:800;
-  opacity:.9;
-  font-size:.72rem;
-}
-
-.general-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:4px 8px;
-  border-radius:999px;
-  border:1px solid rgba(15,23,42,.10);
-  background:rgba(2,6,23,.04);
-  color:#475569;
-  font-size:.72rem;
-  font-weight:800;
-}
-
-.exp-clickable{ cursor:pointer; }
-.exp-clickable:focus,
-.exp-clickable:focus-within{
-  outline:3px solid var(--focus);
-  outline-offset:2px;
-}
-
-.exp-empty{
-  padding:16px;
-  text-align:center;
-  color:var(--muted);
-  font-size:.8rem;
-  font-weight:700;
-  background:linear-gradient(180deg,#fbfdff,#fff);
-  border-radius:12px;
-  border:1px dashed rgba(15,23,42,.14);
-}
-
-.td-label{ display:none; }
-
-@media (max-width: 991.98px){
-  .exp-top{
-    flex-direction:column;
-    align-items:flex-start;
+  .expenses-page{
+    max-width:1120px;
+    margin:0 auto;
   }
 
-  .exp-actions{
-    justify-content:flex-start;
-    width:100%;
+  .expenses-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
   }
 
-  .exp-search{
-    min-width:100%;
+  .expenses-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
   }
 
-  .exp-filterbar{
-    justify-content:flex-start;
-    padding:8px;
+  .expenses-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
   }
 
-  .exp-filter-left{
-    width:100%;
-    display:grid;
-    grid-template-columns:1fr;
-    gap:8px;
+  .expenses-hero-actions{
+    display:flex;
+    gap:.7rem;
+    align-items:center;
+    flex-wrap:wrap;
   }
 
-  .exp-datebox{
-    width:100%;
-    justify-content:space-between;
-  }
-
-  .exp-datebox input[type="date"],
-  .exp-datebox select{
-    width:100%;
-    min-width:0;
-    max-width:220px;
+  .expenses-add-btn{
+    border-radius:12px;
     font-size:.78rem;
+    font-weight:700;
+    padding:.65rem .95rem;
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
   }
 
-  .exp-filter-actions{
-    width:100%;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-
-  .exp-filter-actions .btn{
-    width:100%;
-    justify-content:center;
+  .expenses-chip{
     display:inline-flex;
     align-items:center;
+    gap:.4rem;
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.45rem .72rem;
+    font-weight:700;
+    white-space:nowrap;
   }
 
-  .exp-table thead{ display:none; }
-
-  .exp-row{
-    display:block;
-    padding:.55rem .7rem;
+  .expenses-chip strong{
+    color:#0f172a;
+    font-weight:800;
   }
 
-  .exp-table td{
+  .expenses-filter-card,
+  .expenses-table-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .expenses-filter-card{
+    margin-bottom:1rem;
+  }
+
+  .expenses-filter-body{
+    padding:1rem;
+  }
+
+  .expenses-filter-card .form-control,
+  .expenses-filter-card .form-select,
+  .expenses-filter-card .btn{
+    min-height:42px;
+    border-radius:12px;
+    font-size:.79rem;
+  }
+
+  .expenses-filter-card .btn{
+    font-weight:700;
+  }
+
+  .expenses-search-wrap{
+    position:relative;
+  }
+
+  .expenses-search-icon{
+    position:absolute;
+    left:.85rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:.78rem;
+    pointer-events:none;
+  }
+
+  .expenses-search{
+    padding-left:2.25rem;
+  }
+
+  .expenses-current-filter{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    padding:.7rem .8rem;
+    font-weight:700;
+  }
+
+  .expenses-current-filter strong{
+    color:#0f172a;
+  }
+
+  .expenses-table-head{
     display:flex;
+    align-items:center;
     justify-content:space-between;
-    gap:10px;
-    padding:.42rem 0;
-    white-space:normal;
-    max-width:none;
-    border-bottom:1px dashed rgba(15,23,42,.08);
+    gap:.8rem;
+    padding:.9rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    flex-wrap:wrap;
+  }
+
+  .expenses-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .expenses-table-note{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.35rem .65rem;
+    font-weight:700;
+  }
+
+  .expenses-table{
+    margin:0;
+    width:100%;
+  }
+
+  .expenses-table thead th{
+    padding:.85rem .9rem;
+    font-size:.70rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#64748b;
+    border:0;
+    background:#f8fafc;
+    font-weight:800;
+    white-space:nowrap;
+    border-bottom:1px solid #e2e8f0;
+  }
+
+  .expenses-table tbody td{
+    padding:.82rem .9rem;
+    border-top:1px solid #eef2f7;
+    vertical-align:middle;
+    font-size:.79rem;
+    color:#0f172a;
+    white-space:nowrap;
+  }
+
+  .expenses-table tbody tr{
+    transition:background .16s ease;
+  }
+
+  .expenses-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .expense-row-link{
+    cursor:pointer;
+  }
+
+  .expense-row-link:focus,
+  .expense-row-link:focus-within{
+    outline:3px solid rgba(37,99,235,.14);
+    outline-offset:-3px;
+  }
+
+  .expense-date{
+    font-size:.76rem;
+    color:#334155;
+    font-weight:700;
+  }
+
+  .expense-muted{
+    color:#64748b;
     font-size:.77rem;
   }
 
-  .exp-table td:last-child{ border-bottom:0; }
+  .expense-amount{
+    text-align:right;
+  }
 
-  .td-label{
-    display:inline-block;
-    color:var(--muted);
+  .amount-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.35rem .6rem;
+    border-radius:999px;
+    border:1px solid rgba(16,185,129,.18);
+    background:rgba(16,185,129,.08);
+    color:#065f46;
+    font-size:.71rem;
     font-weight:800;
-    font-size:.73rem;
-    min-width:36%;
-    flex-shrink:0;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
   }
 
-  .exp-amount{
-    text-align:left;
+  .amount-pill .tzs{
+    font-size:.68rem;
+    opacity:.9;
   }
-}
 
-.me-1{ margin-right:6px; }
+  .general-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.32rem .55rem;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.10);
+    background:rgba(2,6,23,.04);
+    color:#475569;
+    font-size:.68rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .expense-empty{
+    text-align:center;
+    padding:2rem 1rem;
+    color:#64748b;
+    font-size:.8rem;
+    background:#fff;
+  }
+
+  .expense-empty i{
+    display:block;
+    font-size:1.15rem;
+    margin-bottom:.45rem;
+    color:#94a3b8;
+  }
+
+  @media (max-width: 991.98px){
+    .expenses-hero{
+      padding:.9rem;
+    }
+
+    .expenses-title{
+      font-size:.98rem;
+    }
+
+    .expenses-subtitle{
+      font-size:.73rem;
+    }
+
+    .expenses-filter-body{
+      padding:.85rem;
+    }
+
+    .expenses-hero-actions{
+      width:100%;
+    }
+
+    .expenses-chip{
+      width:100%;
+      justify-content:center;
+    }
+
+    .expenses-add-btn{
+      width:100%;
+      justify-content:center;
+    }
+
+    .expenses-table thead{
+      display:none;
+    }
+
+    .expenses-table,
+    .expenses-table tbody,
+    .expenses-table tr,
+    .expenses-table td{
+      display:block;
+      width:100%;
+    }
+
+    .expenses-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.3rem 0;
+    }
+
+    .expenses-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .85rem;
+      white-space:normal;
+      border-top:none;
+      border-bottom:1px dashed rgba(15,23,42,.08);
+    }
+
+    .expenses-table tbody td:last-child{
+      border-bottom:none;
+    }
+
+    .expenses-table tbody td::before{
+      content:attr(data-label);
+      min-width:96px;
+      font-size:.67rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:#64748b;
+      flex-shrink:0;
+    }
+
+    .expense-amount{
+      text-align:left;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="exp-card">
-  <div class="exp-top">
-    <div>
-      <h2 class="exp-title">
-        <i class="fa-solid fa-truck-moving"></i>
-        Transport Expenses
-      </h2>
-      <div class="exp-sub">Filter by date, vehicle, or general office expenses.</div>
-    </div>
+<div class="expenses-page">
 
-    <div class="exp-actions">
-      <div class="exp-search" title="Search expenses">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="expenseSearch" type="search" placeholder="Search vehicle, type, desc, branch..." aria-label="Search expenses">
+  <div class="expenses-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h3 class="expenses-title">
+          <i class="fa-solid fa-truck-moving text-primary"></i>
+          Transport Expenses
+        </h3>
+        <div class="expenses-subtitle">
+          Filter by date, vehicle, or general office expenses.
+        </div>
       </div>
 
-      <span class="exp-chip" title="Visible rows">
-        Showing <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong>
-      </span>
+      <div class="expenses-hero-actions">
+        <span class="expenses-chip" title="Visible rows">
+          Showing <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong>
+        </span>
 
-      <a href="{% url 'transport:expense_create' %}" class="btn btn-primary">
-        <i class="fa-solid fa-plus me-1"></i> Add Expense
-      </a>
+        <a href="{% url 'transport:expense_create' %}" class="btn btn-primary expenses-add-btn">
+          <i class="fa-solid fa-plus me-1"></i> Add Expense
+        </a>
+      </div>
     </div>
   </div>
 
-  <form method="get" class="exp-filterbar" aria-label="Filter expenses">
-    <div class="exp-filter-left">
-      <span class="exp-chip" title="Current filter">
-        <i class="fa-regular fa-calendar"></i>
-        Date:
-        <strong>
-          {% if selected_date %}
-            {{ selected_date|date:"d M Y" }}
-          {% else %}
-            All
-          {% endif %}
-        </strong>
-      </span>
+  <div class="expenses-filter-card">
+    <div class="expenses-filter-body">
+      <form method="get" aria-label="Filter expenses">
+        <div class="row g-2">
+          <div class="col-12">
+            <div class="expenses-search-wrap">
+              <i class="fa-solid fa-magnifying-glass expenses-search-icon"></i>
+              <input id="expenseSearch" type="search" class="form-control expenses-search"
+                     placeholder="Search vehicle, type, description, branch..."
+                     aria-label="Search expenses">
+            </div>
+          </div>
 
-      <div class="exp-datebox">
-        <label for="expDate">
-          <i class="fa-solid fa-calendar-day"></i> Date
-        </label>
-        <input id="expDate" type="date" name="date" value="{{ selected_date }}" aria-label="Select date">
-      </div>
+          <div class="col-md-4">
+            <input id="expDate" type="date" name="date" value="{{ selected_date }}" class="form-control" aria-label="Select date">
+          </div>
 
-      <div class="exp-datebox">
-        <label for="expVehicle">
-          <i class="fa-solid fa-truck"></i> Vehicle
-        </label>
-        <select id="expVehicle" name="vehicle" aria-label="Select vehicle">
-          <option value="">All Vehicles</option>
-          {% for v in vehicles %}
-            <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
-              {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+          <div class="col-md-4">
+            <select id="expVehicle" name="vehicle" class="form-select" aria-label="Select vehicle">
+              <option value="">All Vehicles</option>
+              {% for v in vehicles %}
+                <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
+                  {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
 
-      <div class="exp-datebox">
-        <label for="expScope">
-          <i class="fa-solid fa-layer-group"></i> Type
-        </label>
-        <select id="expScope" name="scope" aria-label="Select expense scope">
-          <option value="">All Expenses</option>
-          <option value="vehicle" {% if selected_scope == "vehicle" %}selected{% endif %}>Vehicle Only</option>
-          <option value="general" {% if selected_scope == "general" %}selected{% endif %}>General Only</option>
-        </select>
-      </div>
+          <div class="col-md-4">
+            <select id="expScope" name="scope" class="form-select" aria-label="Select expense scope">
+              <option value="">All Expenses</option>
+              <option value="vehicle" {% if selected_scope == "vehicle" %}selected{% endif %}>Vehicle Only</option>
+              <option value="general" {% if selected_scope == "general" %}selected{% endif %}>General Only</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 d-flex gap-2">
+            <button class="btn btn-outline-primary flex-fill" type="submit">
+              <i class="fa-solid fa-filter me-1"></i> Apply
+            </button>
+
+            <a class="btn btn-light flex-fill" href="{% url 'transport:expense_list' %}">
+              <i class="fa-solid fa-rotate-left me-1"></i> Clear
+            </a>
+          </div>
+
+          <div class="col-md-6">
+            <div class="expenses-current-filter">
+              Date:
+              <strong>
+                {% if selected_date %}
+                  {{ selected_date|date:"d M Y" }}
+                {% else %}
+                  All
+                {% endif %}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="expenses-table-card">
+    <div class="expenses-table-head">
+      <h4 class="expenses-table-title">
+        <i class="fa-solid fa-list-ul text-primary"></i>
+        Expense List
+      </h4>
+      <div class="expenses-table-note">Transport expense overview</div>
     </div>
 
-    <div class="exp-filter-actions">
-      <button class="btn btn-outline-primary btn-sm" type="submit">
-        <i class="fa-solid fa-filter me-1"></i> Apply
-      </button>
+    <div class="expenses-table-wrap">
+      {% if expenses %}
+        <div class="table-responsive" role="region" aria-label="Transport expenses list">
+          <table class="table expenses-table align-middle mb-0" id="expensesTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Vehicle</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th class="text-end">Amount</th>
+                <th>Branch</th>
+                <th>Recorded By</th>
+              </tr>
+            </thead>
 
-      <a class="btn btn-light btn-sm" href="{% url 'transport:expense_list' %}">
-        <i class="fa-solid fa-rotate-left me-1"></i> Clear
-      </a>
-    </div>
-  </form>
+            <tbody>
+              {% for e in expenses %}
+              <tr class="expense-row-link expense-row"
+                  {% if e.get_absolute_url %}data-href="{{ e.get_absolute_url }}"{% endif %}
+                  tabindex="0"
+                  aria-label="Expense row">
+                <td data-label="Date">
+                  <span class="expense-date">{{ e.expense_date|date:"d M Y H:i" }}</span>
+                </td>
 
-  <div class="exp-table-wrap">
-    {% if expenses %}
-      <div class="table-responsive" role="region" aria-label="Transport expenses list">
-        <table class="exp-table" id="expensesTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Vehicle</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th class="text-end">Amount</th>
-              <th>Branch</th>
-              <th>Recorded By</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for e in expenses %}
-            <tr class="exp-row expense-row {% if e.get_absolute_url %}exp-clickable{% endif %}"
-                {% if e.get_absolute_url %}data-href="{{ e.get_absolute_url }}"{% endif %}
-                tabindex="0"
-                aria-label="Expense row">
-              <td data-label="Date">
-                <span class="td-label">Date</span>
-                <span class="exp-date">{{ e.expense_date|date:"d M Y H:i" }}</span>
-              </td>
-
-              <td data-label="Vehicle">
-                <span class="td-label">Vehicle</span>
-                <span>
+                <td data-label="Vehicle">
                   {% if e.vehicle %}
                     {{ e.vehicle }}
                   {% else %}
@@ -495,59 +487,57 @@
                       <i class="fa-solid fa-building"></i> General / Office
                     </span>
                   {% endif %}
-                </span>
-              </td>
+                </td>
 
-              <td data-label="Type">
-                <span class="td-label">Type</span>
-                <span class="exp-muted">{{ e.get_expense_type_display|default:"—" }}</span>
-              </td>
+                <td data-label="Type">
+                  <span class="expense-muted">{{ e.get_expense_type_display|default:"—" }}</span>
+                </td>
 
-              <td data-label="Description">
-                <span class="td-label">Description</span>
-                <span title="{{ e.description|default:'' }}">{{ e.description|default:"—" }}</span>
-              </td>
+                <td data-label="Description">
+                  <span title="{{ e.description|default:'' }}">{{ e.description|default:"—" }}</span>
+                </td>
 
-              <td data-label="Amount" class="exp-amount">
-                <span class="td-label">Amount</span>
-                <span class="amount-pill amount-badge" data-raw="{{ e.amount }}">
-                  <span class="tzs">TZS</span>
-                  <span class="amt">{{ e.amount|floatformat:2|intcomma }}</span>
-                </span>
-              </td>
+                <td data-label="Amount" class="expense-amount">
+                  <span class="amount-pill amount-badge" data-raw="{{ e.amount }}">
+                    <span class="tzs">TZS</span>
+                    <span class="amt">{{ e.amount|floatformat:2|intcomma }}</span>
+                  </span>
+                </td>
 
-              <td data-label="Branch">
-                <span class="td-label">Branch</span>
-                <span class="exp-muted">{{ e.branch|default:"—" }}</span>
-              </td>
+                <td data-label="Branch">
+                  <span class="expense-muted">{{ e.branch|default:"—" }}</span>
+                </td>
 
-              <td data-label="Recorded By">
-                <span class="td-label">Recorded By</span>
-                <span class="exp-muted">{{ e.recorded_by.username|default:"—" }}</span>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="exp-empty">
-        No expenses found for this filter.
-      </div>
-    {% endif %}
+                <td data-label="Recorded By">
+                  <span class="expense-muted">{{ e.recorded_by.username|default:"—" }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="expense-empty">
+          <i class="fa-solid fa-receipt"></i>
+          No expenses found for this filter.
+        </div>
+      {% endif %}
+    </div>
   </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
   document.querySelectorAll('.expense-row').forEach(function (row) {
     const href = row.dataset.href;
     if (!href) return;
 
-    row.addEventListener('click', function () {
+    row.addEventListener('click', function (e) {
+      const interactive = e.target.closest('a, button, input, select, textarea');
+      if (interactive) return;
       window.location.assign(href);
     });
 

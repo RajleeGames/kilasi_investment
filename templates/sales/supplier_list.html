@@ -1,76 +1,431 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Suppliers{% endblock %}
+{% block title %}Suppliers — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --sp-card:#ffffff;
+    --sp-text:#0f172a;
+    --sp-muted:#64748b;
+    --sp-line:#e2e8f0;
+    --sp-line-soft:#eef2f7;
+    --sp-primary:#2563eb;
+    --sp-primary-soft:rgba(37,99,235,.08);
+    --sp-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .sp-wrap{
+    max-width:1120px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--sp-text);
+  }
+
+  .sp-hero,
+  .sp-table-card{
+    background:var(--sp-card);
+    border:1px solid var(--sp-line);
+    border-radius:20px;
+    box-shadow:var(--sp-shadow);
+  }
+
+  .sp-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .sp-hero-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .sp-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .sp-sub{
+    font-size:.75rem;
+    color:var(--sp-muted);
+    margin:.22rem 0 0;
+  }
+
+  .sp-search{
+    display:flex;
+    gap:.55rem;
+    flex-wrap:wrap;
+    width:100%;
+    max-width:500px;
+  }
+
+  .sp-search-wrap{
+    position:relative;
+    flex:1 1 260px;
+    min-width:220px;
+  }
+
+  .sp-search-icon{
+    position:absolute;
+    left:.78rem;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:.78rem;
+    color:#94a3b8;
+    pointer-events:none;
+  }
+
+  .sp-input{
+    width:100%;
+    height:40px;
+    border:1px solid var(--sp-line);
+    border-radius:12px;
+    padding:0 .85rem 0 2.15rem;
+    outline:none;
+    font-size:.78rem;
+    background:#fff;
+    box-shadow:none !important;
+  }
+
+  .sp-input:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .sp-btn,
+  .sp-btn-light{
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    font-size:.77rem;
+    font-weight:700;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    white-space:nowrap;
+  }
+
+  .sp-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .sp-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .sp-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--sp-line);
+  }
+
+  .sp-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .sp-table-card{
+    overflow:hidden;
+  }
+
+  .sp-table-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--sp-line-soft);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.7rem;
+    flex-wrap:wrap;
+  }
+
+  .sp-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .sp-table-note{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid var(--sp-line);
+  }
+
+  .sp-table-wrap{
+    overflow:auto;
+  }
+
+  .sp-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:760px;
+    margin:0;
+  }
+
+  .sp-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    padding:.82rem .95rem;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    white-space:nowrap;
+    border-bottom:1px solid var(--sp-line);
+  }
+
+  .sp-table tbody td{
+    padding:.82rem .95rem;
+    border-top:1px solid var(--sp-line-soft);
+    font-size:.79rem;
+    color:var(--sp-text);
+    vertical-align:middle;
+  }
+
+  .sp-table tbody tr:nth-child(even){
+    background:#fbfdff;
+  }
+
+  .sp-table tbody tr:hover{
+    background:#f8fafc;
+  }
+
+  .sp-id{
+    color:var(--sp-muted);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .sp-name{
+    font-weight:700;
+    font-size:.81rem;
+  }
+
+  .sp-contact{
+    color:#334155;
+    font-weight:600;
+  }
+
+  .sp-empty{
+    background:#fff;
+    border:1px dashed var(--sp-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--sp-muted);
+    margin:1rem;
+  }
+
+  .sp-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .sp-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--sp-text);
+    margin-bottom:.12rem;
+  }
+
+  .sp-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  .sp-pager{
+    padding:.95rem 1rem;
+    border-top:1px solid var(--sp-line-soft);
+    display:flex;
+    gap:.45rem;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .sp-pager a,
+  .sp-pager span{
+    min-width:36px;
+    height:36px;
+    padding:0 12px;
+    border-radius:10px;
+    border:1px solid var(--sp-line);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    color:#0f172a;
+    background:#fff;
+    font-weight:700;
+    font-size:.75rem;
+  }
+
+  .sp-pager .disabled{
+    opacity:.6;
+    pointer-events:none;
+  }
+
+  .sp-pager .current{
+    background:#f8fafc;
+    color:#475569;
+  }
+
+  @media (max-width:768px){
+    .sp-wrap{
+      padding:0 .7rem;
+    }
+
+    .sp-hero{
+      padding:.9rem;
+    }
+
+    .sp-search{
+      max-width:100%;
+    }
+
+    .sp-search-wrap,
+    .sp-btn,
+    .sp-btn-light{
+      width:100%;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-  <div>
-    <h3 class="mb-1">Suppliers</h3>
-    <div class="text-muted small">List of suppliers for purchases & stock entries</div>
-  </div>
+<div class="sp-wrap">
 
-  <form method="get" class="d-flex gap-2">
-    <input type="text" name="q" value="{{ query }}" class="form-control"
-           placeholder="Search name, phone, contact..." style="min-width:240px;">
-    <button class="btn btn-primary"><i class="fa-solid fa-magnifying-glass me-1"></i> Search</button>
-    {% if query %}
-      <a class="btn btn-outline-secondary" href="{% url 'sales:supplier_list' %}">Reset</a>
-    {% endif %}
-  </form>
-</div>
+  <div class="sp-hero">
+    <div class="sp-hero-top">
+      <div>
+        <h2 class="sp-title">
+          <i class="fa-solid fa-truck-field text-primary"></i>
+          Suppliers
+        </h2>
+        <div class="sp-sub">
+          List of suppliers for purchases, stock entries and inventory tracking
+        </div>
+      </div>
 
-<div class="card shadow-sm" style="border-radius:14px;">
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
-          <tr>
-            <th style="width:90px;">#</th>
-            <th>Name</th>
-            <th>Contact</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in suppliers %}
-            <tr>
-              <td class="text-muted">#{{ s.id }}</td>
-              <td class="fw-semibold">{{ s.name|default:"—" }}</td>
-              <td>{{ s.contact|default:"—" }}</td>
-              
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="5" class="text-center py-4 text-muted">
-                <i class="fa-regular fa-face-frown me-1"></i> No suppliers found.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <form method="get" class="sp-search">
+        <div class="sp-search-wrap">
+          <i class="fa-solid fa-magnifying-glass sp-search-icon"></i>
+          <input type="text"
+                 name="q"
+                 value="{{ query }}"
+                 class="sp-input"
+                 placeholder="Search name, phone, contact..."
+                 autocomplete="off">
+        </div>
+
+        <button class="sp-btn">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          Search
+        </button>
+
+        {% if query %}
+          <a class="sp-btn-light" href="{% url 'sales:supplier_list' %}">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
+        {% endif %}
+      </form>
     </div>
   </div>
+
+  <div class="sp-table-card">
+    <div class="sp-table-head">
+      <h3 class="sp-table-title">
+        <i class="fa-solid fa-address-card"></i>
+        Supplier Contacts
+      </h3>
+
+      {% if is_paginated %}
+        <div class="sp-table-note">
+          <i class="fa-solid fa-file-lines"></i>
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </div>
+      {% else %}
+        <div class="sp-table-note">
+          <i class="fa-solid fa-list"></i>
+          {{ suppliers|length }} record{{ suppliers|length|pluralize }}
+        </div>
+      {% endif %}
+    </div>
+
+    {% if suppliers %}
+      <div class="sp-table-wrap">
+        <table class="sp-table">
+          <thead>
+            <tr>
+              <th style="width:90px;">#</th>
+              <th>Name</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in suppliers %}
+              <tr>
+                <td class="sp-id">#{{ s.id }}</td>
+                <td class="sp-name">{{ s.name|default:"—" }}</td>
+                <td class="sp-contact">{{ s.contact|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="sp-empty">
+        <i class="fa-regular fa-face-frown"></i>
+        <h6>No suppliers found</h6>
+        <p>Try another search text or add supplier records first.</p>
+      </div>
+    {% endif %}
+
+    {% if is_paginated %}
+      <div class="sp-pager">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+        {% else %}
+          <span class="disabled">‹ Prev</span>
+        {% endif %}
+
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
+        {% else %}
+          <span class="disabled">Next ›</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
 </div>
-
-{% if is_paginated %}
-  <nav class="mt-3">
-    <ul class="pagination justify-content-center mb-0">
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
-        </li>
-      {% endif %}
-
-      <li class="page-item disabled">
-        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-      </li>
-
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
-        </li>
-      {% endif %}
-    </ul>
-  </nav>
-{% endif %}
 {% endblock %}

@@ -1,162 +1,338 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}New Stock Transfer{% endblock %}
+{% block title %}New Stock Transfer — Kilasi Investment{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* ✅ IMPORTANT:
-     Do NOT use :root here (it affects sidebar/base theme).
-     Scope all variables to this page only.
-  */
   .st-page{
     --st-ink:#0f172a;
     --st-muted:#64748b;
-    --st-line:rgba(15,23,42,.10);
-    --st-card:#fff;
+    --st-line:#e2e8f0;
+    --st-line-soft:#eef2f7;
+    --st-card:#ffffff;
     --st-soft:#f8fafc;
-    --st-radius:18px;
-    --st-shadow: 0 12px 30px rgba(2,6,23,.08);
+    --st-primary:#2563eb;
+    --st-primary-soft:rgba(37,99,235,.08);
+    --st-success:#16a34a;
+    --st-danger:#dc2626;
+    --st-shadow:0 10px 30px rgba(15,23,42,.06);
+    --st-radius:20px;
   }
 
-  .st-page .wrap{max-width:1100px;margin:1.25rem auto 2rem;padding:0 1rem;}
-
-  .st-page .hero{
-    border:1px solid var(--st-line);
-    border-radius: var(--st-radius);
-    box-shadow: var(--st-shadow);
-    padding: 14px;
-    background:
-      radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
-      radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
-      linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+  .st-page .wrap{
+    max-width:1120px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--st-ink);
   }
-  @media(min-width:768px){ .st-page .hero{padding:18px;} }
 
+  .st-page .hero,
   .st-page .cardx{
     border:1px solid var(--st-line);
-    border-radius: var(--st-radius);
-    box-shadow: var(--st-shadow);
-    background: var(--st-card);
+    border-radius:var(--st-radius);
+    box-shadow:var(--st-shadow);
+    background:var(--st-card);
+  }
+
+  .st-page .hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .st-page .hero-top,
+  .st-page .cardx-h{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .st-page .cardx{
     overflow:hidden;
   }
+
   .st-page .cardx-h{
-    padding: 14px 16px;
-    border-bottom:1px solid rgba(15,23,42,.07);
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--st-line-soft);
+    background:rgba(255,255,255,.75);
+  }
+
+  .st-page .cardx-b{
+    padding:1rem;
+  }
+
+  .st-page .title{
+    font-weight:700;
+    color:var(--st-ink);
+    margin:0;
+    font-size:1.06rem;
+    letter-spacing:-.02em;
+  }
+
+  .st-page .sub{
+    color:var(--st-muted);
+    font-size:.75rem;
+    margin-top:.22rem;
+  }
+
+  .st-page .section-title{
+    font-weight:700;
+    color:var(--st-ink);
+    margin:0;
+    font-size:.84rem;
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    background: rgba(255,255,255,.7);
-  }
-  .st-page .cardx-b{padding: 14px 16px;}
-  @media(min-width:768px){
-    .st-page .cardx-h{padding:16px 18px}
-    .st-page .cardx-b{padding:16px 18px}
+    gap:.45rem;
   }
 
-  .st-page .title{font-weight:950;color:var(--st-ink);margin:0;letter-spacing:.2px;}
-  .st-page .sub{color:var(--st-muted);font-size:.92rem;margin-top:4px;}
-
-  .st-page .btn-k{
-    border-radius: 14px;
-    height: 44px;
-    font-weight: 900;
+  .st-page .btn-k,
+  .st-page .btn-k-light,
+  .st-page .btn-k-danger{
+    border-radius:12px;
+    height:40px;
+    font-weight:700;
     display:inline-flex;
     align-items:center;
-    gap:8px;
+    justify-content:center;
+    gap:.42rem;
     white-space:nowrap;
+    text-decoration:none;
+    font-size:.77rem;
+    padding:0 .95rem;
+  }
+
+  .st-page .btn-k{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .st-page .btn-k:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .st-page .btn-k-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--st-line);
+  }
+
+  .st-page .btn-k-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .st-page .btn-k-danger{
+    background:#fff;
+    color:var(--st-danger);
+    border:1px solid rgba(220,38,38,.18);
+  }
+
+  .st-page .btn-k-danger:hover{
+    color:#b91c1c;
+    border-color:rgba(220,38,38,.28);
   }
 
   .st-page .grid{
     display:grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  @media(min-width: 992px){
-    .st-page .grid{grid-template-columns: 1fr 1fr;}
+    grid-template-columns:1fr;
+    gap:12px;
   }
 
-  .st-page .label{font-weight:900;color:var(--st-ink);margin-bottom:6px;}
+  @media(min-width:992px){
+    .st-page .grid{
+      grid-template-columns:1fr 1fr;
+    }
+  }
 
-  /* ✅ Also scoped so it won’t affect all .form-control globally */
+  .st-page .label{
+    font-weight:700;
+    color:#64748b;
+    margin-bottom:.35rem;
+    display:block;
+    font-size:.71rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
   .st-page .form-control,
   .st-page .form-select{
-    border-radius: 14px;
-    height: 44px;
-    border:1px solid rgba(15,23,42,.12);
+    border-radius:12px;
+    min-height:40px;
+    border:1px solid var(--st-line);
+    font-size:.78rem;
+    box-shadow:none !important;
   }
-  .st-page textarea.form-control{height:auto;border-radius:14px;}
 
-  /* Items list (mobile friendly cards) */
-  .st-page .items{display:flex;flex-direction:column;gap:10px;}
-  .st-page .rowcard{
-    border:1px solid rgba(15,23,42,.10);
-    border-radius: 16px;
-    padding: 12px;
-    background: var(--st-soft);
+  .st-page .form-control:focus,
+  .st-page .form-select:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
   }
+
+  .st-page textarea.form-control{
+    min-height:100px;
+    resize:vertical;
+  }
+
+  .st-page .items{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .st-page .rowcard{
+    border:1px solid var(--st-line);
+    border-radius:18px;
+    padding:.9rem;
+    background:var(--st-soft);
+  }
+
   .st-page .rowtop{
     display:flex;
     justify-content:space-between;
     align-items:center;
     gap:10px;
-    margin-bottom:8px;
+    flex-wrap:wrap;
+    margin-bottom:.8rem;
   }
-  .st-page .rowtop .idx{font-weight:950;color:var(--st-ink);}
+
+  .st-page .rowtop .idx{
+    font-weight:700;
+    color:var(--st-ink);
+    font-size:.82rem;
+  }
 
   .st-page .stockpill{
-    display:inline-flex;align-items:center;gap:8px;
-    padding: .35rem .6rem;border-radius:999px;
-    border:1px solid rgba(15,23,42,.10);
-    background: rgba(255,255,255,.85);
-    font-weight:900;color:var(--st-ink);
-    font-size:.85rem;
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    padding:.32rem .6rem;
+    border-radius:999px;
+    border:1px solid var(--st-line);
+    background:#fff;
+    color:#334155;
+    font-size:.72rem;
+    font-weight:700;
     white-space:nowrap;
   }
-  .st-page .stockpill small{font-weight:800;color:var(--st-muted);}
+
+  .st-page .stockpill .mono{
+    font-variant-numeric:tabular-nums;
+    font-weight:800;
+    color:var(--st-ink);
+  }
+
+  .st-page .stockpill small{
+    font-weight:600;
+    color:var(--st-muted);
+  }
 
   .st-page .rowgrid{
     display:grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  @media(min-width: 768px){
-    .st-page .rowgrid{grid-template-columns: 2fr 1fr;}
+    grid-template-columns:1fr;
+    gap:10px;
   }
 
-  /* Search dropdown */
-  .st-page .searchWrap{position:relative;}
+  @media(min-width:768px){
+    .st-page .rowgrid{
+      grid-template-columns:2fr 1fr;
+    }
+  }
+
+  .st-page .searchWrap{
+    position:relative;
+  }
+
   .st-page .searchInput{
-    height:44px;border-radius:14px;border:1px solid rgba(15,23,42,.12);
-    padding-left:44px;
+    height:40px;
+    border-radius:12px;
+    border:1px solid var(--st-line);
+    padding-left:2.2rem;
+    font-size:.78rem;
   }
+
   .st-page .searchIcon{
-    position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    position:absolute;
+    left:.78rem;
+    top:50%;
+    transform:translateY(-50%);
     color:#94a3b8;
+    font-size:.78rem;
   }
+
   .st-page .drop{
-    position:absolute;left:0;right:0;top:100%;
-    background:#fff;border:1px solid rgba(15,23,42,.12);border-top:none;
-    max-height:260px;overflow:auto;z-index:2000;
-    border-bottom-left-radius:14px;border-bottom-right-radius:14px;
+    position:absolute;
+    left:0;
+    right:0;
+    top:100%;
+    background:#fff;
+    border:1px solid var(--st-line);
+    border-top:none;
+    max-height:260px;
+    overflow:auto;
+    z-index:2000;
+    border-bottom-left-radius:12px;
+    border-bottom-right-radius:12px;
     box-shadow:0 12px 30px rgba(2,6,23,.10);
     display:none;
   }
+
   .st-page .drop button{
-    width:100%;text-align:left;padding:.6rem .9rem;border:none;background:#fff;
-    border-top:1px solid rgba(15,23,42,.06);
+    width:100%;
+    text-align:left;
+    padding:.62rem .85rem;
+    border:none;
+    background:#fff;
+    border-top:1px solid var(--st-line-soft);
+    font-size:.77rem;
+    color:var(--st-ink);
   }
-  .st-page .drop button:hover{background:#f1f5f9;}
-  .st-page .smallmuted{color:var(--st-muted);font-size:.85rem;}
+
+  .st-page .drop button:hover{
+    background:#f8fafc;
+  }
+
+  .st-page .smallmuted{
+    color:var(--st-muted);
+    font-size:.68rem;
+    margin-top:.3rem;
+  }
 
   .st-page .danger-note{
     border:1px dashed rgba(220,38,38,.35);
-    background: rgba(254,242,242,.8);
+    background:rgba(254,242,242,.85);
     color:#991b1b;
-    padding: 10px 12px;
-    border-radius: 14px;
-    font-weight:800;
-    font-size:.9rem;
+    padding:.8rem .9rem;
+    border-radius:14px;
+    font-weight:700;
+    font-size:.75rem;
+  }
+
+  @media(max-width:768px){
+    .st-page .wrap{
+      padding:0 .7rem;
+    }
+
+    .st-page .hero,
+    .st-page .cardx-b{
+      padding:.9rem;
+    }
+
+    .st-page .cardx-h{
+      padding:.9rem;
+    }
+
+    .st-page .btn-k,
+    .st-page .btn-k-light,
+    .st-page .btn-k-danger{
+      width:100%;
+    }
   }
 </style>
 {% endblock %}
@@ -165,29 +341,36 @@
 <div class="st-page">
   <div class="wrap">
 
-    <div class="hero mb-3">
-      <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+    <div class="hero">
+      <div class="hero-top">
         <div>
-          <h3 class="title mb-1">Create Stock Transfer</h3>
-          <div class="sub">Transfer stock between branches (Arusha → Moshi etc.). Add multiple items easily.</div>
+          <h3 class="title">Create Stock Transfer</h3>
+          <div class="sub">
+            Transfer stock between branches. Add multiple items, choose quantities, and see available stock from the selected source branch.
+          </div>
         </div>
-        <a href="{% url 'sales:stock_transfer_list' %}" class="btn btn-outline-secondary btn-k">
-          <i class="fa-solid fa-arrow-left"></i> Back
+
+        <a href="{% url 'sales:stock_transfer_list' %}" class="btn-k-light">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
         </a>
       </div>
     </div>
 
     <div class="cardx">
       <div class="cardx-h">
-        <div class="d-flex align-items-center gap-2">
-          <i class="fa-solid fa-truck-ramp-box"></i>
-          <div style="font-weight:950;color:var(--st-ink)">Transfer Details</div>
+        <div>
+          <div class="section-title">
+            <i class="fa-solid fa-truck-ramp-box"></i>
+            Transfer Details
+          </div>
+          <div class="sub">Save first as draft, then review and post later.</div>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-          <button type="button" id="addRowBtn" class="btn btn-outline-primary btn-k">
-            <i class="fa-solid fa-plus"></i> Add Item
-          </button>
-        </div>
+
+        <button type="button" id="addRowBtn" class="btn-k-light">
+          <i class="fa-solid fa-plus"></i>
+          Add Item
+        </button>
       </div>
 
       <div class="cardx-b">
@@ -200,31 +383,41 @@
             </div>
           {% endif %}
 
-          <div class="grid mb-2">
+          <div class="grid mb-3">
             <div>
-              <div class="label">From Branch</div>
+              <label class="label">From Branch</label>
               {{ form.from_branch }}
-              {% if form.from_branch.errors %}<div class="text-danger small mt-1">{{ form.from_branch.errors }}</div>{% endif %}
+              {% if form.from_branch.errors %}
+                <div class="text-danger small mt-1">{{ form.from_branch.errors }}</div>
+              {% endif %}
             </div>
+
             <div>
-              <div class="label">To Branch</div>
+              <label class="label">To Branch</label>
               {{ form.to_branch }}
-              {% if form.to_branch.errors %}<div class="text-danger small mt-1">{{ form.to_branch.errors }}</div>{% endif %}
+              {% if form.to_branch.errors %}
+                <div class="text-danger small mt-1">{{ form.to_branch.errors }}</div>
+              {% endif %}
             </div>
           </div>
 
           <div class="mb-3">
-            <div class="label">Note (optional)</div>
+            <label class="label">Note (Optional)</label>
             {{ form.note }}
-            {% if form.note.errors %}<div class="text-danger small mt-1">{{ form.note.errors }}</div>{% endif %}
+            {% if form.note.errors %}
+              <div class="text-danger small mt-1">{{ form.note.errors }}</div>
+            {% endif %}
           </div>
 
           <hr class="my-3">
 
-          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+          <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap mb-2">
             <div>
-              <div class="title" style="font-size:1.05rem;">Items</div>
-              <div class="sub">Search product name, set qty, and see available stock from the selected “From Branch”.</div>
+              <div class="section-title">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                Items
+              </div>
+              <div class="sub">Search product name, select it, then enter quantity.</div>
             </div>
           </div>
 
@@ -251,9 +444,11 @@
 
                 <div class="rowgrid">
                   <div class="searchWrap">
+                    <label class="label">Product</label>
                     <i class="fa-solid fa-magnifying-glass searchIcon"></i>
-                    <input type="text" class="form-control searchInput"
-                           placeholder="Search product name…"
+                    <input type="text"
+                           class="form-control searchInput"
+                           placeholder="Search product name..."
                            data-search-input>
 
                     <div class="d-none">
@@ -261,17 +456,24 @@
                     </div>
 
                     <div class="drop" data-drop></div>
-                    {% if f.product.errors %}<div class="text-danger small mt-1">{{ f.product.errors }}</div>{% endif %}
-                    <div class="smallmuted mt-1">Tip: type at least 2 letters then pick from list.</div>
+
+                    {% if f.product.errors %}
+                      <div class="text-danger small mt-1">{{ f.product.errors }}</div>
+                    {% endif %}
+
+                    <div class="smallmuted">Type at least 2 letters, then pick from list.</div>
                   </div>
 
                   <div>
-                    <div class="label">Quantity</div>
+                    <label class="label">Quantity</label>
                     {{ f.quantity }}
-                    {% if f.quantity.errors %}<div class="text-danger small mt-1">{{ f.quantity.errors }}</div>{% endif %}
+                    {% if f.quantity.errors %}
+                      <div class="text-danger small mt-1">{{ f.quantity.errors }}</div>
+                    {% endif %}
 
-                    <button type="button" class="btn btn-outline-danger btn-k w-100 mt-2" data-remove-btn>
-                      <i class="fa-solid fa-trash"></i> Remove Item
+                    <button type="button" class="btn-k-danger w-100 mt-2" data-remove-btn>
+                      <i class="fa-solid fa-trash"></i>
+                      Remove Item
                     </button>
                   </div>
                 </div>
@@ -299,9 +501,11 @@
 
               <div class="rowgrid">
                 <div class="searchWrap">
+                  <label class="label">Product</label>
                   <i class="fa-solid fa-magnifying-glass searchIcon"></i>
-                  <input type="text" class="form-control searchInput"
-                         placeholder="Search product name…"
+                  <input type="text"
+                         class="form-control searchInput"
+                         placeholder="Search product name..."
                          data-search-input>
 
                   <div class="d-none">
@@ -309,15 +513,16 @@
                   </div>
 
                   <div class="drop" data-drop></div>
-                  <div class="smallmuted mt-1">Tip: type at least 2 letters then pick from list.</div>
+                  <div class="smallmuted">Type at least 2 letters, then pick from list.</div>
                 </div>
 
                 <div>
-                  <div class="label">Quantity</div>
+                  <label class="label">Quantity</label>
                   {{ formset.empty_form.quantity }}
 
-                  <button type="button" class="btn btn-outline-danger btn-k w-100 mt-2" data-remove-btn>
-                    <i class="fa-solid fa-trash"></i> Remove Item
+                  <button type="button" class="btn-k-danger w-100 mt-2" data-remove-btn>
+                    <i class="fa-solid fa-trash"></i>
+                    Remove Item
                   </button>
                 </div>
               </div>
@@ -327,14 +532,15 @@
           <hr class="my-3">
 
           <div class="d-flex justify-content-end gap-2 flex-wrap">
-            <button class="btn btn-primary btn-k">
-              <i class="fa-solid fa-floppy-disk"></i> Save Transfer (Draft)
+            <button class="btn-k" type="submit">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Transfer (Draft)
             </button>
           </div>
-
         </form>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -344,7 +550,6 @@
   const itemsWrap = document.getElementById('itemsWrap');
   const addRowBtn = document.getElementById('addRowBtn');
   const emptyTpl  = document.getElementById('emptyFormTpl');
-
   const totalFormsInput = document.querySelector('#id_stocktransferitem_set-TOTAL_FORMS');
   const fromBranchSelect = document.getElementById('id_from_branch');
 
@@ -361,13 +566,17 @@
       .catch(() => 0);
   }
 
+  function getProductSelect(row){
+    return row.querySelector('select[name$="-product"]');
+  }
+
   function wireRow(row){
     const searchInput = row.querySelector('[data-search-input]');
     const drop = row.querySelector('[data-drop]');
     const stockLabel = row.querySelector('[data-stock-label]');
     const removeBtn = row.querySelector('[data-remove-btn]');
+    const select = getProductSelect(row);
 
-    const select = row.querySelector('select.product-select') || row.querySelector('select');
     if(!select) return;
 
     if(select.value){
@@ -404,13 +613,16 @@
     });
 
     document.addEventListener("click", (e) => {
-      if(!row.contains(e.target)) drop.style.display = "none";
+      if(!row.contains(e.target)){
+        drop.style.display = "none";
+      }
     });
 
     removeBtn.addEventListener("click", () => {
       const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
       if(del) del.checked = true;
       row.style.display = "none";
+      renumberCards();
     });
 
     if(fromBranchSelect){
@@ -420,11 +632,17 @@
     async function refreshStockForRow(){
       const productId = select.value;
       const branchId = getFromBranchId();
-      stockLabel.textContent = "…";
 
-      if(!branchId){ stockLabel.textContent = "Select branch"; return; }
-      if(!productId){ stockLabel.textContent = "—"; return; }
+      if(!branchId){
+        stockLabel.textContent = "Select branch";
+        return;
+      }
+      if(!productId){
+        stockLabel.textContent = "—";
+        return;
+      }
 
+      stockLabel.textContent = "...";
       const qty = await apiStock(branchId, productId);
       stockLabel.textContent = qty;
     }
@@ -433,11 +651,12 @@
   }
 
   function renumberCards(){
-    const visible = Array.from(itemsWrap.querySelectorAll('.form-row'))
+    const visibleRows = Array.from(itemsWrap.querySelectorAll('.form-row'))
       .filter(r => r.style.display !== "none");
-    visible.forEach((r, i) => {
+
+    visibleRows.forEach((r, i) => {
       const idxEl = r.querySelector('.idx');
-      if(idxEl) idxEl.textContent = `Item #${i+1}`;
+      if(idxEl) idxEl.textContent = `Item #${i + 1}`;
     });
   }
 
@@ -459,12 +678,17 @@
   }
 
   Array.from(itemsWrap.querySelectorAll('.form-row')).forEach(wireRow);
-  addRowBtn.addEventListener("click", addRow);
+
+  if(addRowBtn){
+    addRowBtn.addEventListener("click", addRow);
+  }
 
   window.addEventListener("DOMContentLoaded", () => {
     renumberCards();
     Array.from(itemsWrap.querySelectorAll('.form-row')).forEach(r => {
-      if(typeof r._refreshStock === "function") r._refreshStock();
+      if(typeof r._refreshStock === "function"){
+        r._refreshStock();
+      }
     });
   });
 </script>

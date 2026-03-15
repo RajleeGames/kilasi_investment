@@ -6,51 +6,49 @@
 <head>
   <meta charset="UTF-8" />
   <title>{% block title %}KILASI INVESTMENT{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous"/>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 
   <style>
     :root{
-      --bg: #f6f8fc;
-      --text: #0b1220;
-      --muted: #6b7280;
-      --accent: #0ea5e9;
+      --base-bg:#f7f9fc;
+      --base-text:#0f172a;
+      --base-muted:#64748b;
 
-      --sb-w: 280px;
-      --sb-w-collapsed: 78px;
+      --sb-w:272px;
+      --sb-w-collapsed:78px;
 
-      --radius: 14px;
-      --shadow-sm: 0 10px 28px rgba(2,6,23,.08);
-      --shadow-md: 0 18px 46px rgba(2,6,23,.12);
+      --sb-bg1:#061126;
+      --sb-bg2:#0b1b2b;
+      --sb-text:#e6eef6;
+      --sb-line:rgba(255,255,255,.08);
 
-      --sb-bg1: #061126;
-      --sb-bg2: #0b1b2b;
-      --sb-text: #e6eef6;
-      --sb-line: rgba(255,255,255,.08);
+      --shell-line:rgba(15,23,42,.06);
+      --shell-shadow:0 12px 28px rgba(15,23,42,.07);
+      --shell-shadow-lg:0 18px 46px rgba(15,23,42,.12);
 
-      --danger: #ef4444;
-      --danger-dark: #b91c1c;
-      --warning: #f59e0b;
-      --success: #10b981;
+      --accent:#2563eb;
+      --danger:#ef4444;
+      --danger-dark:#b91c1c;
+      --warning:#f59e0b;
     }
 
-    html, body { height:100%; margin:0; }
-    html { scroll-behavior: smooth; }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    html{ scroll-behavior:smooth; }
 
     body{
-      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.06), transparent 50%),
-        radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.04), transparent 45%),
-        var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
+      font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      background:var(--base-bg);
+      color:var(--base-text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
+      font-size:.92rem;
     }
 
     .app{
@@ -59,98 +57,148 @@
       align-items:stretch;
     }
 
+    /* ========== DESKTOP SIDEBAR ========== */
     .sidebar{
-      width: var(--sb-w);
-      flex: 0 0 var(--sb-w);
-      padding: 14px;
-      background: linear-gradient(180deg, var(--sb-bg1) 0%, var(--sb-bg2) 60%, var(--sb-bg1) 100%);
-      color: var(--sb-text);
-      border-right: 1px solid var(--sb-line);
-      box-shadow: var(--shadow-sm);
-      position: relative;
-      overflow: visible;
+      width:var(--sb-w);
+      flex:0 0 var(--sb-w);
+      padding:14px;
+      background:linear-gradient(180deg,var(--sb-bg1) 0%,var(--sb-bg2) 60%,var(--sb-bg1) 100%);
+      color:var(--sb-text);
+      border-right:1px solid var(--sb-line);
+      box-shadow:var(--shell-shadow);
+      position:relative;
       display:none;
     }
-    @media(min-width: 992px){ .sidebar{ display:flex; flex-direction:column; } }
+
+    @media(min-width:992px){
+      .sidebar{
+        display:flex;
+        flex-direction:column;
+      }
+    }
 
     .sidebar.collapsed{
-      width: var(--sb-w-collapsed);
-      flex-basis: var(--sb-w-collapsed);
+      width:var(--sb-w-collapsed);
+      flex-basis:var(--sb-w-collapsed);
     }
 
     .sb-brand{
-      display:flex; align-items:center; gap:12px;
-      padding: 12px;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.07);
-      margin-bottom: 10px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      border-radius:18px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      margin-bottom:10px;
     }
 
     .sb-brand .logo{
-      width:46px; height:46px; border-radius: 14px;
-      display:grid; place-items:center;
-      background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(96,165,250,.12));
-      border: 1px solid rgba(255,255,255,.08);
-      font-size: 18px;
-      flex: 0 0 auto;
+      width:46px;
+      height:46px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg, rgba(37,99,235,.18), rgba(59,130,246,.10));
+      border:1px solid rgba(255,255,255,.10);
+      color:#eff6ff;
+      font-size:17px;
+      flex:0 0 auto;
     }
 
-    .sb-brand .name{ font-weight:800; color:#ecf8ff; line-height:1.1; }
-    .sb-brand .sub{ font-size:.78rem; color: rgba(235,245,255,.68); }
+    .sb-brand .name{
+      font-weight:800;
+      color:#f8fbff;
+      line-height:1.15;
+      font-size:.88rem;
+      letter-spacing:.02em;
+    }
+
+    .sb-brand .sub{
+      font-size:.70rem;
+      color:rgba(235,245,255,.68);
+      margin-top:2px;
+    }
+
+    .sidebar.collapsed .sb-brand{
+      justify-content:center;
+      padding:10px 8px;
+    }
 
     .sidebar.collapsed .sb-brand .name,
-    .sidebar.collapsed .sb-brand .sub{ display:none; }
+    .sidebar.collapsed .sb-brand .sub{
+      display:none;
+    }
 
     .sb-section-title{
-      margin: 14px 6px 8px;
-      font-size:.72rem;
+      margin:14px 6px 8px;
+      font-size:.66rem;
       letter-spacing:.12em;
-      text-transform: uppercase;
-      color: rgba(235,245,255,.58);
+      text-transform:uppercase;
+      color:rgba(235,245,255,.54);
+      font-weight:700;
     }
+
     .sidebar.collapsed .sb-section-title{ display:none; }
 
     .sb-link{
       display:flex;
       align-items:center;
       gap:12px;
-      padding: 12px 12px;
-      border-radius: 14px;
-      color: rgba(235,245,255,.92);
+      padding:11px 12px;
+      border-radius:14px;
+      color:rgba(235,245,255,.92);
       text-decoration:none;
-      border: 1px solid transparent;
-      transition: background .14s ease, transform .14s ease;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
+      border:1px solid transparent;
       width:100%;
-      position: relative;
+      position:relative;
+      font-size:.81rem;
+      font-weight:600;
+      transition:.16s ease;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    .sb-link i{ width:20px; text-align:center; font-size:16px; }
+    .sb-link i{
+      width:18px;
+      text-align:center;
+      font-size:15px;
+      flex-shrink:0;
+    }
 
     .sb-link:hover{
-      background: rgba(14,165,233,.10);
-      transform: translateX(2px);
-      color:#eafcff;
+      background:rgba(37,99,235,.14);
+      border-color:rgba(37,99,235,.10);
+      color:#fff;
+      transform:translateX(2px);
     }
 
     .sb-link.active{
-      background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.10));
-      border-color: rgba(14,165,233,.20);
+      background:linear-gradient(135deg, rgba(37,99,235,.18), rgba(59,130,246,.10));
+      border-color:rgba(37,99,235,.18);
       color:#fff;
+      box-shadow:0 10px 20px rgba(37,99,235,.10);
     }
 
-    .sidebar.collapsed .sb-link{ justify-content:center; padding: 13px 10px; }
+    .sidebar.collapsed .sb-link{
+      justify-content:center;
+      padding:13px 10px;
+    }
+
     .sidebar.collapsed .sb-link .label{ display:none; }
 
-    .chev{ margin-left:auto; opacity:.8; }
+    .chev{
+      margin-left:auto;
+      opacity:.8;
+      font-size:.68rem !important;
+    }
+
     .sidebar.collapsed .chev{ display:none; }
 
     .sb-sub{
-      margin: 8px 0 0 10px;
-      padding-left: 10px;
-      border-left: 1px dashed rgba(255,255,255,.14);
+      margin:8px 0 0 10px;
+      padding-left:10px;
+      border-left:1px dashed rgba(255,255,255,.14);
       display:flex;
       flex-direction:column;
       gap:6px;
@@ -160,26 +208,26 @@
 
     .sb-badge{
       margin-left:auto;
-      min-width: 22px;
-      height: 22px;
-      padding: 0 7px;
-      border-radius: 999px;
+      min-width:21px;
+      height:21px;
+      padding:0 7px;
+      border-radius:999px;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      font-size:.72rem;
+      font-size:.64rem;
       font-weight:800;
       line-height:1;
       color:#fff;
-      background: linear-gradient(135deg, var(--danger), var(--danger-dark));
-      box-shadow: 0 8px 16px rgba(239,68,68,.28);
-      border: 1px solid rgba(255,255,255,.12);
+      background:linear-gradient(135deg,var(--danger),var(--danger-dark));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 8px 16px rgba(239,68,68,.26);
       flex-shrink:0;
     }
 
     .sb-badge.warn{
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 8px 16px rgba(245,158,11,.28);
+      background:linear-gradient(135deg,#f59e0b,#d97706);
+      box-shadow:0 8px 16px rgba(245,158,11,.26);
     }
 
     .sidebar.collapsed .sb-badge{
@@ -188,79 +236,96 @@
       right:6px;
       min-width:18px;
       height:18px;
-      font-size:.62rem;
+      font-size:.58rem;
       padding:0 5px;
       margin-left:0;
     }
 
     .sb-footer{
-      margin-top: 14px;
-      padding: 12px;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.07);
+      margin-top:14px;
+      padding:12px;
+      border-radius:18px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
     }
 
     .avatar{
-      width:46px; height:46px; border-radius: 14px;
+      width:46px;
+      height:46px;
+      border-radius:14px;
       object-fit:cover;
-      border:2px solid rgba(14,165,233,.22);
+      border:2px solid rgba(37,99,235,.24);
       background:#071227;
       flex:0 0 auto;
     }
 
     .role-pill{
-      display:inline-flex; align-items:center; gap:8px;
-      font-size:.78rem;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:.70rem;
       color:#eafcff;
-      background: rgba(14,165,233,.10);
-      border: 1px solid rgba(14,165,233,.16);
-      padding: .22rem .55rem;
-      border-radius: 999px;
-      margin-top: 6px;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.16);
+      padding:.22rem .55rem;
+      border-radius:999px;
+      margin-top:6px;
+      white-space:nowrap;
     }
-    .role-pill small{ color: rgba(235,245,255,.75); }
+
+    .role-pill small{
+      color:rgba(235,245,255,.74);
+    }
 
     .footer-actions{
-      margin-top: 12px;
+      margin-top:12px;
       display:flex;
       gap:10px;
     }
 
     .footer-actions .btn{
-      border-radius: 14px;
-      padding: 10px 12px;
-      font-weight: 600;
-      white-space: nowrap;
+      border-radius:14px;
+      white-space:nowrap;
     }
 
     .sidebar.collapsed .sb-footer{
-      padding: 10px 8px;
+      padding:10px 8px;
       text-align:center;
     }
+
     .sidebar.collapsed .sb-footer .profile-details{ display:none; }
+
     .sidebar.collapsed .avatar{
-      width:40px; height:40px; border-radius: 12px;
-      margin: 0 auto;
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      margin:0 auto;
       display:block;
     }
+
     .sidebar.collapsed .footer-actions{
       justify-content:center;
       gap:10px;
-      margin-top: 10px;
+      margin-top:10px;
     }
 
     .btn-icon{
-      width:44px; height:44px;
+      width:42px;
+      height:42px;
       padding:0 !important;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      border-radius: 14px;
+      border-radius:14px;
     }
-    .btn-icon span{ display:none; }
-    .btn-icon i{ font-size: 16px; }
 
+    .btn-icon span{ display:none; }
+
+    @media(min-width:992px){
+      .sb-footer{ display:none !important; }
+    }
+
+    /* ========== MAIN SHELL ========== */
     .main{
       flex:1;
       min-width:0;
@@ -270,55 +335,76 @@
     }
 
     .topbar{
-      position: sticky;
-      top: 0;
-      z-index: 1030;
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(15,23,42,.06);
-      padding: 10px 12px;
+      position:sticky;
+      top:0;
+      z-index:1030;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--shell-line);
+      padding:10px 12px;
     }
 
     .brand-mini{
-      display:flex; align-items:center; gap:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
       font-weight:800;
-      color: var(--text);
+      color:var(--base-text);
       text-decoration:none;
+      font-size:.88rem;
+      letter-spacing:.01em;
     }
 
     .brand-mini .dot{
-      width:38px; height:38px; border-radius: 14px;
-      display:grid; place-items:center;
-      background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(96,165,250,.12));
-      border: 1px solid rgba(15,23,42,.06);
+      width:38px;
+      height:38px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      background:rgba(37,99,235,.08);
+      border:1px solid rgba(37,99,235,.10);
+      color:var(--accent);
+      flex-shrink:0;
     }
 
-    .clock{ font-size:.9rem; color:#334155; white-space:nowrap; }
+    .clock{
+      font-size:.77rem;
+      color:#475569;
+      white-space:nowrap;
+      font-weight:600;
+    }
 
     .btn-toggle-sidebar{ display:none; }
-    @media(min-width: 992px){
+
+    @media(min-width:992px){
       .btn-toggle-sidebar{
         display:inline-flex;
-        width:44px; height:44px;
-        align-items:center; justify-content:center;
-        border-radius: 14px;
+        width:42px;
+        height:42px;
+        align-items:center;
+        justify-content:center;
+        border-radius:14px;
       }
     }
 
-    .page{ padding: 16px; flex:1; }
-    @media(min-width: 576px){ .page{ padding: 18px; } }
-    @media(min-width: 992px){ .page{ padding: 22px; } }
+    .page{
+      padding:14px;
+      flex:1;
+    }
 
-    .alert{
-      border-radius: var(--radius);
-      border: 1px solid rgba(15,23,42,.06);
-      box-shadow: var(--shadow-sm);
+    @media(min-width:576px){
+      .page{ padding:18px; }
+    }
+
+    @media(min-width:992px){
+      .page{ padding:22px; }
     }
 
     .topbar-bell{
-      position: relative;
-      width:44px;
-      height:44px;
+      position:relative;
+      width:42px;
+      height:42px;
       border-radius:14px;
       display:inline-flex;
       align-items:center;
@@ -327,13 +413,12 @@
       background:#fff;
       color:#0f172a;
       text-decoration:none;
-      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
-      box-shadow: 0 8px 20px rgba(2,6,23,.05);
+      box-shadow:0 8px 20px rgba(2,6,23,.05);
+      transition:.16s ease;
     }
 
     .topbar-bell:hover{
-      transform: translateY(-1px);
-      background:#f8fafc;
+      transform:translateY(-1px);
       color:#0f172a;
     }
 
@@ -341,61 +426,102 @@
       position:absolute;
       top:-4px;
       right:-4px;
-      min-width:20px;
-      height:20px;
+      min-width:19px;
+      height:19px;
       padding:0 6px;
       border-radius:999px;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      font-size:.68rem;
+      font-size:.62rem;
       font-weight:800;
       color:#fff;
-      background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+      background:linear-gradient(135deg,var(--danger),var(--danger-dark));
       border:2px solid #fff;
-      box-shadow: 0 8px 16px rgba(239,68,68,.28);
       line-height:1;
     }
 
+    /* ========== MOBILE SIDEBAR ========== */
     .offcanvas.sidebar-offcanvas{
-      background: linear-gradient(180deg, var(--sb-bg1) 0%, var(--sb-bg2) 60%, var(--sb-bg1) 100%);
-      color: var(--sb-text);
-      width: min(86vw, 360px);
-      box-shadow: var(--shadow-md);
-      border-right: 1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg,var(--sb-bg1) 0%,var(--sb-bg2) 60%,var(--sb-bg1) 100%);
+      color:var(--sb-text);
+      width:min(86vw, 350px);
+      box-shadow:var(--shell-shadow-lg);
+      border-right:1px solid rgba(255,255,255,.10);
       overflow:hidden;
     }
 
     .offcanvas.sidebar-offcanvas .offcanvas-header{
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      padding: 14px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      padding:14px;
     }
 
     .offcanvas.sidebar-offcanvas .offcanvas-body{
-      padding: 12px 14px 14px;
+      padding:12px 14px 14px;
       overflow:auto;
-      -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling:touch;
     }
 
     .offcanvas.sidebar-offcanvas .sb-link{
-      padding: 13px 12px;
-      border-radius: 14px;
-      font-size: 15px;
+      padding:12px 12px;
+      border-radius:14px;
+      font-size:.82rem;
     }
 
     .offcanvas.sidebar-offcanvas .sb-sub .sb-link{
-      padding: 11px 12px;
-      font-size: 14px;
+      padding:10px 12px;
+      font-size:.78rem;
+    }
+
+    /* ========== SAFE GLOBAL FONT ONLY ========== */
+    h1,h2,h3,h4,h5,h6,
+    .btn,
+    .form-control,
+    .form-select,
+    .dropdown-menu,
+    .dropdown-item,
+    .table,
+    .alert,
+    .badge,
+    .card,
+    label,
+    input,
+    select,
+    textarea,
+    button{
+      font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    }
+
+    .select2-container{
+      width:100% !important;
+      font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
     }
 
     .select2-container .select2-selection--single{
-      height:42px; border-radius:12px; display:flex; align-items:center;
+      min-height:40px;
+      border-radius:12px;
     }
 
-    @media(min-width: 992px){
-      .sb-footer {
-        display: none !important;
+    .select2-container .select2-selection__rendered{
+      line-height:38px !important;
+      padding-left:12px !important;
+    }
+
+    .select2-container .select2-selection__arrow{
+      height:38px !important;
+    }
+
+    @media(max-width:575.98px){
+      body{ font-size:.88rem; }
+      .topbar{ padding:10px; }
+      .page{ padding:12px; }
+      .brand-mini span:last-child{
+        max-width:150px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
       }
+      .clock{ display:none; }
     }
   </style>
 
@@ -451,17 +577,17 @@
                aria-expanded="{% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}true{% else %}false{% endif %}"
                aria-controls="sbGenjiDesk" title="Genji">
               <i class="fa-solid fa-sack-dollar"></i> <span class="label">Genji</span>
-              <i class="fa-solid fa-chevron-down fa-xs chev"></i>
+              <i class="fa-solid fa-chevron-down chev"></i>
             </a>
 
             <div class="collapse {% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}show{% endif %}" id="sbGenjiDesk">
               <div class="sb-sub">
                 <a class="sb-link {% if request.resolver_match.url_name == 'genji_dashboard' %}active{% endif %}"
-                   href="{% url 'sales:genji_dashboard' %}" title="Genji Dashboard">
+                   href="{% url 'sales:genji_dashboard' %}">
                   <i class="fa-solid fa-chart-pie"></i> <span class="label">Dashboard</span>
                 </a>
                 <a class="sb-link {% if request.resolver_match.url_name == 'genji_create' %}active{% endif %}"
-                   href="{% url 'sales:genji_create' %}" title="Add Genji">
+                   href="{% url 'sales:genji_create' %}">
                   <i class="fa-solid fa-plus"></i> <span class="label">Add Genji</span>
                 </a>
               </div>
@@ -480,29 +606,29 @@
             <a class="sb-link" data-bs-toggle="collapse" href="#sbReportsDesk" role="button"
                aria-expanded="false" aria-controls="sbReportsDesk" title="Reports">
               <i class="fa-solid fa-chart-line"></i> <span class="label">Reports</span>
-              <i class="fa-solid fa-chevron-down fa-xs chev"></i>
+              <i class="fa-solid fa-chevron-down chev"></i>
             </a>
 
             <div class="collapse {% if request.resolver_match.url_name in 'sales_history sales_report enhanced_sales_report expense_overview period_progress_report' %}show{% endif %}" id="sbReportsDesk">
               <div class="sb-sub">
                 <a class="sb-link {% if request.resolver_match.url_name == 'sales_history' %}active{% endif %}"
-                   href="{% url 'sales:kilasi_sales_history' %}" title="History">
+                   href="{% url 'sales:kilasi_sales_history' %}">
                   <i class="fa-regular fa-clock"></i> <span class="label">History</span>
                 </a>
                 <a class="sb-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}"
-                   href="{% url 'sales:kilasi_sales_report' %}" title="Daily">
+                   href="{% url 'sales:kilasi_sales_report' %}">
                   <i class="fa-solid fa-calendar-day"></i> <span class="label">Daily</span>
                 </a>
                 <a class="sb-link {% if request.resolver_match.url_name == 'period_progress_report' %}active{% endif %}"
-                   href="{% url 'sales:period_progress_report' %}" title="Progress Report">
+                   href="{% url 'sales:period_progress_report' %}">
                   <i class="fa-solid fa-calendar-days"></i> <span class="label">Progress Report</span>
                 </a>
                 <a class="sb-link {% if request.resolver_match.url_name == 'enhanced_sales_report' %}active{% endif %}"
-                   href="{% url 'sales:enhanced_sales_report' %}" title="Enhanced">
+                   href="{% url 'sales:enhanced_sales_report' %}">
                   <i class="fa-solid fa-chart-simple"></i> <span class="label">Enhanced</span>
                 </a>
                 <a class="sb-link {% if request.resolver_match.url_name == 'expense_overview' %}active{% endif %}"
-                   href="{% url 'sales:expense_overview' %}" title="Expenses">
+                   href="{% url 'sales:expense_overview' %}">
                   <i class="fa-solid fa-receipt"></i> <span class="label">Expenses</span>
                 </a>
               </div>
@@ -518,18 +644,18 @@
               {% if transport_booking_badge_count > 0 %}
                 <span class="sb-badge">{{ transport_booking_badge_count }}</span>
               {% endif %}
-              <i class="fa-solid fa-chevron-down fa-xs chev"></i>
+              <i class="fa-solid fa-chevron-down chev"></i>
             </a>
 
             <div class="collapse {% if request.resolver_match.namespace == 'transport' %}show{% endif %}" id="sbTransportDesk">
               <div class="sb-sub">
                 <a class="sb-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}"
-                   href="{% url 'transport:index' %}" title="Transport Dashboard">
+                   href="{% url 'transport:index' %}">
                   <i class="fa-solid fa-gauge-high"></i> <span class="label">Dashboard</span>
                 </a>
 
                 <a class="sb-link {% if request.resolver_match.url_name == 'booking_list' %}active{% endif %}"
-                   href="{% url 'transport:booking_list' %}" title="Bookings">
+                   href="{% url 'transport:booking_list' %}">
                   <i class="fa-solid fa-calendar-check"></i> <span class="label">Bookings</span>
                   {% if transport_booking_badge_count > 0 %}
                     <span class="sb-badge warn">{{ transport_booking_badge_count }}</span>
@@ -537,27 +663,27 @@
                 </a>
 
                 <a class="sb-link {% if request.resolver_match.url_name == 'booking_create' %}active{% endif %}"
-                   href="{% url 'transport:booking_create' %}" title="Add Booking">
+                   href="{% url 'transport:booking_create' %}">
                   <i class="fa-solid fa-calendar-plus"></i> <span class="label">Add Booking</span>
                 </a>
 
                 <a class="sb-link {% if request.resolver_match.url_name == 'trip_list' %}active{% endif %}"
-                   href="{% url 'transport:trip_list' %}" title="Trips">
+                   href="{% url 'transport:trip_list' %}">
                   <i class="fa-solid fa-route"></i> <span class="label">Trips</span>
                 </a>
 
                 <a class="sb-link {% if request.resolver_match.url_name == 'vehicle_list' %}active{% endif %}"
-                   href="{% url 'transport:vehicle_list' %}" title="Vehicles">
+                   href="{% url 'transport:vehicle_list' %}">
                   <i class="fa-solid fa-truck"></i> <span class="label">Vehicles</span>
                 </a>
 
                 <a class="sb-link {% if request.resolver_match.url_name == 'driver_list' %}active{% endif %}"
-                   href="{% url 'transport:driver_list' %}" title="Drivers">
+                   href="{% url 'transport:driver_list' %}">
                   <i class="fa-solid fa-id-card"></i> <span class="label">Drivers</span>
                 </a>
 
                 <a class="sb-link {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}"
-                   href="{% url 'transport:expense_list' %}" title="Expenses">
+                   href="{% url 'transport:expense_list' %}">
                   <i class="fa-solid fa-gas-pump"></i> <span class="label">Expenses</span>
                 </a>
               </div>
@@ -568,17 +694,17 @@
             <div class="sb-section-title">Admin</div>
 
             <a class="sb-link {% if request.resolver_match.url_name == 'stock_management' %}active{% endif %}"
-               href="{% url 'sales:stock_management' %}" title="Stock Management">
+               href="{% url 'sales:stock_management' %}">
               <i class="fa-solid fa-boxes-packing"></i> <span class="label">Stock</span>
             </a>
 
             <a class="sb-link {% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}"
-               href="{% url 'sales:customer_list' %}" title="Customers">
+               href="{% url 'sales:customer_list' %}">
               <i class="fa-solid fa-users"></i> <span class="label">Customers</span>
             </a>
 
             <a class="sb-link {% if request.resolver_match.url_name == 'supplier_list' %}active{% endif %}"
-               href="{% url 'sales:supplier_list' %}" title="Suppliers">
+               href="{% url 'sales:supplier_list' %}">
               <i class="fa-solid fa-truck-field"></i> <span class="label">Suppliers</span>
             </a>
           {% endif %}
@@ -591,7 +717,7 @@
           {% endif %}
 
           <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
-             href="{% url 'sales:stock_transfer_list' %}" title="Stock Transfers">
+             href="{% url 'sales:stock_transfer_list' %}">
             <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
           </a>
 
@@ -609,7 +735,7 @@
         {% endwith %}
       {% else %}
         <div class="sb-section-title">Account</div>
-        <a class="sb-link" href="{% url 'login' %}" title="Login">
+        <a class="sb-link" href="{% url 'login' %}">
           <i class="fa-solid fa-right-to-bracket"></i> <span class="label">Login</span>
         </a>
       {% endif %}
@@ -639,13 +765,13 @@
         </div>
 
         <div class="footer-actions">
-          <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info w-100 d-none d-lg-inline-flex" style="border-radius:14px;">
+          <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info w-100 d-none d-lg-inline-flex">
             <i class="fa-solid fa-user-pen me-2"></i> Profile
           </a>
 
           <form method="post" action="{% url 'logout' %}" class="w-100 d-none d-lg-block">
             {% csrf_token %}
-            <button class="btn btn-outline-light w-100" type="submit" style="border-radius:14px;">
+            <button class="btn btn-outline-light w-100" type="submit">
               <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
             </button>
           </form>
@@ -653,6 +779,7 @@
           <a href="{% url 'users:profile_update' %}" class="btn btn-outline-info btn-icon" title="Profile">
             <i class="fa-solid fa-user-pen"></i><span>Profile</span>
           </a>
+
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
             <button class="btn btn-outline-light btn-icon" type="submit" title="Logout">
@@ -660,9 +787,8 @@
             </button>
           </form>
         </div>
-
       {% else %}
-        <a href="{% url 'login' %}" class="btn btn-outline-light w-100" style="border-radius:14px;">Login</a>
+        <a href="{% url 'login' %}" class="btn btn-outline-light w-100">Login</a>
       {% endif %}
     </div>
 
@@ -679,7 +805,7 @@
                   data-bs-toggle="offcanvas"
                   data-bs-target="#mobileSidebar"
                   aria-controls="mobileSidebar"
-                  style="border-radius:14px; width:44px; height:44px;">
+                  style="width:42px;height:42px;">
             <i class="fa-solid fa-bars"></i>
           </button>
 
@@ -701,7 +827,7 @@
         <div class="d-flex align-items-center gap-3">
           <div class="clock" id="navClock"></div>
 
-          {% if request.user.is_authenticated and request.user.profile and request.user.profile.role == 'admin' or request.user.profile.role == 'cashier' or request.user.profile.role == 'transport' %}
+          {% if request.user.is_authenticated and request.user.profile and request.user.profile.role in 'admin cashier transport' %}
             <a href="{% url 'transport:booking_list' %}" class="topbar-bell" title="Booking notifications">
               <i class="fa-solid fa-bell"></i>
               {% if transport_booking_badge_count > 0 %}
@@ -718,12 +844,12 @@
               {% else %}
                 <img src="{% static 'images/default-avatar.png' %}" class="rounded-circle" width="36" height="36" style="object-fit:cover;" alt="avatar">
               {% endif %}
-              <span class="fw-semibold d-none d-sm-inline">
+              <span class="fw-semibold d-none d-sm-inline" style="font-size:.82rem;">
                 {% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}
               </span>
             </a>
 
-            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu" style="border-radius:14px;">
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
               {% if request.user.is_authenticated %}
                 <li><a class="dropdown-item" href="{% url 'users:profile_update' %}"><i class="fa-solid fa-user-pen me-2"></i> Edit Profile</a></li>
                 <li><hr class="dropdown-divider"></li>
@@ -763,17 +889,17 @@
      tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel"
      data-bs-backdrop="true" data-bs-auto-focus="false">
 
-  <div class="offcanvas-header py-3 px-3" style="border-bottom: 1px solid rgba(255,255,255,.10);">
+  <div class="offcanvas-header py-3 px-3">
     <h5 class="offcanvas-title m-0" id="mobileSidebarLabel">
       <div class="d-flex align-items-center gap-2" style="color:#e6eef6;">
         <span class="d-inline-flex align-items-center justify-content-center"
-              style="width:42px;height:42px;border-radius:14px;background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));border: 1px solid rgba(255,255,255,.12);">
+              style="width:42px;height:42px;border-radius:14px;background: linear-gradient(135deg, rgba(37,99,235,.18), rgba(59,130,246,.12));border: 1px solid rgba(255,255,255,.12);">
           <i class="fa-solid fa-building"></i>
         </span>
 
         <div class="lh-sm">
           <div class="fw-bold" style="letter-spacing:.4px;">KILASI INVESTMENT</div>
-          <div style="font-size:.78rem; color: rgba(235,245,255,.68);">
+          <div style="font-size:.74rem; color: rgba(235,245,255,.68);">
             Sales • Stock • Transport
           </div>
         </div>
@@ -879,30 +1005,24 @@
                 <a class="sb-link" href="{% url 'transport:index' %}">
                   <i class="fa-solid fa-gauge-high"></i> Dashboard
                 </a>
-
                 <a class="sb-link" href="{% url 'transport:booking_list' %}">
                   <i class="fa-solid fa-calendar-check"></i> Bookings
                   {% if transport_booking_badge_count > 0 %}
                     <span class="sb-badge warn">{{ transport_booking_badge_count }}</span>
                   {% endif %}
                 </a>
-
                 <a class="sb-link" href="{% url 'transport:booking_create' %}">
                   <i class="fa-solid fa-calendar-plus"></i> Add Booking
                 </a>
-
                 <a class="sb-link" href="{% url 'transport:trip_list' %}">
                   <i class="fa-solid fa-route"></i> Trips
                 </a>
-
                 <a class="sb-link" href="{% url 'transport:vehicle_list' %}">
                   <i class="fa-solid fa-truck"></i> Vehicles
                 </a>
-
                 <a class="sb-link" href="{% url 'transport:driver_list' %}">
                   <i class="fa-solid fa-id-card"></i> Drivers
                 </a>
-
                 <a class="sb-link" href="{% url 'transport:expense_list' %}">
                   <i class="fa-solid fa-gas-pump"></i> Expenses
                 </a>
@@ -984,8 +1104,11 @@
     const el = document.getElementById('navClock');
     if(!el) return;
     el.textContent = now.toLocaleString('en-GB', {
-      weekday:'short', day:'2-digit', month:'short',
-      hour:'2-digit', minute:'2-digit'
+      weekday:'short',
+      day:'2-digit',
+      month:'short',
+      hour:'2-digit',
+      minute:'2-digit'
     });
   }
   updateClock();
@@ -998,7 +1121,7 @@
 
     const sidebar = document.getElementById('primarySidebar');
     const btn = document.getElementById('btnToggleSidebar');
-    const KEY = 'chui_sb_collapsed';
+    const KEY = 'kilasi_sb_collapsed';
 
     if (sidebar && btn) {
       try {

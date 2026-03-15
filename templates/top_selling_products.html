@@ -1,93 +1,469 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% block title %}Top-Selling Products — Chui Hardware{% endblock %}
+{% block title %}Top-Selling Products — Kilasi Investment{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h2 class="mb-1">Top-Selling Products</h2>
-    <div class="text-muted small">
-      {% if role == 'seller' and branch %}
-        Showing: <strong>{{ branch.name }}</strong> branch
-      {% else %}
-        Showing: <strong>All branches</strong>
-      {% endif %}
+<style>
+  :root{
+    --tp-bg:#f8fafc;
+    --tp-card:#ffffff;
+    --tp-line:#e2e8f0;
+    --tp-line-soft:#eef2f7;
+    --tp-text:#0f172a;
+    --tp-muted:#64748b;
+    --tp-primary:#2563eb;
+    --tp-primary-soft:rgba(37,99,235,.08);
+    --tp-primary-soft-2:rgba(37,99,235,.12);
+    --tp-success:#16a34a;
+    --tp-warning:#f59e0b;
+    --tp-shadow:0 10px 30px rgba(15,23,42,.06);
+    --tp-radius:16px;
+  }
+
+  .top-wrap{
+    color:var(--tp-text);
+  }
+
+  .top-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--tp-line);
+    border-radius:20px;
+    box-shadow:var(--tp-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .top-hero-title{
+    font-size:1.08rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    margin:0 0 .2rem;
+    color:var(--tp-text);
+  }
+
+  .top-hero-sub{
+    font-size:.76rem;
+    color:var(--tp-muted);
+    margin:0;
+  }
+
+  .top-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:var(--tp-primary-soft);
+    color:var(--tp-primary);
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .top-badge i{
+    font-size:.72rem;
+  }
+
+  .top-filter-card{
+    background:var(--tp-card);
+    border:1px solid var(--tp-line);
+    border-radius:18px;
+    padding:.85rem;
+    box-shadow:var(--tp-shadow);
+    margin-bottom:1rem;
+  }
+
+  .top-filter-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    align-items:center;
+  }
+
+  .top-select,
+  .top-search{
+    height:38px;
+    border-radius:12px;
+    border:1px solid var(--tp-line);
+    background:#fff;
+    font-size:.78rem;
+    color:var(--tp-text);
+    box-shadow:none !important;
+    transition:.18s ease;
+  }
+
+  .top-select{
+    min-width:180px;
+    max-width:220px;
+    padding:.35rem .85rem;
+  }
+
+  .top-search-wrap{
+    position:relative;
+    flex:1 1 260px;
+    min-width:210px;
+  }
+
+  .top-search{
+    width:100%;
+    padding:.35rem .85rem .35rem 2.15rem;
+  }
+
+  .top-search-icon{
+    position:absolute;
+    left:.78rem;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:.78rem;
+    color:#94a3b8;
+    pointer-events:none;
+  }
+
+  .top-select:focus,
+  .top-search:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .top-btn{
+    height:38px;
+    border:none;
+    border-radius:12px;
+    padding:0 .95rem;
+    font-size:.77rem;
+    font-weight:600;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    white-space:nowrap;
+  }
+
+  .top-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .top-table-card{
+    background:var(--tp-card);
+    border:1px solid var(--tp-line);
+    border-radius:20px;
+    box-shadow:var(--tp-shadow);
+    overflow:hidden;
+  }
+
+  .top-table{
+    margin:0;
+  }
+
+  .top-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    border-bottom:1px solid var(--tp-line);
+    padding:.82rem .95rem;
+    white-space:nowrap;
+  }
+
+  .top-table tbody td{
+    padding:.82rem .95rem;
+    vertical-align:middle;
+    border-top:1px solid var(--tp-line-soft);
+    font-size:.80rem;
+    color:var(--tp-text);
+  }
+
+  .top-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .rank-chip{
+    min-width:34px;
+    height:34px;
+    border-radius:10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.78rem;
+    font-weight:700;
+    background:linear-gradient(135deg, rgba(37,99,235,.12), rgba(59,130,246,.06));
+    color:var(--tp-primary);
+    border:1px solid rgba(37,99,235,.10);
+  }
+
+  .rank-chip.top1{
+    background:linear-gradient(135deg, rgba(245,158,11,.18), rgba(251,191,36,.08));
+    color:#b45309;
+    border-color:rgba(245,158,11,.18);
+  }
+
+  .rank-chip.top2{
+    background:linear-gradient(135deg, rgba(148,163,184,.18), rgba(203,213,225,.08));
+    color:#475569;
+    border-color:rgba(148,163,184,.18);
+  }
+
+  .rank-chip.top3{
+    background:linear-gradient(135deg, rgba(234,88,12,.16), rgba(251,146,60,.08));
+    color:#c2410c;
+    border-color:rgba(234,88,12,.18);
+  }
+
+  .product-name{
+    font-size:.81rem;
+    font-weight:600;
+    color:var(--tp-text);
+    line-height:1.2;
+  }
+
+  .product-meta{
+    font-size:.70rem;
+    color:var(--tp-muted);
+    margin-top:.18rem;
+  }
+
+  .sold-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:flex-end;
+    min-width:84px;
+    padding:.36rem .62rem;
+    border-radius:999px;
+    background:rgba(22,163,74,.08);
+    color:var(--tp-success);
+    font-size:.74rem;
+    font-weight:700;
+    border:1px solid rgba(22,163,74,.10);
+  }
+
+  .top-empty{
+    background:#fff;
+    border:1px dashed var(--tp-line);
+    border-radius:18px;
+    padding:2rem 1rem;
+    text-align:center;
+    color:var(--tp-muted);
+    box-shadow:var(--tp-shadow);
+  }
+
+  .top-empty i{
+    font-size:1.3rem;
+    color:#94a3b8;
+    margin-bottom:.5rem;
+  }
+
+  .top-empty h6{
+    font-size:.9rem;
+    font-weight:700;
+    color:var(--tp-text);
+    margin-bottom:.2rem;
+  }
+
+  .top-empty p{
+    font-size:.76rem;
+    margin:0;
+  }
+
+  .top-pagination{
+    margin-top:.9rem;
+  }
+
+  .top-pagination .pagination{
+    gap:.35rem;
+  }
+
+  .top-pagination .page-link{
+    border:none;
+    min-width:34px;
+    height:34px;
+    border-radius:10px !important;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.75rem;
+    font-weight:600;
+    color:#475569;
+    background:#fff;
+    border:1px solid var(--tp-line);
+    box-shadow:none;
+  }
+
+  .top-pagination .page-item.active .page-link{
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+    border-color:transparent;
+  }
+
+  .top-pagination .page-item.disabled .page-link{
+    color:#94a3b8;
+    background:#f8fafc;
+    border-color:var(--tp-line);
+  }
+
+  @media (max-width: 768px){
+    .top-hero{
+      padding:.9rem;
+    }
+    .top-filter-card{
+      padding:.75rem;
+    }
+    .top-table thead th,
+    .top-table tbody td{
+      padding:.72rem .75rem;
+    }
+  }
+</style>
+
+<div class="top-wrap">
+  <div class="top-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="top-hero-title">Top-Selling Products</h2>
+        <p class="top-hero-sub mb-0">
+          {% if is_seller and selected_branch_obj %}
+            <span class="top-badge">
+              <i class="fa-solid fa-shop"></i>
+              {{ selected_branch_obj.name }} branch
+            </span>
+          {% elif selected_branch_obj %}
+            <span class="top-badge">
+              <i class="fa-solid fa-code-branch"></i>
+              {{ selected_branch_obj.name }} branch
+            </span>
+          {% else %}
+            <span class="top-badge">
+              <i class="fa-solid fa-layer-group"></i>
+              All branches
+            </span>
+          {% endif %}
+        </p>
+      </div>
     </div>
   </div>
 
-  <form method="get" class="d-flex" style="max-width: 320px;">
-    <input
-      type="text"
-      id="searchInput"
-      name="q"
-      value="{{ query }}"
-      class="form-control me-2"
-      placeholder="Search products…"
-      autocomplete="off"
-    >
-    <button type="submit" class="btn btn-outline-primary">
-      <i class="fa fa-search"></i>
-    </button>
-  </form>
-</div>
-
-{% if top_products %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-primary">
-        <tr>
-          <th style="width:90px;">Rank</th>
-          <th>Product</th>
-          <th class="text-end">Units Sold</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in top_products %}
-        <tr>
-          <td>
-            {# correct rank across pages #}
-            {{ page_obj.start_index|add:forloop.counter0 }}
-          </td>
-          <td>{{ item.product.name }}</td>
-          <td class="text-end">{{ item.total_sold|intcomma }}</td>
-        </tr>
+  <div class="top-filter-card">
+    <form method="get" class="top-filter-row">
+      {% if not is_seller %}
+      <select name="branch" class="form-select top-select">
+        <option value="">All branches</option>
+        {% for b in branches %}
+          <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>
+            {{ b.name }}
+          </option>
         {% endfor %}
-      </tbody>
-    </table>
+      </select>
+      {% endif %}
+
+      <div class="top-search-wrap">
+        <i class="fa-solid fa-magnifying-glass top-search-icon"></i>
+        <input
+          type="text"
+          id="searchInput"
+          name="q"
+          value="{{ query }}"
+          class="form-control top-search"
+          placeholder="Search product name..."
+          autocomplete="off"
+        >
+      </div>
+
+      <button type="submit" class="btn top-btn">
+        <i class="fa-solid fa-sliders"></i>
+        Apply
+      </button>
+    </form>
   </div>
 
-  {% if is_paginated %}
-  <nav class="mt-3">
-    <ul class="pagination">
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">‹ Prev</span></li>
-      {% endif %}
+  {% if top_products %}
+    <div class="top-table-card">
+      <div class="table-responsive">
+        <table class="table top-table align-middle">
+          <thead>
+            <tr>
+              <th style="width:90px;">Rank</th>
+              <th>Product</th>
+              <th class="text-end" style="width:160px;">Units Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in top_products %}
+            {% with rank=page_obj.start_index|add:forloop.counter0 %}
+            <tr>
+              <td>
+                <span class="rank-chip {% if rank == 1 %}top1{% elif rank == 2 %}top2{% elif rank == 3 %}top3{% endif %}">
+                  {{ rank }}
+                </span>
+              </td>
+              <td>
+                <div class="product-name">{{ item.product.name }}</div>
+                <div class="product-meta">
+                  Best performing item in the current filter
+                </div>
+              </td>
+              <td class="text-end">
+                <span class="sold-pill">{{ item.total_sold|intcomma }} sold</span>
+              </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-      {% for num in paginator.page_range %}
-        {% if num == page_obj.number %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+    {% if is_paginated %}
+    <nav class="top-pagination">
+      <ul class="pagination flex-wrap mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?q={{ query }}&branch={{ selected_branch }}&page={{ page_obj.previous_page_number }}">
+              ‹
+            </a>
+          </li>
         {% else %}
-          <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
+          <li class="page-item disabled"><span class="page-link">‹</span></li>
         {% endif %}
-      {% endfor %}
 
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next ›</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Next ›</span></li>
-      {% endif %}
-    </ul>
-  </nav>
+        {% for num in paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query }}&branch={{ selected_branch }}&page={{ num }}">
+                {{ num }}
+              </a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?q={{ query }}&branch={{ selected_branch }}&page={{ page_obj.next_page_number }}">
+              ›
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">›</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  {% else %}
+    <div class="top-empty">
+      <i class="fa-solid fa-chart-column"></i>
+      <h6>No sales data found</h6>
+      <p>Try changing the branch filter or search keyword.</p>
+    </div>
   {% endif %}
-{% else %}
-  <p class="text-muted">No sales data available.</p>
-{% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -95,9 +471,12 @@
   (function(){
     var input = document.getElementById('searchInput');
     if(!input) return;
+
     input.addEventListener('input', function(){
       if (this.value.trim() === '') {
-        window.location.href = window.location.pathname;
+        var url = new URL(window.location.href);
+        url.searchParams.delete('q');
+        window.location.href = url.pathname + url.search;
       }
     });
   })();

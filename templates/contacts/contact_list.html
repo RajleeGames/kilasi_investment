@@ -2,99 +2,438 @@
 
 {% block title %}Contacts{% endblock %}
 
+{% block extra_css %}
+<style>
+  .contacts-wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .contacts-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .9rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
+  }
+
+  .contacts-title{
+    font-size:1.05rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    margin:0;
+    color:#0f172a;
+  }
+
+  .contacts-subtitle{
+    font-size:.76rem;
+    color:#64748b;
+    margin-top:.2rem;
+  }
+
+  .contacts-add-btn{
+    border-radius:12px;
+    font-size:.78rem;
+    font-weight:700;
+    padding:.65rem .95rem;
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
+
+  .contacts-filter-card,
+  .contacts-table-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .contacts-filter-card{
+    margin-bottom:1rem;
+  }
+
+  .contacts-filter-body{
+    padding:1rem;
+  }
+
+  .contacts-label{
+    font-size:.69rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#64748b;
+    margin-bottom:.38rem;
+  }
+
+  .contacts-filter-card .form-control,
+  .contacts-filter-card .form-select{
+    min-height:42px;
+    border-radius:12px;
+    font-size:.79rem;
+  }
+
+  .contacts-filter-card .btn{
+    border-radius:12px;
+    font-size:.77rem;
+    font-weight:700;
+    min-height:42px;
+    padding:.55rem .9rem;
+  }
+
+  .contacts-table-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.8rem;
+    padding:.9rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  .contacts-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .contacts-count{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.35rem .65rem;
+    font-weight:700;
+  }
+
+  .contacts-table{
+    margin:0;
+  }
+
+  .contacts-table thead th{
+    font-size:.70rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#64748b;
+    background:#f8fafc;
+    border-bottom:1px solid #e2e8f0;
+    padding:.85rem .9rem;
+    white-space:nowrap;
+  }
+
+  .contacts-table tbody td{
+    font-size:.79rem;
+    color:#0f172a;
+    padding:.82rem .9rem;
+    vertical-align:middle;
+    border-top:1px solid #eef2f7;
+  }
+
+  .contacts-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .contact-name{
+    font-weight:700;
+    font-size:.81rem;
+    color:#0f172a;
+  }
+
+  .contact-meta{
+    font-size:.68rem;
+    color:#94a3b8;
+    margin-top:.15rem;
+  }
+
+  .role-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:.34rem .58rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:700;
+    background:#f1f5f9;
+    color:#475569;
+    border:1px solid #e2e8f0;
+  }
+
+  .contact-muted{
+    color:#64748b;
+    font-size:.77rem;
+  }
+
+  .actions-wrap{
+    display:flex;
+    gap:.45rem;
+    flex-wrap:wrap;
+  }
+
+  .action-btn{
+    width:34px;
+    height:34px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    padding:0;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:2rem 1rem;
+    color:#64748b;
+    font-size:.8rem;
+  }
+
+  .empty-state i{
+    font-size:1.1rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+    display:block;
+  }
+
+  .empty-state b{
+    color:#0f172a;
+  }
+
+  .contacts-pagination .page-link{
+    border-radius:10px !important;
+    margin:0 .15rem;
+    font-size:.76rem;
+    font-weight:700;
+    color:#334155;
+    border-color:#e2e8f0;
+    padding:.5rem .8rem;
+  }
+
+  .contacts-pagination .page-item.active .page-link{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+
+  .contacts-pagination .page-item.disabled .page-link{
+    color:#64748b;
+    background:#fff;
+  }
+
+  @media (max-width: 767.98px){
+    .contacts-hero{
+      padding:.9rem;
+    }
+
+    .contacts-title{
+      font-size:.98rem;
+    }
+
+    .contacts-subtitle{
+      font-size:.73rem;
+    }
+
+    .contacts-filter-body{
+      padding:.85rem;
+    }
+
+    .contacts-table thead{
+      display:none;
+    }
+
+    .contacts-table,
+    .contacts-table tbody,
+    .contacts-table tr,
+    .contacts-table td{
+      display:block;
+      width:100%;
+    }
+
+    .contacts-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.3rem 0;
+    }
+
+    .contacts-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .85rem;
+    }
+
+    .contacts-table tbody td::before{
+      content:attr(data-label);
+      min-width:90px;
+      font-size:.67rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:#64748b;
+    }
+
+    .actions-wrap{
+      justify-content:flex-end;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-  <div>
-    <h3 class="mb-1">Contacts</h3>
-    <div class="text-muted small">Save bosses, secretaries, staff, drivers…</div>
-  </div>
+<div class="contacts-wrap">
 
-  <a href="{% url 'contacts:contact_create' %}" class="btn btn-primary">
-    <i class="fa-solid fa-plus me-1"></i> Add Contact
-  </a>
-</div>
+  <div class="contacts-hero">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <h3 class="contacts-title">
+          <i class="fa-solid fa-address-book me-1 text-primary"></i>
+          Contacts
+        </h3>
+        <div class="contacts-subtitle">Save bosses, secretaries, staff, drivers and other important people.</div>
+      </div>
 
-<form method="get" class="card shadow-sm mb-3" style="border-radius:14px;">
-  <div class="card-body d-flex flex-column flex-md-row gap-2 align-items-md-end">
-    <div class="flex-grow-1">
-      <label class="form-label mb-1">Search</label>
-      <input name="q" value="{{ q }}" class="form-control" placeholder="Name, phone, whatsapp, company, email">
-    </div>
-    <div style="min-width:220px;">
-      <label class="form-label mb-1">Role</label>
-      <select name="role" class="form-select">
-        <option value="">All Roles</option>
-        {% for val,label in role_choices %}
-          <option value="{{ val }}" {% if role == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-primary"><i class="fa-solid fa-filter me-1"></i> Filter</button>
-      <a class="btn btn-outline-secondary" href="{% url 'contacts:contact_list' %}">Reset</a>
+      <a href="{% url 'contacts:contact_create' %}" class="btn btn-primary contacts-add-btn">
+        <i class="fa-solid fa-plus me-1"></i> Add Contact
+      </a>
     </div>
   </div>
-</form>
 
-<div class="card shadow-sm" style="border-radius:14px;">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Name</th>
-          <th>Role</th>
-          <th>Phone</th>
-          <th>WhatsApp</th>
-          <th>Company</th>
-          <th style="width:160px;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for c in contacts %}
+  <form method="get" class="contacts-filter-card">
+    <div class="contacts-filter-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6">
+          <label class="contacts-label">Search</label>
+          <input name="q" value="{{ q }}" class="form-control"
+                 placeholder="Name, phone, whatsapp, company, email">
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label class="contacts-label">Role</label>
+          <select name="role" class="form-select">
+            <option value="">All Roles</option>
+            {% for val,label in role_choices %}
+              <option value="{{ val }}" {% if role == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-12 col-md-3">
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary w-100">
+              <i class="fa-solid fa-filter me-1"></i> Filter
+            </button>
+            <a class="btn btn-outline-secondary" href="{% url 'contacts:contact_list' %}">
+              Reset
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="contacts-table-card">
+    <div class="contacts-table-head">
+      <h4 class="contacts-table-title">
+        <i class="fa-solid fa-users-line text-primary"></i>
+        Contact List
+      </h4>
+      <div class="contacts-count">
+        {{ contacts|length }} contact{{ contacts|length|pluralize }}
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table contacts-table align-middle mb-0">
+        <thead>
           <tr>
-            <td class="fw-semibold">{{ c.full_name }}</td>
-            <td><span class="badge bg-secondary">{{ c.get_role_display }}</span></td>
-            <td>{{ c.phone|default:"—" }}</td>
-            <td>{{ c.whatsapp|default:"—" }}</td>
-            <td>{{ c.company|default:"—" }}</td>
-            <td>
-              <a class="btn btn-sm btn-outline-primary" href="{% url 'contacts:contact_update' c.id %}">
-                <i class="fa-solid fa-pen"></i>
-              </a>
-              <a class="btn btn-sm btn-outline-danger" href="{% url 'contacts:contact_delete' c.id %}">
-                <i class="fa-solid fa-trash"></i>
-              </a>
-            </td>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Phone</th>
+            <th>WhatsApp</th>
+            <th>Company</th>
+            <th style="width:160px;">Actions</th>
           </tr>
-        {% empty %}
-          <tr>
-            <td colspan="6" class="text-center py-4 text-muted">
-              No contacts yet. Click <b>Add Contact</b>.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+        </thead>
+        <tbody>
+          {% for c in contacts %}
+            <tr>
+              <td data-label="Name">
+                <div class="contact-name">{{ c.full_name }}</div>
+              </td>
 
-{% if is_paginated %}
-  <nav class="mt-3">
-    <ul class="pagination justify-content-center mb-0">
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ q }}&role={{ role }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+              <td data-label="Role">
+                <span class="role-badge">{{ c.get_role_display }}</span>
+              </td>
+
+              <td data-label="Phone">
+                <span class="contact-muted">{{ c.phone|default:"—" }}</span>
+              </td>
+
+              <td data-label="WhatsApp">
+                <span class="contact-muted">{{ c.whatsapp|default:"—" }}</span>
+              </td>
+
+              <td data-label="Company">
+                <span class="contact-muted">{{ c.company|default:"—" }}</span>
+              </td>
+
+              <td data-label="Actions">
+                <div class="actions-wrap">
+                  <a class="btn btn-sm btn-outline-primary action-btn"
+                     href="{% url 'contacts:contact_update' c.id %}"
+                     title="Edit">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+
+                  <a class="btn btn-sm btn-outline-danger action-btn"
+                     href="{% url 'contacts:contact_delete' c.id %}"
+                     title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <i class="fa-regular fa-address-book"></i>
+                  No contacts yet. Click <b>Add Contact</b>.
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-3 contacts-pagination">
+      <ul class="pagination justify-content-center mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&role={{ role }}&page={{ page_obj.previous_page_number }}">‹ Prev</a>
+          </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+          <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         </li>
-      {% endif %}
-      <li class="page-item disabled">
-        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-      </li>
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?q={{ q }}&role={{ role }}&page={{ page_obj.next_page_number }}">Next ›</a>
-        </li>
-      {% endif %}
-    </ul>
-  </nav>
-{% endif %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&role={{ role }}&page={{ page_obj.next_page_number }}">Next ›</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+</div>
 {% endblock %}

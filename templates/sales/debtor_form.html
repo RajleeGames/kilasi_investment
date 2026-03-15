@@ -1,66 +1,346 @@
 {% extends "base.html" %}
-{% block title %}{% if is_edit %}Edit Debtor{% else %}Add Debtor{% endif %}{% endblock %}
+{% block title %}{% if is_edit %}Edit Debtor{% else %}Add Debtor{% endif %} — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --df-card:#ffffff;
+    --df-text:#0f172a;
+    --df-muted:#64748b;
+    --df-line:#e2e8f0;
+    --df-line-soft:#eef2f7;
+    --df-primary:#2563eb;
+    --df-primary-soft:rgba(37,99,235,.08);
+    --df-danger:#dc2626;
+    --df-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .df-wrap{
+    max-width:940px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--df-text);
+  }
+
+  .df-hero,
+  .df-form-card{
+    background:var(--df-card);
+    border:1px solid var(--df-line);
+    border-radius:20px;
+    box-shadow:var(--df-shadow);
+  }
+
+  .df-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .df-hero-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .df-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .df-sub{
+    font-size:.75rem;
+    color:var(--df-muted);
+    margin:.22rem 0 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .df-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:var(--df-primary-soft);
+    color:var(--df-primary);
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .df-btn,
+  .df-btn-light{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.77rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .df-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .df-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .df-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--df-line);
+  }
+
+  .df-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .df-form-card{
+    overflow:hidden;
+  }
+
+  .df-form-body{
+    padding:1rem;
+  }
+
+  .df-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .df-form-body input[type="text"],
+  .df-form-body input[type="number"],
+  .df-form-body input[type="tel"],
+  .df-form-body input[type="email"],
+  .df-form-body textarea,
+  .df-form-body select{
+    width:100%;
+    min-height:40px;
+    border-radius:12px;
+    border:1px solid var(--df-line);
+    background:#fff;
+    color:var(--df-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+    padding:.65rem .85rem;
+  }
+
+  .df-form-body textarea{
+    min-height:110px;
+    resize:vertical;
+  }
+
+  .df-form-body input:focus,
+  .df-form-body textarea:focus,
+  .df-form-body select:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .df-error{
+    margin-top:.28rem;
+    color:var(--df-danger);
+    font-size:.68rem;
+    font-weight:600;
+  }
+
+  .df-check{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+    min-height:40px;
+    padding:.72rem .9rem;
+    border:1px solid var(--df-line);
+    border-radius:12px;
+    background:#fff;
+  }
+
+  .df-check input[type="checkbox"]{
+    width:16px;
+    height:16px;
+    margin:0;
+    accent-color:var(--df-primary);
+  }
+
+  .df-check label{
+    margin:0;
+    font-size:.78rem;
+    font-weight:600;
+    color:var(--df-text);
+    text-transform:none;
+    letter-spacing:0;
+  }
+
+  .df-divider{
+    height:1px;
+    background:var(--df-line-soft);
+    margin:1rem 0;
+  }
+
+  .df-actions{
+    display:flex;
+    gap:.65rem;
+    flex-wrap:wrap;
+  }
+
+  @media(max-width:768px){
+    .df-wrap{
+      padding:0 .7rem;
+    }
+
+    .df-hero,
+    .df-form-body{
+      padding:.9rem;
+    }
+
+    .df-btn,
+    .df-btn-light{
+      width:100%;
+    }
+
+    .df-actions{
+      flex-direction:column;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width:900px;">
+<div class="df-wrap">
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      {% if is_edit %}Edit Debtor{% else %}Add Debtor{% endif %}
-    </h4>
-    <a href="{% url 'sales:debtor_list' %}" class="btn btn-outline-secondary">
-      <i class="fa-solid fa-arrow-left me-1"></i> Back
-    </a>
+  <div class="df-hero">
+    <div class="df-hero-top">
+      <div>
+        <h2 class="df-title">
+          <i class="fa-solid {% if is_edit %}fa-pen-to-square{% else %}fa-user-plus{% endif %} text-primary"></i>
+          {% if is_edit %}Edit Debtor{% else %}Add Debtor{% endif %}
+        </h2>
+
+        <div class="df-sub">
+          <span class="df-badge">
+            <i class="fa-solid fa-wallet"></i>
+            {% if is_edit %}Update debtor details{% else %}Create a new debtor record{% endif %}
+          </span>
+        </div>
+      </div>
+
+      <a href="{% url 'sales:debtor_list' %}" class="df-btn-light">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back
+      </a>
+    </div>
   </div>
 
-  <div class="card border-0 shadow-sm">
-    <div class="card-body">
+  <div class="df-form-card">
+    <div class="df-form-body">
       <form method="post">
         {% csrf_token %}
 
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="fw-semibold mb-1">Name</label>
-            {{ form.name }}
-            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+            <div class="df-field">
+              <label>Name</label>
+              {{ form.name }}
+              {% if form.name.errors %}
+                <div class="df-error">{{ form.name.errors }}</div>
+              {% endif %}
+            </div>
           </div>
 
           <div class="col-md-6">
-            <label class="fw-semibold mb-1">Phone</label>
-            {{ form.phone }}
-            {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors }}</div>{% endif %}
+            <div class="df-field">
+              <label>Phone</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}
+                <div class="df-error">{{ form.phone.errors }}</div>
+              {% endif %}
+            </div>
           </div>
 
           <div class="col-md-6">
-            <label class="fw-semibold mb-1">Location</label>
-            {{ form.location }}
+            <div class="df-field">
+              <label>Location</label>
+              {{ form.location }}
+              {% if form.location.errors %}
+                <div class="df-error">{{ form.location.errors }}</div>
+              {% endif %}
+            </div>
           </div>
 
           <div class="col-md-6">
-            <label class="fw-semibold mb-1">Amount Owed (TZS)</label>
-            {{ form.amount_owed }}
-            {% if form.amount_owed.errors %}<div class="text-danger small">{{ form.amount_owed.errors }}</div>{% endif %}
+            <div class="df-field">
+              <label>Amount Owed (TZS)</label>
+              {{ form.amount_owed }}
+              {% if form.amount_owed.errors %}
+                <div class="df-error">{{ form.amount_owed.errors }}</div>
+              {% endif %}
+            </div>
           </div>
 
           <div class="col-12">
-            <label class="fw-semibold mb-1">Note</label>
-            {{ form.note }}
+            <div class="df-field">
+              <label>Note</label>
+              {{ form.note }}
+              {% if form.note.errors %}
+                <div class="df-error">{{ form.note.errors }}</div>
+              {% endif %}
+            </div>
           </div>
 
           <div class="col-12">
-            <div class="form-check">
-              {{ form.is_active }}
-              <label class="form-check-label">Active (still owes)</label>
+            <div class="df-field">
+              <label>Status</label>
+              <div class="df-check">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}">Active (still owes)</label>
+              </div>
+              {% if form.is_active.errors %}
+                <div class="df-error">{{ form.is_active.errors }}</div>
+              {% endif %}
             </div>
           </div>
         </div>
 
-        <hr class="my-3">
+        <div class="df-divider"></div>
 
-        <button class="btn btn-primary">
-          <i class="fa-solid fa-floppy-disk me-1"></i>
-          {% if is_edit %}Save Changes{% else %}Save Debtor{% endif %}
-        </button>
+        <div class="df-actions">
+          <button class="df-btn" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            {% if is_edit %}Save Changes{% else %}Save Debtor{% endif %}
+          </button>
+
+          <a href="{% url 'sales:debtor_list' %}" class="df-btn-light">
+            <i class="fa-solid fa-xmark"></i>
+            Cancel
+          </a>
+        </div>
       </form>
     </div>
   </div>

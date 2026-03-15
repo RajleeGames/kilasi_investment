@@ -6,311 +6,431 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --border:rgba(15,23,42,.10);
-  --border2:rgba(15,23,42,.06);
-  --shadow:0 12px 30px rgba(2,6,23,.08);
-  --shadow2:0 8px 22px rgba(2,6,23,.06);
-  --radius:14px;
-  --accent:#0ea5e9;
-  --focus:rgba(14,165,233,.25);
-  --good:#10b981;
-  --bad:#ef4444;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-}
+  .veh-wrap{
+    max-width: 1120px;
+    margin: 0 auto;
+  }
 
-/* -------- Wrapper -------- */
-.veh-card{
-  max-width: 980px;
-  margin: 18px auto;
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 14px;
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow);
-  box-sizing: border-box;
-  font-family: var(--font);
-  color: var(--text);
-}
+  .veh-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .9rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
+  }
 
-/* -------- Header -------- */
-.veh-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap: 12px;
-  padding: 4px 4px 12px 4px;
-}
-.veh-title{
-  margin:0;
-  font-size: 1.1rem;
-  font-weight: 900;
-  letter-spacing:.2px;
-  display:flex;
-  align-items:center;
-  gap: 8px;
-}
-.veh-sub{
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: .9rem;
-}
-
-.veh-actions{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  flex-wrap: wrap;
-  justify-content:flex-end;
-}
-
-.veh-search{
-  display:flex;
-  align-items:center;
-  gap: 8px;
-  min-width: 260px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(2,6,23,.04);
-}
-.veh-search i{ color: var(--muted); }
-.veh-search input{
-  width:100%;
-  border:none;
-  outline:none;
-  font-size:.95rem;
-  background: transparent;
-}
-.veh-search input::placeholder{ color:#94a3b8; }
-
-.veh-chip{
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  color: var(--muted);
-  font-size: .86rem;
-  user-select:none;
-}
-.veh-chip strong{
-  color: var(--text);
-  font-weight: 900;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* -------- Table -------- */
-.veh-table{
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
-}
-.veh-table thead th{
-  padding: .65rem .85rem;
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #475569;
-  border: 0;
-  background: transparent;
-  font-weight: 900;
-}
-.veh-row{
-  background:#fff;
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  box-shadow: var(--shadow2);
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-.veh-row:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(2,6,23,.10);
-  border-color: rgba(14,165,233,.18);
-}
-.veh-row.veh-clickable{ cursor:pointer; }
-.veh-row:focus,
-.veh-row:focus-within{
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.veh-table td{
-  padding: .7rem .85rem;
-  border: 0;
-  vertical-align: middle;
-  font-size: .92rem;
-  color: var(--text);
-  max-width: 360px;
-  overflow:hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.veh-plate{
-  font-family: var(--mono);
-  font-weight: 900;
-  letter-spacing: .03em;
-}
-
-.veh-muted{ color: var(--muted); }
-
-/* Active badge */
-.veh-badge{
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 900;
-  font-size: .86rem;
-  border: 1px solid;
-}
-.veh-badge .dot{
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-.veh-badge.on{
-  background: rgba(16,185,129,.10);
-  border-color: rgba(16,185,129,.25);
-  color: #065f46;
-}
-.veh-badge.on .dot{ background: var(--good); }
-.veh-badge.off{
-  background: rgba(239,68,68,.08);
-  border-color: rgba(239,68,68,.22);
-  color: #7f1d1d;
-}
-.veh-badge.off .dot{ background: var(--bad); }
-
-/* Empty */
-.veh-empty{
-  padding: 18px;
-  text-align:center;
-  color: var(--muted);
-  background: linear-gradient(180deg, #fbfdff, #fff);
-  border-radius: 12px;
-  border: 1px dashed rgba(15,23,42,.14);
-}
-
-/* Mobile stacked */
-.td-label{ display:none; }
-@media (max-width: 991.98px){
-  .veh-head{ flex-direction:column; align-items:flex-start; }
-  .veh-actions{ justify-content:flex-start; width:100%; }
-  .veh-search{ min-width: 100%; }
-
-  .veh-table thead{ display:none; }
-  .veh-row{ display:block; padding: .65rem .75rem; }
-  .veh-table td{
+  .veh-title{
+    margin:0;
+    font-size:1.05rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
     display:flex;
-    justify-content:space-between;
-    gap: 12px;
-    padding: .5rem 0;
-    white-space: normal;
-    max-width:none;
-    border-bottom: 1px dashed rgba(15,23,42,.08);
+    align-items:center;
+    gap:.5rem;
   }
-  .veh-table td:last-child{ border-bottom:0; }
-  .td-label{
-    display:inline-block;
-    color: var(--muted);
-    font-weight: 900;
-    font-size: .82rem;
-    min-width: 34%;
-  }
-}
 
-/* helpers */
-.me-1{ margin-right:6px; }
+  .veh-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
+  }
+
+  .veh-top-actions{
+    display:flex;
+    gap:.7rem;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .veh-add-btn{
+    border-radius:12px;
+    font-size:.78rem;
+    font-weight:700;
+    padding:.65rem .95rem;
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
+
+  .veh-filter-card,
+  .veh-table-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .veh-filter-card{
+    margin-bottom:1rem;
+  }
+
+  .veh-filter-body{
+    padding:1rem;
+  }
+
+  .veh-search-wrap{
+    position:relative;
+  }
+
+  .veh-search-icon{
+    position:absolute;
+    left:.85rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:.78rem;
+    pointer-events:none;
+  }
+
+  .veh-search{
+    min-height:42px;
+    border-radius:12px;
+    font-size:.79rem;
+    padding-left:2.25rem;
+  }
+
+  .veh-count{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.45rem .7rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .veh-count strong{
+    color:#0f172a;
+    font-weight:800;
+  }
+
+  .veh-table-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.8rem;
+    padding:.9rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    flex-wrap:wrap;
+  }
+
+  .veh-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .veh-table-note{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.35rem .65rem;
+    font-weight:700;
+  }
+
+  .veh-table{
+    margin:0;
+    width:100%;
+  }
+
+  .veh-table thead th{
+    font-size:.70rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#64748b;
+    background:#f8fafc;
+    border-bottom:1px solid #e2e8f0;
+    padding:.85rem .9rem;
+    white-space:nowrap;
+  }
+
+  .veh-table tbody td{
+    font-size:.79rem;
+    color:#0f172a;
+    padding:.82rem .9rem;
+    vertical-align:middle;
+    border-top:1px solid #eef2f7;
+  }
+
+  .veh-table tbody tr{
+    transition:background .16s ease, transform .16s ease;
+  }
+
+  .veh-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .veh-row-link{
+    cursor:pointer;
+  }
+
+  .veh-row-link:focus,
+  .veh-row-link:focus-within{
+    outline:3px solid rgba(37,99,235,.15);
+    outline-offset:-3px;
+  }
+
+  .veh-plate{
+    font-weight:800;
+    color:#0f172a;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    letter-spacing:.04em;
+    font-size:.8rem;
+  }
+
+  .veh-muted{
+    color:#64748b;
+    font-size:.78rem;
+  }
+
+  .veh-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    padding:.36rem .62rem;
+    border-radius:999px;
+    font-size:.69rem;
+    font-weight:800;
+    border:1px solid;
+  }
+
+  .veh-badge-dot{
+    width:8px;
+    height:8px;
+    border-radius:999px;
+  }
+
+  .veh-badge.on{
+    background:rgba(16,185,129,.10);
+    border-color:rgba(16,185,129,.20);
+    color:#065f46;
+  }
+
+  .veh-badge.on .veh-badge-dot{
+    background:#10b981;
+  }
+
+  .veh-badge.off{
+    background:rgba(239,68,68,.08);
+    border-color:rgba(239,68,68,.18);
+    color:#7f1d1d;
+  }
+
+  .veh-badge.off .veh-badge-dot{
+    background:#ef4444;
+  }
+
+  .veh-empty{
+    text-align:center;
+    padding:2rem 1rem;
+    color:#64748b;
+    font-size:.8rem;
+  }
+
+  .veh-empty i{
+    display:block;
+    font-size:1.15rem;
+    margin-bottom:.45rem;
+    color:#94a3b8;
+  }
+
+  .veh-empty a{
+    font-weight:700;
+    text-decoration:none;
+  }
+
+  .td-label{
+    display:none;
+  }
+
+  @media (max-width: 767.98px){
+    .veh-hero{
+      padding:.9rem;
+    }
+
+    .veh-title{
+      font-size:.98rem;
+    }
+
+    .veh-subtitle{
+      font-size:.73rem;
+    }
+
+    .veh-filter-body{
+      padding:.85rem;
+    }
+
+    .veh-table thead{
+      display:none;
+    }
+
+    .veh-table,
+    .veh-table tbody,
+    .veh-table tr,
+    .veh-table td{
+      display:block;
+      width:100%;
+    }
+
+    .veh-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.3rem 0;
+    }
+
+    .veh-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .85rem;
+    }
+
+    .veh-table tbody td::before{
+      content:attr(data-label);
+      min-width:92px;
+      font-size:.67rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:#64748b;
+    }
+
+    .veh-top-actions{
+      width:100%;
+    }
+
+    .veh-add-btn{
+      width:100%;
+      justify-content:center;
+    }
+
+    .veh-count{
+      width:100%;
+      justify-content:center;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="veh-card">
-  <div class="veh-head">
-    <div>
-      <h1 class="veh-title">
-        <i class="fa-solid fa-truck"></i>
-        Vehicles
-      </h1>
-      <div class="veh-sub">Search vehicles and click a row to open details (if you have a detail page).</div>
-    </div>
+<div class="veh-wrap">
 
-    <div class="veh-actions">
-      <div class="veh-search" title="Search vehicles">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="vehicleSearch" type="search" placeholder="Search plate, model, capacity, active..." aria-label="Search vehicles">
+  <div class="veh-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h3 class="veh-title">
+          <i class="fa-solid fa-truck text-primary"></i>
+          Vehicles
+        </h3>
+        <div class="veh-subtitle">
+          Search vehicles quickly and click a row to open details.
+        </div>
       </div>
 
-      <span class="veh-chip" title="Visible rows">
-        Showing <strong id="visibleVehicles">0</strong> / <strong id="totalVehicles">0</strong>
-      </span>
+      <div class="veh-top-actions">
+        <span class="veh-count" title="Visible rows">
+          Showing <strong id="visibleVehicles">0</strong> / <strong id="totalVehicles">0</strong>
+        </span>
 
-      <a href="{% url 'transport:vehicle_create' %}" class="btn btn-primary">
-        <i class="fa-solid fa-plus me-1"></i> Add Vehicle
-      </a>
+        <a href="{% url 'transport:vehicle_create' %}" class="btn btn-primary veh-add-btn">
+          <i class="fa-solid fa-plus me-1"></i> Add Vehicle
+        </a>
+      </div>
     </div>
   </div>
 
-  {% if vehicles %}
-    <div class="table-responsive" role="region" aria-label="Vehicles list">
-      <table class="veh-table" id="vehiclesTable">
-        <thead>
-          <tr>
-            <th>Plate</th>
-            <th>Model</th>
-            <th>Capacity</th>
-            <th>Active</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for v in vehicles %}
-          <tr class="veh-row veh-row-js {% if v.get_absolute_url %}veh-clickable{% endif %}"
-              {% if v.get_absolute_url %}data-href="{{ v.get_absolute_url }}"{% endif %}
-              tabindex="0"
-              aria-label="Vehicle row">
-            <td data-label="Plate">
-              <span class="td-label">Plate</span>
-              <span class="veh-plate">{{ v.plate_number|default:"—" }}</span>
-            </td>
-
-            <td data-label="Model">
-              <span class="td-label">Model</span>
-              <span class="veh-muted">{{ v.model|default:"—" }}</span>
-            </td>
-
-            <td data-label="Capacity">
-              <span class="td-label">Capacity</span>
-              <span class="veh-muted">{{ v.capacity|default:"—" }}</span>
-            </td>
-
-            <td data-label="Active">
-              <span class="td-label">Active</span>
-              {% if v.is_active %}
-                <span class="veh-badge on"><span class="dot"></span> Active</span>
-              {% else %}
-                <span class="veh-badge off"><span class="dot"></span> Inactive</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="veh-filter-card">
+    <div class="veh-filter-body">
+      <div class="veh-search-wrap">
+        <i class="fa-solid fa-magnifying-glass veh-search-icon"></i>
+        <input id="vehicleSearch"
+               type="search"
+               class="form-control veh-search"
+               placeholder="Search plate, model, capacity, active..."
+               aria-label="Search vehicles">
+      </div>
     </div>
-  {% else %}
-    <div class="veh-empty">No vehicles yet. Click <a href="{% url 'transport:vehicle_create' %}">Add Vehicle</a>.</div>
-  {% endif %}
+  </div>
+
+  <div class="veh-table-card">
+    <div class="veh-table-head">
+      <h4 class="veh-table-title">
+        <i class="fa-solid fa-list-ul text-primary"></i>
+        Vehicle List
+      </h4>
+      <div class="veh-table-note">Transport fleet overview</div>
+    </div>
+
+    {% if vehicles %}
+      <div class="table-responsive" role="region" aria-label="Vehicles list">
+        <table class="table veh-table align-middle mb-0" id="vehiclesTable">
+          <thead>
+            <tr>
+              <th>Plate</th>
+              <th>Model</th>
+              <th>Capacity</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for v in vehicles %}
+            <tr class="veh-row-link veh-row-js"
+                {% if v.get_absolute_url %}data-href="{{ v.get_absolute_url }}"{% endif %}
+                tabindex="0"
+                aria-label="Vehicle row">
+              <td data-label="Plate">
+                <span class="veh-plate">{{ v.plate_number|default:"—" }}</span>
+              </td>
+
+              <td data-label="Model">
+                <span class="veh-muted">{{ v.model|default:"—" }}</span>
+              </td>
+
+              <td data-label="Capacity">
+                <span class="veh-muted">{{ v.capacity|default:"—" }}</span>
+              </td>
+
+              <td data-label="Active">
+                {% if v.is_active %}
+                  <span class="veh-badge on">
+                    <span class="veh-badge-dot"></span> Active
+                  </span>
+                {% else %}
+                  <span class="veh-badge off">
+                    <span class="veh-badge-dot"></span> Inactive
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="veh-empty">
+        <i class="fa-solid fa-truck-fast"></i>
+        No vehicles yet. Click
+        <a href="{% url 'transport:vehicle_create' %}">Add Vehicle</a>.
+      </div>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}
 
@@ -329,12 +449,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (visibleEl) visibleEl.textContent = visible.length;
   }
 
-  // Click + keyboard open row if data-href exists
   document.querySelectorAll('.veh-row-js').forEach(function (row) {
     const href = row.dataset.href;
     if (!href) return;
 
-    row.addEventListener('click', function () {
+    row.addEventListener('click', function (e) {
+      const interactive = e.target.closest('a, button, input, select, textarea');
+      if (interactive) return;
       window.location.assign(href);
     });
 
@@ -346,17 +467,20 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Search filter
   const search = document.getElementById('vehicleSearch');
+
   function applyFilter(){
     if (!table) return;
     const q = (search?.value || '').trim().toLowerCase();
+
     table.querySelectorAll('tbody tr').forEach(r => {
       const text = r.textContent.trim().toLowerCase();
       r.style.display = (!q || text.includes(q)) ? '' : 'none';
     });
+
     updateCounts();
   }
+
   if (search) search.addEventListener('input', applyFilter);
 
   updateCounts();

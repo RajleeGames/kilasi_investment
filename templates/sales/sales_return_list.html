@@ -1,81 +1,578 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Sales Returns{% endblock %}
+{% block title %}Sales Returns — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --sr-bg:#f8fafc;
+    --sr-card:#ffffff;
+    --sr-line:#e2e8f0;
+    --sr-line-soft:#eef2f7;
+    --sr-text:#0f172a;
+    --sr-muted:#64748b;
+    --sr-primary:#2563eb;
+    --sr-primary-soft:rgba(37,99,235,.08);
+    --sr-success:#16a34a;
+    --sr-warning:#f59e0b;
+    --sr-danger:#dc2626;
+    --sr-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .sr-wrap{
+    max-width:1120px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--sr-text);
+  }
+
+  .sr-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--sr-line);
+    border-radius:20px;
+    box-shadow:var(--sr-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .sr-hero-top{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.8rem;
+  }
+
+  .sr-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    color:var(--sr-text);
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .sr-sub{
+    font-size:.75rem;
+    color:var(--sr-muted);
+    margin:.22rem 0 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .sr-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:var(--sr-primary-soft);
+    color:var(--sr-primary);
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .sr-badge.soft{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--sr-line);
+  }
+
+  .sr-filter-card{
+    background:var(--sr-card);
+    border:1px solid var(--sr-line);
+    border-radius:18px;
+    padding:.85rem;
+    box-shadow:var(--sr-shadow);
+    margin-bottom:1rem;
+  }
+
+  .sr-filter-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    align-items:center;
+  }
+
+  .sr-search-wrap{
+    position:relative;
+    flex:1 1 260px;
+    min-width:220px;
+  }
+
+  .sr-search-icon{
+    position:absolute;
+    left:.78rem;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:.78rem;
+    color:#94a3b8;
+    pointer-events:none;
+  }
+
+  .sr-search{
+    width:100%;
+    height:38px;
+    border-radius:12px;
+    border:1px solid var(--sr-line);
+    background:#fff;
+    font-size:.78rem;
+    color:var(--sr-text);
+    box-shadow:none !important;
+    transition:.18s ease;
+    padding:.35rem .85rem .35rem 2.15rem;
+  }
+
+  .sr-search:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .sr-btn,
+  .sr-btn-light{
+    height:38px;
+    border:none;
+    border-radius:12px;
+    padding:0 .95rem;
+    font-size:.77rem;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    white-space:nowrap;
+    text-decoration:none;
+  }
+
+  .sr-btn{
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .sr-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .sr-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--sr-line);
+  }
+
+  .sr-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .sr-table-card{
+    background:var(--sr-card);
+    border:1px solid var(--sr-line);
+    border-radius:20px;
+    box-shadow:var(--sr-shadow);
+    overflow:hidden;
+  }
+
+  .sr-table-head{
+    padding:.88rem 1rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.7rem;
+    flex-wrap:wrap;
+    border-bottom:1px solid var(--sr-line-soft);
+  }
+
+  .sr-table-title{
+    font-size:.84rem;
+    font-weight:700;
+    color:var(--sr-text);
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+    margin:0;
+  }
+
+  .sr-table-note{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid var(--sr-line);
+  }
+
+  .sr-table{
+    margin:0;
+    width:100%;
+  }
+
+  .sr-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    border-bottom:1px solid var(--sr-line);
+    padding:.82rem .95rem;
+    white-space:nowrap;
+  }
+
+  .sr-table tbody td{
+    padding:.82rem .95rem;
+    vertical-align:middle;
+    border-top:1px solid var(--sr-line-soft);
+    font-size:.79rem;
+    color:var(--sr-text);
+  }
+
+  .sr-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .sr-id{
+    font-weight:700;
+    color:var(--sr-text);
+  }
+
+  .sr-main{
+    font-weight:600;
+    color:var(--sr-text);
+    font-size:.8rem;
+    line-height:1.2;
+  }
+
+  .sr-meta{
+    font-size:.69rem;
+    color:var(--sr-muted);
+    margin-top:.15rem;
+  }
+
+  .sr-status{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:700;
+    border:1px solid transparent;
+  }
+
+  .sr-status.posted{
+    background:rgba(22,163,74,.08);
+    color:var(--sr-success);
+    border-color:rgba(22,163,74,.14);
+  }
+
+  .sr-status.draft{
+    background:rgba(245,158,11,.10);
+    color:#b45309;
+    border-color:rgba(245,158,11,.14);
+  }
+
+  .sr-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:700;
+  }
+
+  .sr-action{
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    height:34px;
+    padding:0 .78rem;
+    border-radius:999px;
+    border:1px solid rgba(37,99,235,.14);
+    background:rgba(37,99,235,.06);
+    color:var(--sr-primary);
+    text-decoration:none;
+    font-size:.73rem;
+    font-weight:700;
+  }
+
+  .sr-action:hover{
+    color:#1d4ed8;
+    background:rgba(37,99,235,.10);
+  }
+
+  .sr-empty{
+    background:#fff;
+    border:1px dashed var(--sr-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--sr-muted);
+    margin:1rem;
+  }
+
+  .sr-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .sr-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--sr-text);
+    margin-bottom:.12rem;
+  }
+
+  .sr-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  .sr-pagination{
+    margin-top:.95rem;
+    display:flex;
+    justify-content:center;
+  }
+
+  .sr-pagination .pagination{
+    gap:.35rem;
+  }
+
+  .sr-pagination .page-link{
+    border:none;
+    min-width:36px;
+    height:36px;
+    border-radius:10px !important;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.75rem;
+    font-weight:600;
+    color:#475569;
+    background:#fff;
+    border:1px solid var(--sr-line);
+    box-shadow:none;
+  }
+
+  .sr-pagination .page-item.disabled .page-link{
+    color:#94a3b8;
+    background:#f8fafc;
+    border-color:var(--sr-line);
+  }
+
+  @media (max-width: 768px){
+    .sr-hero{
+      padding:.9rem;
+    }
+
+    .sr-filter-card{
+      padding:.75rem;
+    }
+
+    .sr-table thead{
+      display:none;
+    }
+
+    .sr-table,
+    .sr-table tbody,
+    .sr-table tr,
+    .sr-table td{
+      display:block;
+      width:100%;
+    }
+
+    .sr-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .sr-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .75rem;
+    }
+
+    .sr-table tbody td::before{
+      content:attr(data-label);
+      font-size:.68rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:88px;
+    }
+
+    .sr-action{
+      width:auto;
+      justify-content:center;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
+<div class="sr-wrap">
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h4 class="mb-0">Sales Returns</h4>
-      <small class="text-muted">All returns (Draft/Posted)</small>
+  <div class="sr-hero">
+    <div class="sr-hero-top">
+      <div>
+        <h2 class="sr-title">
+          <i class="fa-solid fa-rotate-left text-primary"></i>
+          Sales Returns
+        </h2>
+
+        <p class="sr-sub">
+          <span class="sr-badge">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            Draft and posted returns
+          </span>
+
+          <span class="sr-badge soft">
+            <i class="fa-solid fa-list"></i>
+            {{ page_obj.paginator.count|default:returns|length }} total
+          </span>
+        </p>
+      </div>
     </div>
+  </div>
 
-    <form class="d-flex gap-2" method="get">
-      <input type="text" name="q" value="{{ query }}" class="form-control form-control-sm" placeholder="Search invoice / customer...">
-      <button class="btn btn-sm btn-primary"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
+  <div class="sr-filter-card">
+    <form class="sr-filter-row" method="get">
+      <div class="sr-search-wrap">
+        <i class="fa-solid fa-magnifying-glass sr-search-icon"></i>
+        <input type="text"
+               name="q"
+               value="{{ query }}"
+               class="form-control sr-search"
+               placeholder="Search invoice or customer..."
+               autocomplete="off">
+      </div>
+
+      <button class="btn sr-btn">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        Search
+      </button>
+
+      {% if query %}
+      <a href="{% url 'sales:sales_return_list' %}" class="sr-btn-light">
+        <i class="fa-solid fa-rotate-left"></i>
+        Reset
+      </a>
+      {% endif %}
     </form>
   </div>
 
-  <div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-      <table class="table align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>Invoice</th>
-            <th>Customer</th>
-            <th>Status</th>
-            <th class="text-end">Total</th>
-            <th>Created</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in returns %}
+  <div class="sr-table-card">
+    <div class="sr-table-head">
+      <h3 class="sr-table-title">
+        <i class="fa-solid fa-list-check"></i>
+        Returns List
+      </h3>
+
+      <div class="sr-table-note">
+        <i class="fa-solid fa-filter"></i>
+        {% if query %}Filtered results{% else %}All results{% endif %}
+      </div>
+    </div>
+
+    {% if returns %}
+      <div class="table-responsive">
+        <table class="table sr-table align-middle mb-0">
+          <thead>
             <tr>
-              <td class="fw-semibold">{{ r.id }}</td>
-              <td>INV#{{ r.invoice.id }}</td>
-              <td>{{ r.invoice.customer.name|default:"Walk-in" }}</td>
-              <td>
+              <th style="width:80px;">#</th>
+              <th style="width:110px;">Invoice</th>
+              <th>Customer</th>
+              <th style="width:120px;">Status</th>
+              <th class="text-end" style="width:150px;">Total</th>
+              <th style="width:170px;">Created</th>
+              <th class="text-end" style="width:120px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in returns %}
+            <tr>
+              <td data-label="#" class="sr-id">{{ r.id }}</td>
+
+              <td data-label="Invoice">
+                <span class="sr-main">INV#{{ r.invoice.id }}</span>
+              </td>
+
+              <td data-label="Customer">
+                <div class="sr-main">{{ r.invoice.customer.name|default:"Walk-in" }}</div>
+                <div class="sr-meta">Return record #{{ r.id }}</div>
+              </td>
+
+              <td data-label="Status">
                 {% if r.status == "posted" %}
-                  <span class="badge bg-success">POSTED</span>
+                  <span class="sr-status posted">
+                    <i class="fa-solid fa-circle-check"></i>
+                    POSTED
+                  </span>
                 {% else %}
-                  <span class="badge bg-warning text-dark">DRAFT</span>
+                  <span class="sr-status draft">
+                    <i class="fa-solid fa-pen"></i>
+                    DRAFT
+                  </span>
                 {% endif %}
               </td>
-              <td class="text-end fw-bold">TZS {{ r.total_amount|default:0|intcomma }}</td>
-              <td class="text-muted">{{ r.created_at|date:"d M Y H:i" }}</td>
-              <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" href="{% url 'sales:sales_return_detail' r.id %}">
+
+              <td data-label="Total" class="text-end sr-money">
+                TZS {{ r.total_amount|default:0|intcomma }}
+              </td>
+
+              <td data-label="Created" class="sr-meta">
+                {{ r.created_at|date:"d M Y H:i" }}
+              </td>
+
+              <td data-label="Action" class="text-end">
+                <a class="sr-action" href="{% url 'sales:sales_return_detail' r.id %}">
+                  <i class="fa-solid fa-eye"></i>
                   View
                 </a>
               </td>
             </tr>
-          {% empty %}
-            <tr><td colspan="7" class="text-center py-4 text-muted">No returns found.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="sr-empty">
+        <i class="fa-solid fa-rotate-left"></i>
+        <h6>No returns found</h6>
+        <p>Try changing the search text or create a new return.</p>
+      </div>
+    {% endif %}
   </div>
 
   {% if is_paginated %}
-    <nav class="mt-3">
-      <ul class="pagination pagination-sm mb-0">
+    <nav class="sr-pagination">
+      <ul class="pagination mb-0">
         {% if page_obj.has_previous %}
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}">Prev</a></li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}">Prev</a>
+          </li>
         {% else %}
           <li class="page-item disabled"><span class="page-link">Prev</span></li>
         {% endif %}
 
-        <li class="page-item disabled"><span class="page-link">
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span></li>
+        <li class="page-item disabled">
+          <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
 
         {% if page_obj.has_next %}
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}">Next</a></li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}">Next</a>
+          </li>
         {% else %}
           <li class="page-item disabled"><span class="page-link">Next</span></li>
         {% endif %}

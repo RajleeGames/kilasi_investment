@@ -1,80 +1,307 @@
 {% extends "base.html" %}
-{% block title %}Add Expense{% endblock %}
+{% block title %}Add Expense — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --ae-bg:#f8fafc;
+    --ae-card:#ffffff;
+    --ae-line:#e2e8f0;
+    --ae-line-soft:#eef2f7;
+    --ae-text:#0f172a;
+    --ae-muted:#64748b;
+    --ae-primary:#2563eb;
+    --ae-primary-soft:rgba(37,99,235,.08);
+    --ae-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .ae-wrap{
+    max-width:980px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--ae-text);
+  }
+
+  .ae-hero,
+  .ae-form-card{
+    background:var(--ae-card);
+    border:1px solid var(--ae-line);
+    border-radius:20px;
+    box-shadow:var(--ae-shadow);
+  }
+
+  .ae-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .ae-hero-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:.7rem;
+  }
+
+  .ae-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .ae-sub{
+    font-size:.75rem;
+    color:var(--ae-muted);
+    margin:.22rem 0 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .ae-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:var(--ae-primary-soft);
+    color:var(--ae-primary);
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .ae-link-btn,
+  .ae-btn,
+  .ae-btn-light{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.77rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .ae-link-btn,
+  .ae-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--ae-line);
+  }
+
+  .ae-link-btn:hover,
+  .ae-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .ae-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .ae-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .ae-form-card{
+    overflow:hidden;
+  }
+
+  .ae-form-body{
+    padding:1rem;
+  }
+
+  .ae-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .ae-control,
+  .ae-textarea{
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--ae-line);
+    background:#fff;
+    color:var(--ae-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+  }
+
+  .ae-control{
+    height:40px;
+  }
+
+  .ae-textarea{
+    min-height:110px;
+    padding:.75rem .9rem;
+    resize:vertical;
+  }
+
+  .ae-control:focus,
+  .ae-textarea:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .ae-help{
+    margin-top:.3rem;
+    font-size:.68rem;
+    color:var(--ae-muted);
+  }
+
+  .ae-actions{
+    display:flex;
+    gap:.65rem;
+    flex-wrap:wrap;
+    margin-top:.35rem;
+  }
+
+  @media(max-width:768px){
+    .ae-wrap{
+      padding:0 .7rem;
+    }
+
+    .ae-hero,
+    .ae-form-body{
+      padding:.9rem;
+    }
+
+    .ae-actions{
+      flex-direction:column;
+    }
+
+    .ae-btn,
+    .ae-btn-light{
+      width:100%;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-  <div>
-    <h4 class="mb-0"><i class="fa-solid fa-plus me-2"></i>Add Expense</h4>
-    <small class="text-muted">
-      Record a new expense
-      {% if selected_branch_obj %}
-        <span class="ms-2 badge bg-primary-subtle text-primary border border-primary-subtle">
-          <i class="fa-solid fa-building me-1"></i>{{ selected_branch_obj.name }}
-        </span>
-      {% endif %}
-    </small>
-  </div>
+<div class="ae-wrap">
 
-  <div class="d-flex gap-2">
-    <a href="{% url 'sales:expense_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
-       class="btn btn-outline-secondary btn-sm" style="border-radius:12px;">
-      <i class="fa-solid fa-clock-rotate-left me-1"></i>History
-    </a>
-  </div>
-</div>
+  <div class="ae-hero">
+    <div class="ae-hero-top">
+      <div>
+        <h2 class="ae-title">
+          <i class="fa-solid fa-plus text-primary"></i>
+          Add Expense
+        </h2>
 
-<div class="card border-0 shadow-sm" style="border-radius:16px;">
-  <div class="card-body p-4">
+        <p class="ae-sub">
+          <span class="ae-badge">
+            <i class="fa-solid fa-receipt"></i>
+            Record a new expense
+          </span>
 
-    <form method="post" class="row g-3">
-      {% csrf_token %}
-
-      {% if branches %}
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">Branch</label>
-        <select name="branch" class="form-select" required>
-          <option value="">Select branch</option>
-          {% for b in branches %}
-            <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
-              {{ b.name }}
-            </option>
-          {% endfor %}
-        </select>
-        <div class="form-text">Admin/Cashier can select branch. Seller is locked automatically.</div>
-      </div>
-      {% endif %}
-
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">Date</label>
-        <input type="date" name="date" class="form-control" required>
+          {% if selected_branch_obj %}
+            <span class="ae-badge">
+              <i class="fa-solid fa-building"></i>
+              {{ selected_branch_obj.name }}
+            </span>
+          {% endif %}
+        </p>
       </div>
 
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">Category</label>
-        <input type="text" name="category" class="form-control" placeholder="Labor, Rent, Supplies..." required>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">Amount (TSH)</label>
-        <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
-      </div>
-
-      <div class="col-12">
-        <label class="form-label fw-semibold">Description (optional)</label>
-        <textarea name="description" class="form-control" rows="3" placeholder="Extra notes..."></textarea>
-      </div>
-
-      <div class="col-12 d-flex gap-2 mt-2">
-        <button class="btn btn-primary" style="border-radius:12px;">
-          <i class="fa-solid fa-floppy-disk me-1"></i>Save Expense
-        </button>
-        <a class="btn btn-outline-secondary" style="border-radius:12px;"
-           href="{% url 'sales:expense_overview' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-          Cancel
+      <div>
+        <a href="{% url 'sales:expense_history' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+           class="ae-link-btn">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          History
         </a>
       </div>
-    </form>
-
+    </div>
   </div>
+
+  <div class="ae-form-card">
+    <div class="ae-form-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        {% if branches %}
+        <div class="col-md-6">
+          <div class="ae-field">
+            <label>Branch</label>
+            <select name="branch" class="form-select ae-control" required>
+              <option value="">Select branch</option>
+              {% for b in branches %}
+                <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                  {{ b.name }}
+                </option>
+              {% endfor %}
+            </select>
+            <div class="ae-help">Admin/Cashier can select branch. Seller is locked automatically.</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="col-md-6">
+          <div class="ae-field">
+            <label>Date</label>
+            <input type="date" name="date" class="form-control ae-control" value="{{ today_str }}" required>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="ae-field">
+            <label>Category</label>
+            <input type="text" name="category" class="form-control ae-control" placeholder="Labor, Rent, Supplies..." required>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="ae-field">
+            <label>Amount (TSH)</label>
+            <input type="number" name="amount" class="form-control ae-control" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="ae-field">
+            <label>Description (Optional)</label>
+            <textarea name="description" class="form-control ae-textarea" placeholder="Extra notes..."></textarea>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="ae-actions">
+            <button class="ae-btn" type="submit">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Expense
+            </button>
+
+            <a class="ae-btn-light"
+               href="{% url 'sales:expense_overview' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+              <i class="fa-solid fa-xmark"></i>
+              Cancel
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

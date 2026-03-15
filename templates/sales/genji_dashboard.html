@@ -5,599 +5,649 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --bg:#f8fafc;
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --line:rgba(15,23,42,.08);
-  --line2:rgba(15,23,42,.05);
-  --shadow:0 12px 30px rgba(2,6,23,.06);
-  --shadow-soft:0 8px 18px rgba(2,6,23,.04);
-  --radius:18px;
-  --radius-sm:12px;
-
-  --blue:#0ea5e9;
-  --blue-dark:#0369a1;
-  --green:#16a34a;
-  --green-dark:#166534;
-  --amber:#f59e0b;
-  --amber-dark:#b45309;
-  --red:#ef4444;
-  --red-dark:#b91c1c;
-  --slate:#0f172a;
-  --slate-soft:#334155;
-}
-
-.gwrap{
-  max-width:1200px;
-  margin:0 auto;
-}
-
-.gtop{
-  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
-  border:1px solid var(--line);
-  border-radius:22px;
-  box-shadow:var(--shadow);
-  overflow:hidden;
-}
-
-.gtop-inner{
-  padding:18px 18px 14px;
-}
-
-.gtitle-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-  flex-wrap:wrap;
-}
-
-.gtitle{
-  margin:0;
-  font-size:1.18rem;
-  font-weight:900;
-  color:var(--text);
-  letter-spacing:-.02em;
-}
-
-.gsub{
-  margin-top:6px;
-  color:var(--muted);
-  font-size:.90rem;
-  line-height:1.5;
-  max-width:760px;
-}
-
-.gperiod-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:8px 12px;
-  border-radius:999px;
-  background:#eff6ff;
-  color:#1d4ed8;
-  border:1px solid #bfdbfe;
-  font-size:.76rem;
-  font-weight:800;
-  white-space:nowrap;
-}
-
-.gfilters{
-  border-top:1px solid var(--line2);
-  padding:14px 18px 18px;
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
-  align-items:end;
-}
-
-.gfield label{
-  display:block;
-  margin-bottom:6px;
-  color:var(--muted);
-  font-size:.72rem;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-}
-
-.gcontrol{
-  width:100%;
-  height:42px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:0 12px;
-  background:#fff;
-  color:var(--text);
-  font-size:.92rem;
-  outline:none;
-  transition:.2s ease;
-}
-
-.gcontrol:focus{
-  border-color:#7dd3fc;
-  box-shadow:0 0 0 4px rgba(14,165,233,.10);
-}
-
-.gbtns{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  width:100%;
-}
-
-.gbtn{
-  width:100%;
-  height:42px;
-  padding:0 14px;
-  border:none;
-  border-radius:12px;
-  font-weight:800;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  white-space:nowrap;
-  transition:.18s ease;
-  cursor:pointer;
-}
-
-.gbtn:hover{
-  transform:translateY(-1px);
-  box-shadow:var(--shadow-soft);
-}
-
-.gbtn-primary{
-  background:linear-gradient(135deg,#0ea5e9,#0284c7);
-  color:#fff;
-}
-
-.gbtn-add{
-  background:linear-gradient(135deg,#16a34a,#15803d);
-  color:#fff;
-}
-
-.gbtn-light{
-  background:#fff;
-  color:#0f172a;
-  border:1px solid var(--line);
-}
-
-.gbtn-light:hover{
-  color:#0f172a;
-  background:#f8fafc;
-}
-
-.gstats{
-  margin-top:16px;
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
-}
-
-.gcard{
-  position:relative;
-  overflow:hidden;
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  box-shadow:var(--shadow-soft);
-  padding:14px 14px 13px;
-  min-height:98px;
-}
-
-.gcard::after{
-  content:"";
-  position:absolute;
-  right:-18px;
-  top:-18px;
-  width:70px;
-  height:70px;
-  border-radius:50%;
-  opacity:.12;
-}
-
-.gcard.buy::after{ background:var(--blue); }
-.gcard.sell::after{ background:var(--amber); }
-.gcard.profit::after{ background:var(--green); }
-.gcard.records::after{ background:#64748b; }
-
-.glabel{
-  position:relative;
-  z-index:1;
-  font-size:.72rem;
-  color:var(--muted);
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-}
-
-.gvalue{
-  position:relative;
-  z-index:1;
-  margin-top:8px;
-  font-size:1.08rem;
-  font-weight:900;
-  color:var(--text);
-  line-height:1.25;
-  word-break:break-word;
-}
-
-.gmeta{
-  position:relative;
-  z-index:1;
-  margin-top:6px;
-  font-size:.78rem;
-  color:var(--muted);
-}
-
-.blue{color:var(--blue-dark);}
-.green{color:var(--green-dark);}
-.amber{color:var(--amber-dark);}
-.red{color:var(--red-dark);}
-
-.gtablebox{
-  margin-top:16px;
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:20px;
-  box-shadow:var(--shadow);
-  overflow:hidden;
-}
-
-.ghead{
-  padding:14px 16px;
-  border-bottom:1px solid var(--line2);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.ghead-left{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-}
-
-.ghead-title{
-  margin:0;
-  font-size:1rem;
-  font-weight:900;
-  color:var(--text);
-}
-
-.ghead-sub{
-  color:var(--muted);
-  font-size:.82rem;
-}
-
-.gchip{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:6px 10px;
-  border-radius:999px;
-  background:#f1f5f9;
-  color:#334155;
-  border:1px solid #e2e8f0;
-  font-size:.74rem;
-  font-weight:800;
-  white-space:nowrap;
-}
-
-.table-responsive{
-  overflow:auto;
-}
-
-.gtable{
-  width:100%;
-  min-width:980px;
-  border-collapse:separate;
-  border-spacing:0;
-}
-
-.gtable th{
-  background:#0f172a;
-  color:#e2e8f0;
-  padding:12px 10px;
-  font-size:.71rem;
-  text-transform:uppercase;
-  white-space:nowrap;
-  letter-spacing:.06em;
-  font-weight:800;
-}
-
-.gtable td{
-  padding:10px 10px;
-  border-top:1px solid var(--line2);
-  font-size:.86rem;
-  white-space:nowrap;
-  color:var(--text);
-  vertical-align:middle;
-}
-
-.gtable tbody tr:nth-child(even){
-  background:#fbfdff;
-}
-
-.gtable tr:hover{
-  background:#f8fafc;
-}
-
-.item-name{
-  font-weight:800;
-  color:#0f172a;
-}
-
-.customer-name{
-  color:#334155;
-}
-
-.qty-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:34px;
-  height:28px;
-  padding:0 9px;
-  border-radius:999px;
-  background:#eff6ff;
-  color:#1d4ed8;
-  border:1px solid #bfdbfe;
-  font-size:.74rem;
-  font-weight:800;
-}
-
-.money{
-  font-weight:900;
-  font-variant-numeric:tabular-nums;
-}
-
-.branch-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:5px 9px;
-  border-radius:999px;
-  background:#f8fafc;
-  color:#475569;
-  border:1px solid #e2e8f0;
-  font-size:.73rem;
-  font-weight:800;
-}
-
-.actions{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.btn-sm{
-  height:32px;
-  padding:0 10px;
-  border-radius:10px;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  font-size:.76rem;
-  font-weight:800;
-  transition:.18s ease;
-  white-space:nowrap;
-}
-
-.btn-sm:hover{
-  transform:translateY(-1px);
-}
-
-.btn-edit{
-  background:#eff6ff;
-  color:#1d4ed8;
-  border:1px solid #bfdbfe;
-}
-
-.btn-edit:hover{
-  background:#dbeafe;
-  color:#1d4ed8;
-}
-
-.btn-delete{
-  background:#fef2f2;
-  color:#dc2626;
-  border:1px solid #fecaca;
-}
-
-.btn-delete:hover{
-  background:#fee2e2;
-  color:#b91c1c;
-}
-
-.empty-row{
-  text-align:center;
-  color:var(--muted);
-  padding:20px 12px !important;
-  font-weight:700;
-}
-
-.pager{
-  padding:14px;
-  display:flex;
-  gap:8px;
-  justify-content:center;
-  flex-wrap:wrap;
-  border-top:1px solid var(--line2);
-}
-
-.pager a,
-.pager span{
-  min-width:36px;
-  height:34px;
-  padding:0 10px;
-  border-radius:10px;
-  border:1px solid var(--line);
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  text-decoration:none;
-  color:#0f172a;
-  font-weight:800;
-  background:#fff;
-  font-size:.84rem;
-}
-
-.pager a:hover{
-  background:#f8fafc;
-}
-
-.pager .active{
-  background:#e0f2fe;
-  color:#075985;
-  border-color:#bae6fd;
-}
-
-.pager .disabled{
-  opacity:.5;
-  pointer-events:none;
-}
-
-@media (max-width: 980px){
-  .gfilters,
-  .gstats{
-    grid-template-columns:1fr 1fr;
-  }
-}
-
-@media (max-width: 640px){
-  .gtop-inner{
-    padding:16px 14px 12px;
+  .genji-dash-page{
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
-  .gfilters{
-    padding:12px 14px 14px;
-    grid-template-columns:1fr;
+  .genji-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
   }
 
-  .gstats{
-    grid-template-columns:1fr;
+  .genji-hero-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
   }
 
-  .ghead{
-    padding:12px 14px;
+  .genji-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
   }
-}
+
+  .genji-subtitle{
+    margin-top:.2rem;
+    font-size:.75rem;
+    color:#64748b;
+    line-height:1.55;
+    max-width:760px;
+  }
+
+  .genji-period-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    padding:.45rem .75rem;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+    font-size:.72rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .genji-filter-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+    margin-bottom:1rem;
+  }
+
+  .genji-filter-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  .genji-filter-head h4{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .genji-filter-body{
+    padding:1rem;
+  }
+
+  .genji-filter-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0,1fr));
+    gap:.9rem;
+    align-items:end;
+  }
+
+  .genji-field label{
+    display:block;
+    margin-bottom:.42rem;
+    font-size:.69rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#64748b;
+  }
+
+  .genji-control{
+    width:100%;
+    min-height:42px;
+    border:1px solid #dbe4f0;
+    border-radius:12px;
+    padding:0 .85rem;
+    background:#fff;
+    color:#0f172a;
+    font-size:.79rem;
+    outline:none;
+    transition:.18s ease;
+    box-shadow:none;
+  }
+
+  .genji-control:focus{
+    border-color:rgba(37,99,235,.40);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10);
+  }
+
+  .genji-actions-col{
+    display:flex;
+    flex-direction:column;
+    gap:.55rem;
+  }
+
+  .genji-btn{
+    width:100%;
+    min-height:42px;
+    border:none;
+    border-radius:12px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    font-size:.78rem;
+    font-weight:700;
+    transition:.18s ease;
+    padding:.62rem 1rem;
+  }
+
+  .genji-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(2,6,23,.06);
+  }
+
+  .genji-btn-primary{
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .genji-btn-add{
+    background:linear-gradient(135deg, #16a34a, #15803d);
+    color:#fff;
+  }
+
+  .genji-stats{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0,1fr));
+    gap:.9rem;
+    margin-bottom:1rem;
+  }
+
+  .genji-stat{
+    position:relative;
+    overflow:hidden;
+    background:#fff;
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    box-shadow:0 8px 22px rgba(2,6,23,.05);
+    padding:.95rem;
+    min-height:102px;
+  }
+
+  .genji-stat::after{
+    content:"";
+    position:absolute;
+    right:-18px;
+    top:-18px;
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    opacity:.10;
+  }
+
+  .genji-stat.buy::after{ background:#0ea5e9; }
+  .genji-stat.sell::after{ background:#f59e0b; }
+  .genji-stat.profit::after{ background:#16a34a; }
+  .genji-stat.records::after{ background:#64748b; }
+
+  .genji-stat-label{
+    position:relative;
+    z-index:1;
+    font-size:.69rem;
+    color:#64748b;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  .genji-stat-value{
+    position:relative;
+    z-index:1;
+    margin-top:.45rem;
+    font-size:1rem;
+    line-height:1.25;
+    font-weight:800;
+    color:#0f172a;
+    word-break:break-word;
+  }
+
+  .genji-stat-meta{
+    position:relative;
+    z-index:1;
+    margin-top:.35rem;
+    font-size:.72rem;
+    color:#64748b;
+  }
+
+  .c-blue{ color:#0369a1; }
+  .c-green{ color:#166534; }
+  .c-amber{ color:#b45309; }
+  .c-red{ color:#b91c1c; }
+
+  .genji-table-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .genji-table-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .genji-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .genji-table-sub{
+    color:#64748b;
+    font-size:.72rem;
+    margin-top:.15rem;
+  }
+
+  .genji-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.35rem .65rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#334155;
+    border:1px solid #e2e8f0;
+    font-size:.72rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .genji-table{
+    width:100%;
+    margin:0;
+  }
+
+  .genji-table thead th{
+    background:#f8fafc;
+    color:#64748b;
+    padding:.85rem .9rem;
+    font-size:.70rem;
+    text-transform:uppercase;
+    white-space:nowrap;
+    letter-spacing:.05em;
+    font-weight:800;
+    border-bottom:1px solid #e2e8f0;
+  }
+
+  .genji-table tbody td{
+    padding:.82rem .9rem;
+    border-top:1px solid #eef2f7;
+    font-size:.79rem;
+    color:#0f172a;
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+
+  .genji-table tbody tr:nth-child(even){
+    background:#fbfdff;
+  }
+
+  .genji-table tbody tr:hover{
+    background:#f8fafc;
+  }
+
+  .item-name{
+    font-weight:800;
+    color:#0f172a;
+  }
+
+  .customer-name{
+    color:#334155;
+    font-size:.77rem;
+  }
+
+  .qty-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    height:28px;
+    padding:0 .55rem;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:800;
+  }
+
+  .money{
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .branch-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.32rem .55rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#475569;
+    border:1px solid #e2e8f0;
+    font-size:.68rem;
+    font-weight:800;
+  }
+
+  .genji-row-actions{
+    display:flex;
+    gap:.45rem;
+    flex-wrap:wrap;
+  }
+
+  .genji-action-btn{
+    min-height:32px;
+    padding:0 .7rem;
+    border-radius:10px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.35rem;
+    font-size:.72rem;
+    font-weight:800;
+    transition:.18s ease;
+    white-space:nowrap;
+  }
+
+  .genji-action-btn:hover{
+    transform:translateY(-1px);
+  }
+
+  .btn-edit{
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+  }
+
+  .btn-edit:hover{
+    background:#dbeafe;
+    color:#1d4ed8;
+  }
+
+  .btn-delete{
+    background:#fef2f2;
+    color:#dc2626;
+    border:1px solid #fecaca;
+  }
+
+  .btn-delete:hover{
+    background:#fee2e2;
+    color:#b91c1c;
+  }
+
+  .empty-row{
+    text-align:center;
+    color:#64748b;
+    padding:1.3rem .8rem !important;
+    font-weight:700;
+  }
+
+  .pager{
+    padding:14px;
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    flex-wrap:wrap;
+    border-top:1px solid rgba(15,23,42,.06);
+  }
+
+  .pager a,
+  .pager span{
+    min-width:36px;
+    height:34px;
+    padding:0 .7rem;
+    border-radius:10px;
+    border:1px solid #e2e8f0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    color:#0f172a;
+    font-weight:800;
+    background:#fff;
+    font-size:.76rem;
+  }
+
+  .pager a:hover{
+    background:#f8fafc;
+  }
+
+  .pager .active{
+    background:#e0f2fe;
+    color:#075985;
+    border-color:#bae6fd;
+  }
+
+  .pager .disabled{
+    opacity:.5;
+    pointer-events:none;
+  }
+
+  @media (max-width: 980px){
+    .genji-filter-grid,
+    .genji-stats{
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  @media (max-width: 640px){
+    .genji-hero{
+      padding:.9rem;
+    }
+
+    .genji-title{
+      font-size:.98rem;
+    }
+
+    .genji-subtitle{
+      font-size:.73rem;
+    }
+
+    .genji-filter-body,
+    .genji-table-head{
+      padding:.9rem;
+    }
+
+    .genji-filter-grid,
+    .genji-stats{
+      grid-template-columns:1fr;
+    }
+
+    .genji-table thead{
+      display:none;
+    }
+
+    .genji-table,
+    .genji-table tbody,
+    .genji-table tr,
+    .genji-table td{
+      display:block;
+      width:100%;
+    }
+
+    .genji-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.3rem 0;
+    }
+
+    .genji-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .9rem;
+      white-space:normal;
+    }
+
+    .genji-table tbody td::before{
+      content:attr(data-label);
+      min-width:88px;
+      font-size:.67rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:#64748b;
+      flex-shrink:0;
+    }
+
+    .genji-row-actions{
+      width:100%;
+      justify-content:flex-end;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="gwrap">
+<div class="genji-dash-page">
 
-  <div class="gtop">
-    <div class="gtop-inner">
-      <div class="gtitle-row">
-        <div>
-          <h2 class="gtitle">Genji Dashboard</h2>
-          <div class="gsub">
-            Separate records for items bought outside and sold to customers, with clear buying cost, selling price, and profit tracking.
+  <div class="genji-hero">
+    <div class="genji-hero-row">
+      <div>
+        <h2 class="genji-title">
+          <i class="fa-solid fa-chart-pie text-primary"></i>
+          Genji Dashboard
+        </h2>
+        <div class="genji-subtitle">
+          Separate records for items bought outside and sold to customers, with clear buying cost, selling price, and profit tracking.
+        </div>
+      </div>
+
+      <div class="genji-period-badge">
+        <i class="fa-solid fa-calendar-days"></i>
+        {{ start_date }} → {{ end_date }}
+      </div>
+    </div>
+  </div>
+
+  <div class="genji-filter-card">
+    <div class="genji-filter-head">
+      <h4>
+        <i class="fa-solid fa-filter text-primary"></i>
+        Filter Records
+      </h4>
+    </div>
+
+    <div class="genji-filter-body">
+      <form method="get" class="genji-filter-grid">
+        <div class="genji-field">
+          <label>Start Date</label>
+          <input type="date" name="start_date" class="genji-control" value="{{ start_date }}">
+        </div>
+
+        <div class="genji-field">
+          <label>End Date</label>
+          <input type="date" name="end_date" class="genji-control" value="{{ end_date }}">
+        </div>
+
+        {% if not is_seller %}
+        <div class="genji-field">
+          <label>Branch</label>
+          <select name="branch" class="genji-control">
+            <option value="">All Branches</option>
+            {% for b in branches %}
+              <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>
+                {{ b.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div class="genji-field">
+          <label>Actions</label>
+          <div class="genji-actions-col">
+            <button class="genji-btn genji-btn-primary" type="submit">
+              <i class="fa-solid fa-filter"></i>
+              Apply Filter
+            </button>
+
+            <a href="{% url 'sales:genji_create' %}" class="genji-btn genji-btn-add">
+              <i class="fa-solid fa-plus"></i>
+              Add Genji
+            </a>
           </div>
         </div>
-
-        <div class="gperiod-badge">
-          <i class="fa-solid fa-calendar-days"></i>
-          {{ start_date }} → {{ end_date }}
-        </div>
-      </div>
+      </form>
     </div>
-
-    <form method="get" class="gfilters">
-      <div class="gfield">
-        <label>Start Date</label>
-        <input type="date" name="start_date" class="gcontrol" value="{{ start_date }}">
-      </div>
-
-      <div class="gfield">
-        <label>End Date</label>
-        <input type="date" name="end_date" class="gcontrol" value="{{ end_date }}">
-      </div>
-
-      {% if not is_seller %}
-      <div class="gfield">
-        <label>Branch</label>
-        <select name="branch" class="gcontrol">
-          <option value="">All Branches</option>
-          {% for b in branches %}
-            <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>
-              {{ b.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      {% endif %}
-
-      <div class="gfield">
-        <label>Actions</label>
-        <div class="gbtns">
-          <button class="gbtn gbtn-primary" type="submit">
-            <i class="fa-solid fa-filter"></i>
-            Apply Filter
-          </button>
-
-          <a href="{% url 'sales:genji_create' %}" class="gbtn gbtn-add">
-            <i class="fa-solid fa-plus"></i>
-            Add Genji
-          </a>
-        </div>
-      </div>
-    </form>
   </div>
 
-  <div class="gstats">
-    <div class="gcard buy">
-      <div class="glabel">Total Buying</div>
-      <div class="gvalue blue">{{ total_buying|floatformat:2|intcomma }}</div>
-      <div class="gmeta">Total purchase cost for all genji records</div>
+  <div class="genji-stats">
+    <div class="genji-stat buy">
+      <div class="genji-stat-label">Total Buying</div>
+      <div class="genji-stat-value c-blue">{{ total_buying|floatformat:2|intcomma }}</div>
+      <div class="genji-stat-meta">Total purchase cost for all genji records</div>
     </div>
 
-    <div class="gcard sell">
-      <div class="glabel">Total Selling</div>
-      <div class="gvalue amber">{{ total_selling|floatformat:2|intcomma }}</div>
-      <div class="gmeta">Total amount sold to customers</div>
+    <div class="genji-stat sell">
+      <div class="genji-stat-label">Total Selling</div>
+      <div class="genji-stat-value c-amber">{{ total_selling|floatformat:2|intcomma }}</div>
+      <div class="genji-stat-meta">Total amount sold to customers</div>
     </div>
 
-    <div class="gcard profit">
-      <div class="glabel">Total Profit</div>
-      <div class="gvalue {% if total_profit >= 0 %}green{% else %}red{% endif %}">
+    <div class="genji-stat profit">
+      <div class="genji-stat-label">Total Profit</div>
+      <div class="genji-stat-value {% if total_profit >= 0 %}c-green{% else %}c-red{% endif %}">
         {{ total_profit|floatformat:2|intcomma }}
       </div>
-      <div class="gmeta">Overall gain or loss from genji sales</div>
+      <div class="genji-stat-meta">Overall gain or loss from genji sales</div>
     </div>
 
-    <div class="gcard records">
-      <div class="glabel">Records</div>
-      <div class="gvalue">{{ total_records|intcomma }}</div>
-      <div class="gmeta">Total genji entries in this period</div>
+    <div class="genji-stat records">
+      <div class="genji-stat-label">Records</div>
+      <div class="genji-stat-value">{{ total_records|intcomma }}</div>
+      <div class="genji-stat-meta">Total genji entries in this period</div>
     </div>
   </div>
 
-  <div class="gtablebox">
-    <div class="ghead">
-      <div class="ghead-left">
-        <h3 class="ghead-title">Genji History</h3>
-        <div class="ghead-sub">Compact and clear list of bought and sold outside items</div>
+  <div class="genji-table-card">
+    <div class="genji-table-head">
+      <div>
+        <h3 class="genji-table-title">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+          Genji History
+        </h3>
+        <div class="genji-table-sub">Compact and clear list of bought and sold outside items</div>
       </div>
 
-      <span class="gchip">
+      <span class="genji-chip">
         Page {{ page_obj.number }} of {{ paginator.num_pages }}
       </span>
     </div>
 
     <div class="table-responsive">
-      <table class="gtable">
+      <table class="table genji-table align-middle mb-0">
         <thead>
           <tr>
             <th>Sell Date</th>
@@ -612,35 +662,36 @@
             <th>Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {% for row in genji_rows %}
           <tr>
-            <td>{{ row.sell_date }}</td>
-            <td>{{ row.buy_date }}</td>
-            <td class="item-name">{{ row.item_name }}</td>
-            <td class="customer-name">{{ row.customer_name|default:"—" }}</td>
-            <td>
+            <td data-label="Sell Date">{{ row.sell_date }}</td>
+            <td data-label="Buy Date">{{ row.buy_date }}</td>
+            <td data-label="Item" class="item-name">{{ row.item_name }}</td>
+            <td data-label="Customer" class="customer-name">{{ row.customer_name|default:"—" }}</td>
+            <td data-label="Qty">
               <span class="qty-badge">{{ row.quantity }}</span>
             </td>
-            <td class="money">{{ row.total_buying|floatformat:2|intcomma }}</td>
-            <td class="money">{{ row.total_selling|floatformat:2|intcomma }}</td>
-            <td class="money {% if row.profit >= 0 %}green{% else %}red{% endif %}">
+            <td data-label="Buy Cost" class="money">{{ row.total_buying|floatformat:2|intcomma }}</td>
+            <td data-label="Sell Price" class="money">{{ row.total_selling|floatformat:2|intcomma }}</td>
+            <td data-label="Profit" class="money {% if row.profit >= 0 %}c-green{% else %}c-red{% endif %}">
               {{ row.profit|floatformat:2|intcomma }}
             </td>
-            <td>
+            <td data-label="Branch">
               {% if row.branch %}
                 <span class="branch-badge">{{ row.branch.name }}</span>
               {% else %}
                 <span class="branch-badge">—</span>
               {% endif %}
             </td>
-            <td>
-              <div class="actions">
-                <a href="{% url 'sales:genji_update' row.id %}" class="btn-sm btn-edit">
+            <td data-label="Actions">
+              <div class="genji-row-actions">
+                <a href="{% url 'sales:genji_update' row.id %}" class="genji-action-btn btn-edit">
                   <i class="fa-solid fa-pen-to-square"></i>
                   Edit
                 </a>
-                <a href="{% url 'sales:genji_delete' row.id %}" class="btn-sm btn-delete">
+                <a href="{% url 'sales:genji_delete' row.id %}" class="genji-action-btn btn-delete">
                   <i class="fa-solid fa-trash"></i>
                   Delete
                 </a>

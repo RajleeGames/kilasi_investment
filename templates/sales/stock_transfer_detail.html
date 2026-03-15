@@ -1,127 +1,564 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Transfer #{{ transfer.id }}{% endblock %}
+{% block title %}Transfer #{{ transfer.id }} — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --td-card:#ffffff;
+    --td-text:#0f172a;
+    --td-muted:#64748b;
+    --td-line:#e2e8f0;
+    --td-line-soft:#eef2f7;
+    --td-primary:#2563eb;
+    --td-primary-soft:rgba(37,99,235,.08);
+    --td-success:#16a34a;
+    --td-warning:#f59e0b;
+    --td-dark:#334155;
+    --td-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .td-wrap{
+    max-width:1140px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--td-text);
+  }
+
+  .td-hero,
+  .td-stat-card,
+  .td-card{
+    background:var(--td-card);
+    border:1px solid var(--td-line);
+    border-radius:20px;
+    box-shadow:var(--td-shadow);
+  }
+
+  .td-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .td-hero-top,
+  .td-card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .td-title{
+    margin:0;
+    font-size:1.08rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .td-sub{
+    font-size:.75rem;
+    color:var(--td-muted);
+    margin:.22rem 0 0;
+    line-height:1.6;
+  }
+
+  .td-btn,
+  .td-btn-light{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.77rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .td-btn{
+    border:none;
+    background:linear-gradient(135deg, #16a34a, #22c55e);
+    color:#fff;
+  }
+
+  .td-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .td-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--td-line);
+  }
+
+  .td-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .td-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.34rem .62rem;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:700;
+    border:1px solid transparent;
+    text-transform:uppercase;
+  }
+
+  .td-badge.posted{
+    background:rgba(22,163,74,.10);
+    color:var(--td-success);
+    border-color:rgba(22,163,74,.14);
+  }
+
+  .td-badge.draft{
+    background:rgba(100,116,139,.10);
+    color:#475569;
+    border-color:rgba(100,116,139,.14);
+  }
+
+  .td-stat-card{
+    padding:.95rem;
+    height:100%;
+  }
+
+  .td-stat-row{
+    display:flex;
+    align-items:center;
+    gap:.8rem;
+  }
+
+  .td-stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  .td-stat-icon.primary{ background:rgba(37,99,235,.10); color:var(--td-primary); }
+  .td-stat-icon.success{ background:rgba(22,163,74,.10); color:var(--td-success); }
+  .td-stat-icon.warning{ background:rgba(245,158,11,.12); color:#b45309; }
+
+  .td-stat-label{
+    color:var(--td-muted);
+    font-size:.72rem;
+    margin-bottom:.08rem;
+  }
+
+  .td-stat-value{
+    font-size:1rem;
+    font-weight:800;
+    line-height:1.2;
+  }
+
+  .td-card{
+    overflow:hidden;
+    margin-bottom:1rem;
+  }
+
+  .td-card-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--td-line-soft);
+  }
+
+  .td-card-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .td-card-sub{
+    font-size:.72rem;
+    color:var(--td-muted);
+    margin-top:.18rem;
+  }
+
+  .td-card-body{
+    padding:1rem;
+  }
+
+  .td-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .td-card-body input[type="text"],
+  .td-card-body input[type="number"],
+  .td-card-body textarea,
+  .td-card-body select{
+    width:100%;
+    min-height:40px;
+    border-radius:12px;
+    border:1px solid var(--td-line);
+    background:#fff;
+    color:var(--td-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+    padding:.65rem .85rem;
+  }
+
+  .td-card-body textarea{
+    min-height:96px;
+    resize:vertical;
+  }
+
+  .td-card-body input:focus,
+  .td-card-body textarea:focus,
+  .td-card-body select:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .td-table-wrap{
+    overflow:auto;
+  }
+
+  .td-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:760px;
+    margin:0;
+  }
+
+  .td-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    padding:.82rem .95rem;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    white-space:nowrap;
+    border-bottom:1px solid var(--td-line);
+  }
+
+  .td-table tbody td{
+    padding:.82rem .95rem;
+    border-top:1px solid var(--td-line-soft);
+    font-size:.79rem;
+    color:var(--td-text);
+    vertical-align:middle;
+  }
+
+  .td-table tbody tr:nth-child(even){
+    background:#fbfdff;
+  }
+
+  .td-table tbody tr:hover{
+    background:#f8fafc;
+  }
+
+  .td-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:700;
+  }
+
+  .td-empty{
+    background:#fff;
+    border:1px dashed var(--td-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--td-muted);
+    margin:1rem;
+  }
+
+  .td-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .td-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--td-text);
+    margin-bottom:.12rem;
+  }
+
+  .td-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  @media(max-width:768px){
+    .td-wrap{
+      padding:0 .7rem;
+    }
+
+    .td-hero,
+    .td-card-body{
+      padding:.9rem;
+    }
+
+    .td-card-head{
+      padding:.9rem;
+    }
+
+    .td-btn,
+    .td-btn-light{
+      width:100%;
+    }
+
+    .td-table{
+      min-width:100%;
+    }
+
+    .td-table thead{
+      display:none;
+    }
+
+    .td-table,
+    .td-table tbody,
+    .td-table tr,
+    .td-table td{
+      display:block;
+      width:100%;
+    }
+
+    .td-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .td-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .75rem;
+    }
+
+    .td-table tbody td::before{
+      content:attr(data-label);
+      font-size:.68rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:88px;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width:1150px;">
+<div class="td-wrap">
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h4 class="mb-0">Transfer #{{ transfer.id }}</h4>
-      <div class="text-muted small">
-        {{ transfer.from_branch.name }} → {{ transfer.to_branch.name }} •
-        Created {{ transfer.created_at|date:"Y-m-d H:i" }} by {{ transfer.created_by.username }}
-      </div>
-      {% if transfer.posted_at %}
-        <div class="text-muted small">
-          Posted {{ transfer.posted_at|date:"Y-m-d H:i" }} by {{ transfer.posted_by.username }}
+  <div class="td-hero">
+    <div class="td-hero-top">
+      <div>
+        <h2 class="td-title">
+          <i class="fa-solid fa-arrow-right-arrow-left text-primary"></i>
+          Transfer #{{ transfer.id }}
+        </h2>
+
+        <div class="td-sub">
+          {{ transfer.from_branch.name }} → {{ transfer.to_branch.name }} •
+          Created {{ transfer.created_at|date:"Y-m-d H:i" }} by {{ transfer.created_by.username }}
+          {% if transfer.posted_at %}
+            <br>
+            Posted {{ transfer.posted_at|date:"Y-m-d H:i" }} by {{ transfer.posted_by.username }}
+          {% endif %}
         </div>
-      {% endif %}
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'sales:stock_transfer_list' %}" class="td-btn-light">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
+        </a>
+
+        {% if transfer.status == "draft" %}
+          <form method="post" action="{% url 'sales:stock_transfer_post' transfer.id %}">
+            {% csrf_token %}
+            <button class="td-btn" type="submit">
+              <i class="fa-solid fa-check"></i>
+              POST (Update Stock)
+            </button>
+          </form>
+        {% else %}
+          <span class="td-badge posted">Posted</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="td-stat-card">
+        <div class="td-stat-row">
+          <div class="td-stat-icon primary">
+            <i class="fa-solid fa-circle-info"></i>
+          </div>
+          <div>
+            <div class="td-stat-label">Status</div>
+            <div class="td-stat-value">
+              {% if transfer.status == "posted" %}
+                <span class="td-badge posted">Posted</span>
+              {% else %}
+                <span class="td-badge draft">{{ transfer.status|upper }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="d-flex gap-2 flex-wrap">
-      <a href="{% url 'sales:stock_transfer_list' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="fa-solid fa-arrow-left me-1"></i> Back
-      </a>
+    <div class="col-md-4">
+      <div class="td-stat-card">
+        <div class="td-stat-row">
+          <div class="td-stat-icon success">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div>
+            <div class="td-stat-label">Items Total</div>
+            <div class="td-stat-value td-money">{{ transfer.items_count|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="col-md-4">
+      <div class="td-stat-card">
+        <div class="td-stat-row">
+          <div class="td-stat-icon warning">
+            <i class="fa-solid fa-note-sticky"></i>
+          </div>
+          <div>
+            <div class="td-stat-label">Note</div>
+            <div class="td-stat-value" style="font-size:.84rem;">{{ transfer.note|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="td-card">
+    <div class="td-card-head">
+      <div>
+        <h3 class="td-card-title">
+          <i class="fa-solid fa-box-open"></i>
+          Transfer Items
+        </h3>
+        {% if transfer.status == "draft" %}
+          <div class="td-card-sub">You can still edit these items while the transfer is in Draft.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="td-card-body">
       {% if transfer.status == "draft" %}
-        <form method="post" action="{% url 'sales:stock_transfer_post' transfer.id %}">
+        <form method="post">
           {% csrf_token %}
-          <button class="btn btn-success btn-sm">
-            <i class="fa-solid fa-check me-1"></i> POST (Update Stock)
-          </button>
+          <input type="hidden" name="save_items" value="1">
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="td-field">
+                <label>{{ form.from_branch.label }}</label>
+                {{ form.from_branch }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="td-field">
+                <label>{{ form.to_branch.label }}</label>
+                {{ form.to_branch }}
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="td-field">
+                <label>{{ form.note.label }}</label>
+                {{ form.note }}
+              </div>
+            </div>
+          </div>
+
+          {{ formset.management_form }}
+
+          <div class="td-table-wrap">
+            <table class="td-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style="width:140px;">Qty</th>
+                  <th style="width:120px;">Remove</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in formset %}
+                <tr>
+                  <td data-label="Product">{{ f.product }}</td>
+                  <td data-label="Qty">{{ f.quantity }}</td>
+                  <td data-label="Remove">{% if f.instance.pk %}{{ f.DELETE }}{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-end mt-3">
+            <button class="td-btn" type="submit">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Changes
+            </button>
+          </div>
         </form>
       {% else %}
-        <span class="badge bg-success p-2">POSTED</span>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body">
-      <div class="row g-2">
-        <div class="col-md-4"><b>Status:</b> {{ transfer.status|upper }}</div>
-        <div class="col-md-4"><b>Items Total:</b> {{ transfer.items_count|intcomma }}</div>
-        <div class="col-md-4"><b>Note:</b> {{ transfer.note|default:"—" }}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-transparent">
-      <b>Transfer Items</b>
-      {% if transfer.status == "draft" %}
-        <span class="text-muted small ms-2">(you can edit while Draft)</span>
-      {% endif %}
-    </div>
-
-    <div class="card-body">
-      {% if transfer.status == "draft" %}
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="save_items" value="1">
-
-        <div class="row g-3 mb-2">
-          <div class="col-md-6">{{ form.from_branch.label_tag }}{{ form.from_branch }}</div>
-          <div class="col-md-6">{{ form.to_branch.label_tag }}{{ form.to_branch }}</div>
-          <div class="col-12">{{ form.note.label_tag }}{{ form.note }}</div>
-        </div>
-
-        <hr>
-
-        {{ formset.management_form }}
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Product</th>
-                <th style="width:140px;">Qty</th>
-                <th style="width:120px;">Remove</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for f in formset %}
-              <tr>
-                <td>{{ f.product }}</td>
-                <td>{{ f.quantity }}</td>
-                <td>{% if f.instance.pk %}{{ f.DELETE }}{% else %}—{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="d-flex justify-content-end">
-          <button class="btn btn-primary">
-            <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
-          </button>
-        </div>
-      </form>
-      {% else %}
-
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>#</th>
-              <th>Product</th>
-              <th class="text-end">Qty</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for it in items %}
-            <tr>
-              <td class="text-muted">{{ forloop.counter }}</td>
-              <td class="fw-semibold">{{ it.product.name }}</td>
-              <td class="text-end fw-bold">{{ it.quantity|intcomma }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3" class="text-center text-muted py-3">No items.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
+        {% if items %}
+          <div class="td-table-wrap">
+            <table class="td-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Product</th>
+                  <th class="text-end">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for it in items %}
+                <tr>
+                  <td data-label="#" class="text-muted">{{ forloop.counter }}</td>
+                  <td data-label="Product" class="fw-semibold">{{ it.product.name }}</td>
+                  <td data-label="Qty" class="text-end td-money">{{ it.quantity|intcomma }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="td-empty">
+            <i class="fa-regular fa-face-frown"></i>
+            <h6>No items</h6>
+            <p>This transfer has no items yet.</p>
+          </div>
+        {% endif %}
       {% endif %}
     </div>
   </div>

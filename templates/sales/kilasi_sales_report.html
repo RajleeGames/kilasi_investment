@@ -1,225 +1,682 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Sales Report{% endblock %}
+{% block title %}Sales Report — Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --rp-bg:#f8fafc;
+    --rp-card:#ffffff;
+    --rp-line:#e2e8f0;
+    --rp-line-soft:#eef2f7;
+    --rp-text:#0f172a;
+    --rp-muted:#64748b;
+    --rp-primary:#2563eb;
+    --rp-primary-soft:rgba(37,99,235,.08);
+    --rp-success:#16a34a;
+    --rp-warning:#f59e0b;
+    --rp-danger:#dc2626;
+    --rp-info:#0891b2;
+    --rp-shadow:0 10px 30px rgba(15,23,42,.06);
+  }
+
+  .rp-wrap{
+    max-width:1180px;
+    margin:1rem auto 1.5rem;
+    padding:0 .85rem;
+    color:var(--rp-text);
+  }
+
+  .rp-hero,
+  .rp-filter-card,
+  .rp-panel,
+  .rp-table-card,
+  .rp-stat{
+    background:var(--rp-card);
+    border:1px solid var(--rp-line);
+    border-radius:20px;
+    box-shadow:var(--rp-shadow);
+  }
+
+  .rp-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .rp-hero-top,
+  .rp-panel-head,
+  .rp-table-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:.7rem;
+  }
+
+  .rp-title{
+    margin:0;
+    font-size:1.06rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .rp-sub{
+    font-size:.75rem;
+    color:var(--rp-muted);
+    margin:.22rem 0 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .rp-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:var(--rp-primary-soft);
+    color:var(--rp-primary);
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .rp-badge.soft{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--rp-line);
+  }
+
+  .rp-nav-btn,
+  .rp-btn,
+  .rp-btn-light{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    height:40px;
+    padding:0 .95rem;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:.77rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .rp-nav-btn,
+  .rp-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--rp-line);
+  }
+
+  .rp-nav-btn:hover,
+  .rp-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .rp-btn{
+    border:none;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff;
+  }
+
+  .rp-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .rp-filter-card,
+  .rp-panel,
+  .rp-table-card{
+    margin-bottom:1rem;
+    overflow:hidden;
+  }
+
+  .rp-filter-body,
+  .rp-panel-body,
+  .rp-table-body{
+    padding:1rem;
+  }
+
+  .rp-panel-head,
+  .rp-table-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid var(--rp-line-soft);
+  }
+
+  .rp-panel-title,
+  .rp-table-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .rp-table-note{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    font-weight:600;
+    border:1px solid var(--rp-line);
+  }
+
+  .rp-field label{
+    display:block;
+    margin-bottom:.35rem;
+    font-size:.71rem;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .rp-control{
+    width:100%;
+    height:40px;
+    border-radius:12px;
+    border:1px solid var(--rp-line);
+    background:#fff;
+    color:var(--rp-text);
+    font-size:.78rem;
+    box-shadow:none !important;
+  }
+
+  .rp-control:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .rp-break-card{
+    padding:.95rem;
+    border-radius:16px;
+    border:1px solid var(--rp-line);
+    background:#f8fafc;
+    height:100%;
+  }
+
+  .rp-break-card.success{
+    background:rgba(22,163,74,.06);
+  }
+
+  .rp-break-label{
+    color:var(--rp-muted);
+    font-size:.72rem;
+    margin-bottom:.2rem;
+  }
+
+  .rp-break-value{
+    font-size:1.18rem;
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .rp-break-help{
+    margin-top:.35rem;
+    color:var(--rp-muted);
+    font-size:.68rem;
+  }
+
+  .rp-stat{
+    height:100%;
+    padding:.95rem;
+  }
+
+  .rp-stat-row{
+    display:flex;
+    align-items:center;
+    gap:.8rem;
+  }
+
+  .rp-stat-icon{
+    width:42px;
+    height:42px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  .rp-stat-icon.success{ background:rgba(22,163,74,.10); color:var(--rp-success); }
+  .rp-stat-icon.danger{ background:rgba(220,38,38,.10); color:var(--rp-danger); }
+  .rp-stat-icon.info{ background:rgba(8,145,178,.10); color:var(--rp-info); }
+
+  .rp-stat-label{
+    color:var(--rp-muted);
+    font-size:.72rem;
+    margin-bottom:.1rem;
+  }
+
+  .rp-stat-value{
+    font-size:1.2rem;
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .rp-table{
+    width:100%;
+    margin:0;
+  }
+
+  .rp-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    border-bottom:1px solid var(--rp-line);
+    padding:.82rem .95rem;
+    white-space:nowrap;
+  }
+
+  .rp-table tbody td{
+    padding:.82rem .95rem;
+    vertical-align:middle;
+    border-top:1px solid var(--rp-line-soft);
+    font-size:.79rem;
+    color:var(--rp-text);
+  }
+
+  .rp-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .rp-main{
+    font-weight:600;
+    font-size:.8rem;
+    line-height:1.2;
+  }
+
+  .rp-meta{
+    font-size:.69rem;
+    color:var(--rp-muted);
+    margin-top:.15rem;
+  }
+
+  .rp-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:700;
+  }
+
+  .rp-status{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .56rem;
+    border-radius:999px;
+    font-size:.71rem;
+    font-weight:700;
+    border:1px solid transparent;
+    margin-right:.22rem;
+    margin-bottom:.2rem;
+    text-transform:uppercase;
+  }
+
+  .rp-status.cash{ background:rgba(22,163,74,.08); color:var(--rp-success); border-color:rgba(22,163,74,.14); }
+  .rp-status.bank{ background:rgba(37,99,235,.08); color:var(--rp-primary); border-color:rgba(37,99,235,.14); }
+  .rp-status.ebt{ background:rgba(79,70,229,.10); color:#4338ca; border-color:rgba(79,70,229,.14); }
+  .rp-status.debt{ background:rgba(245,158,11,.10); color:#b45309; border-color:rgba(245,158,11,.14); }
+  .rp-status.paid{ background:rgba(22,163,74,.08); color:var(--rp-success); border-color:rgba(22,163,74,.14); }
+  .rp-status.unpaid{ background:rgba(245,158,11,.10); color:#b45309; border-color:rgba(245,158,11,.14); }
+
+  .rp-empty{
+    background:#fff;
+    border:1px dashed var(--rp-line);
+    border-radius:16px;
+    padding:1.8rem 1rem;
+    text-align:center;
+    color:var(--rp-muted);
+    margin:1rem;
+  }
+
+  .rp-empty i{
+    font-size:1.15rem;
+    color:#94a3b8;
+    margin-bottom:.45rem;
+  }
+
+  .rp-empty h6{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--rp-text);
+    margin-bottom:.12rem;
+  }
+
+  .rp-empty p{
+    font-size:.74rem;
+    margin:0;
+  }
+
+  .rp-pagination{
+    margin-top:.9rem;
+  }
+
+  .rp-pagination .pagination{
+    gap:.35rem;
+  }
+
+  .rp-pagination .page-link{
+    border:none;
+    min-width:36px;
+    height:36px;
+    border-radius:10px !important;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.75rem;
+    font-weight:600;
+    color:#475569;
+    background:#fff;
+    border:1px solid var(--rp-line);
+    box-shadow:none;
+  }
+
+  .rp-pagination .page-item.disabled .page-link{
+    color:#94a3b8;
+    background:#f8fafc;
+    border-color:var(--rp-line);
+  }
+
+  @media(max-width:768px){
+    .rp-wrap{ padding:0 .7rem; }
+    .rp-hero,
+    .rp-filter-body,
+    .rp-panel-body,
+    .rp-table-body{ padding:.9rem; }
+    .rp-panel-head,
+    .rp-table-head{ padding:.9rem; }
+
+    .rp-table thead{ display:none; }
+    .rp-table,
+    .rp-table tbody,
+    .rp-table tr,
+    .rp-table td{
+      display:block;
+      width:100%;
+    }
+
+    .rp-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .rp-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:.72rem .75rem;
+    }
+
+    .rp-table tbody td::before{
+      content:attr(data-label);
+      font-size:.68rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:88px;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-  <div>
-    <h4 class="mb-0"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Sales Report</h4>
-    <small class="text-muted">
-      Date: <strong>{{ selected_date }}</strong>
-      {% if selected_branch_obj %}
-        <span class="ms-2 badge bg-primary-subtle text-primary border border-primary-subtle">
-          <i class="fa-solid fa-building me-1"></i>{{ selected_branch_obj.name }}
-        </span>
-      {% endif %}
-      {% if request.GET.status %}
-        <span class="ms-2 badge bg-secondary-subtle text-secondary border border-secondary-subtle text-uppercase">
-          <i class="fa-solid fa-filter me-1"></i>{{ request.GET.status }}
-        </span>
-      {% endif %}
-    </small>
-  </div>
+<div class="rp-wrap">
 
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary btn-sm"
-       href="?date={{ prev_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-      <i class="fa-solid fa-chevron-left me-1"></i>{{ prev_date }}
-    </a>
+  <div class="rp-hero">
+    <div class="rp-hero-top">
+      <div>
+        <h2 class="rp-title">
+          <i class="fa-solid fa-file-invoice-dollar text-primary"></i>
+          Sales Report
+        </h2>
 
-    <a class="btn btn-outline-secondary btn-sm"
-       href="?date={{ next_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-      {{ next_date }}<i class="fa-solid fa-chevron-right ms-1"></i>
-    </a>
-  </div>
-</div>
+        <p class="rp-sub">
+          <span class="rp-badge">
+            <i class="fa-solid fa-calendar-day"></i>
+            {{ selected_date }}
+          </span>
 
-<!-- Filters -->
-<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
-  <div class="card-body">
-    <form method="get" class="row g-2 align-items-end">
+          {% if selected_branch_obj %}
+            <span class="rp-badge soft">
+              <i class="fa-solid fa-building"></i>
+              {{ selected_branch_obj.name }}
+            </span>
+          {% endif %}
 
-      {% if branches %}
-      <div class="col-md-4">
-        <label class="form-label fw-semibold">Branch</label>
-        <select name="branch" class="form-select">
-          <option value="">All Branches</option>
-          {% for b in branches %}
-            <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
-              {{ b.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      {% endif %}
-
-      <div class="col-md-4">
-        <label class="form-label fw-semibold">Date</label>
-        <input type="date" name="date" class="form-control" value="{{ selected_date }}" required>
+          {% if request.GET.status %}
+            <span class="rp-badge soft">
+              <i class="fa-solid fa-filter"></i>
+              {{ request.GET.status }}
+            </span>
+          {% endif %}
+        </p>
       </div>
 
-      {% if request.GET.status %}
-        <input type="hidden" name="status" value="{{ request.GET.status }}">
-      {% endif %}
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="rp-nav-btn"
+           href="?date={{ prev_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+          <i class="fa-solid fa-chevron-left"></i>
+          {{ prev_date }}
+        </a>
 
-      <div class="col-md-4 d-flex gap-2">
-        <button class="btn btn-primary w-100" style="border-radius:12px;">
-          <i class="fa-solid fa-filter me-1"></i>Apply
-        </button>
-
-        <a class="btn btn-outline-secondary w-100" style="border-radius:12px;"
-           href="{% url 'sales:kilasi_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
-          Reset
+        <a class="rp-nav-btn"
+           href="?date={{ next_date }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+          {{ next_date }}
+          <i class="fa-solid fa-chevron-right"></i>
         </a>
       </div>
-    </form>
-  </div>
-</div>
-
-<!-- ✅ Revenue Breakdown -->
-<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
-  <div class="card-body">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-      <h6 class="mb-0">
-        <i class="fa-solid fa-circle-info me-2"></i>Revenue Breakdown (so report never “adds itself”)
-      </h6>
-      <small class="text-muted">Formula: <strong>Total Revenue = Paid Invoices + Debt Payments</strong></small>
-    </div>
-
-    <div class="row g-3">
-      <div class="col-md-4">
-        <div class="p-3 rounded-4 border bg-light h-100">
-          <div class="text-muted small">Paid Invoices (Cash + Bank + EBT)</div>
-          <div class="fs-4 fw-bold">
-            Tsh {{ income_sales|default:0|floatformat:0|intcomma }}
-          </div>
-          <div class="small text-muted mt-1">
-            Only invoices with <strong>paid=True</strong> and status cash/bank/ebt.
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="p-3 rounded-4 border bg-light h-100">
-          <div class="text-muted small">Debt Payments Received</div>
-          <div class="fs-4 fw-bold">
-            Tsh {{ income_debt|default:0|floatformat:0|intcomma }}
-          </div>
-          <div class="small text-muted mt-1">
-            Payments collected on this date for debt invoices.
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="p-3 rounded-4 border bg-success-subtle h-100">
-          <div class="text-muted small">Total Revenue Received</div>
-          <div class="fs-4 fw-bold text-success">
-            Tsh {{ revenue_received|default:total_sales|floatformat:0|intcomma }}
-          </div>
-          <div class="small text-muted mt-1">
-            This is what the “Sales” card shows.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Top Cards -->
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100" style="border-radius:16px;">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="rounded-4 p-3 bg-success-subtle text-success">
-          <i class="fa-solid fa-sack-dollar fa-lg"></i>
-        </div>
-        <div>
-          <div class="text-muted small">Sales (Revenue Received)</div>
-          <div class="fs-4 fw-bold">Tsh {{ total_sales|floatformat:0|intcomma }}</div>
-        </div>
-      </div>
     </div>
   </div>
 
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100" style="border-radius:16px;">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="rounded-4 p-3 bg-danger-subtle text-danger">
-          <i class="fa-solid fa-receipt fa-lg"></i>
+  <div class="rp-filter-card">
+    <div class="rp-filter-body">
+      <form method="get" class="row g-3 align-items-end">
+        {% if branches %}
+        <div class="col-12 col-md-4">
+          <div class="rp-field">
+            <label>Branch</label>
+            <select name="branch" class="form-select rp-control">
+              <option value="">All Branches</option>
+              {% for b in branches %}
+                <option value="{{ b.id }}" {% if selected_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                  {{ b.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
-        <div>
-          <div class="text-muted small">Expenses</div>
-          <div class="fs-4 fw-bold">Tsh {{ total_expenses|floatformat:0|intcomma }}</div>
+        {% endif %}
+
+        <div class="col-12 col-md-4">
+          <div class="rp-field">
+            <label>Date</label>
+            <input type="date" name="date" class="form-control rp-control" value="{{ selected_date }}" required>
+          </div>
         </div>
-      </div>
+
+        {% if request.GET.status %}
+          <input type="hidden" name="status" value="{{ request.GET.status }}">
+        {% endif %}
+
+        <div class="col-12 col-md-4 d-flex gap-2">
+          <button class="rp-btn w-100">
+            <i class="fa-solid fa-filter"></i>
+            Apply
+          </button>
+
+          <a class="rp-btn-light w-100"
+             href="{% url 'sales:kilasi_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
+        </div>
+      </form>
     </div>
   </div>
 
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100" style="border-radius:16px;">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="rounded-4 p-3 bg-info-subtle text-info">
-          <i class="fa-solid fa-chart-line fa-lg"></i>
+  <div class="rp-panel">
+    <div class="rp-panel-head">
+      <h3 class="rp-panel-title">
+        <i class="fa-solid fa-circle-info"></i>
+        Revenue Breakdown
+      </h3>
+      <div class="rp-table-note">
+        Total Revenue = Paid Invoices + Debt Payments
+      </div>
+    </div>
+
+    <div class="rp-panel-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="rp-break-card">
+            <div class="rp-break-label">Paid Invoices (Cash + Bank + EBT)</div>
+            <div class="rp-break-value">Tsh {{ income_sales|default:0|floatformat:0|intcomma }}</div>
+            <div class="rp-break-help">
+              Only invoices with paid=True and status cash, bank or ebt.
+            </div>
+          </div>
         </div>
-        <div>
-          <div class="text-muted small">Net</div>
-          <div class="fs-4 fw-bold">Tsh {{ net_sales|floatformat:0|intcomma }}</div>
+
+        <div class="col-md-4">
+          <div class="rp-break-card">
+            <div class="rp-break-label">Debt Payments Received</div>
+            <div class="rp-break-value">Tsh {{ income_debt|default:0|floatformat:0|intcomma }}</div>
+            <div class="rp-break-help">
+              Payments collected on this date for debt invoices.
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="rp-break-card success">
+            <div class="rp-break-label">Total Revenue Received</div>
+            <div class="rp-break-value text-success">Tsh {{ revenue_received|default:total_sales|floatformat:0|intcomma }}</div>
+            <div class="rp-break-help">
+              This is what the Sales card shows.
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Sales Table -->
-<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
-  <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-    <h6 class="mb-0"><i class="fa-solid fa-cart-shopping me-2"></i>Sales Records (Invoices)</h6>
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="rp-stat">
+        <div class="rp-stat-row">
+          <div class="rp-stat-icon success">
+            <i class="fa-solid fa-sack-dollar"></i>
+          </div>
+          <div>
+            <div class="rp-stat-label">Sales (Revenue Received)</div>
+            <div class="rp-stat-value">Tsh {{ total_sales|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="rp-stat">
+        <div class="rp-stat-row">
+          <div class="rp-stat-icon danger">
+            <i class="fa-solid fa-receipt"></i>
+          </div>
+          <div>
+            <div class="rp-stat-label">Expenses</div>
+            <div class="rp-stat-value">Tsh {{ total_expenses|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="rp-stat">
+        <div class="rp-stat-row">
+          <div class="rp-stat-icon info">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div>
+            <div class="rp-stat-label">Net</div>
+            <div class="rp-stat-value">Tsh {{ net_sales|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="card-body px-4 pb-4">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Customer</th>
-            <th>Seller</th>
-            <th>Status</th>
-            <th class="text-end">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for inv in sales_page %}
+  <div class="rp-table-card">
+    <div class="rp-table-head">
+      <h3 class="rp-table-title">
+        <i class="fa-solid fa-cart-shopping"></i>
+        Sales Records (Invoices)
+      </h3>
+    </div>
+
+    <div class="rp-table-body">
+      {% if sales_page %}
+      <div class="table-responsive">
+        <table class="table rp-table align-middle mb-0">
+          <thead>
             <tr>
-              <td class="fw-semibold">#{{ inv.id }}</td>
-              <td>{{ inv.created_at|date:"Y-m-d H:i" }}</td>
-              <td>{{ inv.customer|default:"Walk-in" }}</td>
-              <td>{{ inv.seller.username|default:"—" }}</td>
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary text-uppercase border border-secondary-subtle">
-                  {{ inv.status|default:"—" }}
-                </span>
-                {% if inv.paid %}
-                  <span class="badge bg-success-subtle text-success border border-success-subtle">PAID</span>
-                {% else %}
-                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle">UNPAID</span>
-                {% endif %}
-              </td>
-              <td class="text-end fw-bold">Tsh {{ inv.total_amount|floatformat:0|intcomma }}</td>
+              <th>#</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Seller</th>
+              <th>Status</th>
+              <th class="text-end">Total</th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="6" class="text-center text-muted py-4">No sales on this date.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {% for inv in sales_page %}
+              <tr>
+                <td data-label="#" class="rp-main">#{{ inv.id }}</td>
+                <td data-label="Date">{{ inv.created_at|date:"Y-m-d H:i" }}</td>
+                <td data-label="Customer"><div class="rp-main">{{ inv.customer|default:"Walk-in" }}</div></td>
+                <td data-label="Seller">{{ inv.seller.username|default:"—" }}</td>
+                <td data-label="Status">
+                  <span class="rp-status {{ inv.status|default:'cash' }}">{{ inv.status|default:"—" }}</span>
+                  {% if inv.paid %}
+                    <span class="rp-status paid">PAID</span>
+                  {% else %}
+                    <span class="rp-status unpaid">UNPAID</span>
+                  {% endif %}
+                </td>
+                <td data-label="Total" class="text-end rp-money">Tsh {{ inv.total_amount|floatformat:0|intcomma }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="rp-empty">
+        <i class="fa-regular fa-face-smile"></i>
+        <h6>No sales on this date</h6>
+        <p>Try another date or branch.</p>
+      </div>
+      {% endif %}
 
-    {% if sales_page.has_other_pages %}
-      <nav class="mt-3">
+      {% if sales_page.has_other_pages %}
+      <nav class="rp-pagination">
         <ul class="pagination mb-0">
           {% if sales_page.has_previous %}
             <li class="page-item">
@@ -248,52 +705,60 @@
           {% endif %}
         </ul>
       </nav>
-    {% endif %}
-  </div>
-</div>
-
-<!-- Expenses Table -->
-<div class="card border-0 shadow-sm" style="border-radius:16px;">
-  <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-    <h6 class="mb-0"><i class="fa-solid fa-money-bill-wave me-2"></i>Expenses Records</h6>
-    <a href="{% url 'sales:kilasi_add_expense' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
-       class="btn btn-sm btn-primary" style="border-radius:12px;">
-      <i class="fa-solid fa-plus me-1"></i>Add Expense
-    </a>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="card-body px-4 pb-4">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th class="text-end">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in exp_page %}
-            <tr>
-              <td class="fw-semibold">#{{ e.id }}</td>
-              <td>{{ e.date }}</td>
-              <td>{{ e.category }}</td>
-              <td class="text-muted">{{ e.description|default:"—" }}</td>
-              <td class="text-end fw-bold">Tsh {{ e.amount|floatformat:0|intcomma }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="5" class="text-center text-muted py-4">No expenses on this date.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="rp-table-card">
+    <div class="rp-table-head">
+      <h3 class="rp-table-title">
+        <i class="fa-solid fa-money-bill-wave"></i>
+        Expenses Records
+      </h3>
+
+      <a href="{% url 'sales:kilasi_add_expense' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+         class="rp-btn">
+        <i class="fa-solid fa-plus"></i>
+        Add Expense
+      </a>
     </div>
 
-    {% if exp_page.has_other_pages %}
-      <nav class="mt-3">
+    <div class="rp-table-body">
+      {% if exp_page %}
+      <div class="table-responsive">
+        <table class="table rp-table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in exp_page %}
+              <tr>
+                <td data-label="#" class="rp-main">#{{ e.id }}</td>
+                <td data-label="Date">{{ e.date }}</td>
+                <td data-label="Category">{{ e.category }}</td>
+                <td data-label="Description" class="rp-meta">{{ e.description|default:"—" }}</td>
+                <td data-label="Amount" class="text-end rp-money">Tsh {{ e.amount|floatformat:0|intcomma }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="rp-empty">
+        <i class="fa-solid fa-wallet"></i>
+        <h6>No expenses on this date</h6>
+        <p>Everything is clear for this selected day.</p>
+      </div>
+      {% endif %}
+
+      {% if exp_page.has_other_pages %}
+      <nav class="rp-pagination">
         <ul class="pagination mb-0">
           {% if exp_page.has_previous %}
             <li class="page-item">
@@ -322,7 +787,9 @@
           {% endif %}
         </ul>
       </nav>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
+
 </div>
 {% endblock %}

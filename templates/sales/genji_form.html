@@ -4,301 +4,367 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --bg:#f8fafc;
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --line:rgba(15,23,42,.08);
-  --line2:rgba(15,23,42,.05);
-  --shadow:0 10px 28px rgba(2,6,23,.06);
-  --shadow-soft:0 6px 16px rgba(2,6,23,.04);
-  --radius:18px;
-  --blue:#0ea5e9;
-  --blue2:#0284c7;
-  --green:#16a34a;
-}
-
-.genji-wrap{
-  max-width: 760px;
-  margin: 0 auto;
-}
-
-.genji-card{
-  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
-  border:1px solid var(--line);
-  border-radius:22px;
-  box-shadow:var(--shadow);
-  overflow:hidden;
-}
-
-.genji-head{
-  padding:18px 20px 14px;
-  border-bottom:1px solid var(--line2);
-}
-
-.genji-title{
-  margin:0;
-  font-size:1.18rem;
-  font-weight:900;
-  color:var(--text);
-  letter-spacing:-.02em;
-}
-
-.genji-sub{
-  margin-top:6px;
-  color:var(--muted);
-  font-size:.90rem;
-  line-height:1.5;
-}
-
-.genji-body{
-  padding:18px 20px 20px;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(12, minmax(0,1fr));
-  gap:14px;
-}
-
-.span-12{ grid-column:span 12; }
-.span-6{ grid-column:span 6; }
-.span-4{ grid-column:span 4; }
-
-.form-group label{
-  display:block;
-  margin-bottom:6px;
-  font-size:.76rem;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  color:var(--muted);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea{
-  width:100%;
-  min-height:42px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:#fff;
-  color:var(--text);
-  padding:10px 12px;
-  font-size:.93rem;
-  outline:none;
-  transition:.2s ease;
-  box-shadow:none;
-}
-
-.form-group textarea{
-  min-height:110px;
-  resize:vertical;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus{
-  border-color:#7dd3fc;
-  box-shadow:0 0 0 4px rgba(14,165,233,.10);
-}
-
-.form-group .helptext{
-  display:block;
-  margin-top:6px;
-  color:var(--muted);
-  font-size:.78rem;
-}
-
-.form-group .errorlist{
-  list-style:none;
-  margin:6px 0 0;
-  padding:0;
-  color:#dc2626;
-  font-size:.82rem;
-  font-weight:700;
-}
-
-.actions{
-  margin-top:18px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.btnx{
-  height:42px;
-  padding:0 16px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  font-size:.90rem;
-  font-weight:800;
-  cursor:pointer;
-  transition:.18s ease;
-}
-
-.btnx:hover{
-  transform:translateY(-1px);
-  box-shadow:var(--shadow-soft);
-}
-
-.btnx-primary{
-  border-color:transparent;
-  color:#fff;
-  background:linear-gradient(135deg,var(--blue),var(--blue2));
-}
-
-.btnx-secondary{
-  color:var(--text);
-  background:#fff;
-}
-
-.badge-mode{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:7px 11px;
-  border-radius:999px;
-  font-size:.75rem;
-  font-weight:800;
-  background:#eff6ff;
-  color:#1d4ed8;
-  border:1px solid #bfdbfe;
-  margin-top:10px;
-}
-
-@media (max-width: 768px){
-  .genji-head{
-    padding:16px 16px 12px;
+  .genji-page{
+    max-width: 980px;
+    margin: 0 auto;
   }
 
-  .genji-body{
-    padding:16px;
+  .genji-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
   }
 
-  .span-6,
-  .span-4{
-    grid-column:span 12;
+  .genji-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
   }
 
-  .actions{
+  .genji-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
+  }
+
+  .genji-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.4rem .7rem;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+    font-size:.72rem;
+    font-weight:800;
+    margin-top:.7rem;
+  }
+
+  .genji-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
+
+  .genji-card-head{
+    padding:.95rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  .genji-card-head h4{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .genji-card-body{
+    padding:1rem;
+  }
+
+  .genji-grid{
     display:grid;
-    grid-template-columns:1fr;
+    grid-template-columns:repeat(12, minmax(0,1fr));
+    gap:.95rem;
   }
 
-  .btnx{
-    width:100%;
+  .g-span-12{ grid-column:span 12; }
+  .g-span-6{ grid-column:span 6; }
+  .g-span-4{ grid-column:span 4; }
+
+  .genji-field{
+    min-width:0;
   }
-}
+
+  .genji-field label{
+    display:block;
+    margin:0 0 .42rem 0;
+    font-size:.69rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#64748b;
+  }
+
+  .genji-field input,
+  .genji-field select,
+  .genji-field textarea{
+    width:100%;
+    min-height:42px;
+    border:1px solid #dbe4f0;
+    border-radius:12px;
+    background:#fff;
+    color:#0f172a;
+    padding:.7rem .85rem;
+    font-size:.79rem;
+    outline:none;
+    transition:.18s ease;
+    box-shadow:none;
+  }
+
+  .genji-field textarea{
+    min-height:115px;
+    resize:vertical;
+  }
+
+  .genji-field input:focus,
+  .genji-field select:focus,
+  .genji-field textarea:focus{
+    border-color:rgba(37,99,235,.40);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10);
+  }
+
+  .genji-field select{
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    appearance:none;
+    padding-right:44px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%),
+      linear-gradient(to right, rgba(15,23,42,.10), rgba(15,23,42,.10));
+    background-position:
+      calc(100% - 18px) 50%,
+      calc(100% - 13px) 50%,
+      calc(100% - 2.65rem) 50%;
+    background-size:6px 6px, 6px 6px, 1px 22px;
+    background-repeat:no-repeat;
+  }
+
+  .genji-field .helptext{
+    display:block;
+    margin-top:.35rem;
+    color:#94a3b8;
+    font-size:.68rem;
+  }
+
+  .genji-field .errorlist{
+    list-style:none;
+    margin:.35rem 0 0;
+    padding:0;
+    color:#dc2626;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .genji-actions{
+    margin-top:1rem;
+    display:flex;
+    gap:.65rem;
+    flex-wrap:wrap;
+  }
+
+  .genji-btn{
+    min-height:42px;
+    padding:.62rem 1rem;
+    border-radius:12px;
+    border:1px solid rgba(15,23,42,.08);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    font-size:.78rem;
+    font-weight:700;
+    transition:.18s ease;
+  }
+
+  .genji-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(2,6,23,.06);
+  }
+
+  .genji-btn-primary{
+    border-color:transparent;
+    color:#fff;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
+
+  .genji-btn-secondary{
+    color:#0f172a;
+    background:#fff;
+  }
+
+  .genji-note{
+    margin-top:.95rem;
+    padding:.75rem .85rem;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  @media (max-width: 768px){
+    .genji-hero{
+      padding:.9rem;
+    }
+
+    .genji-title{
+      font-size:.98rem;
+    }
+
+    .genji-subtitle{
+      font-size:.73rem;
+    }
+
+    .genji-card-body{
+      padding:.9rem;
+    }
+
+    .g-span-6,
+    .g-span-4{
+      grid-column:span 12;
+    }
+
+    .genji-actions{
+      display:grid;
+      grid-template-columns:1fr;
+    }
+
+    .genji-btn{
+      width:100%;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="genji-wrap">
-  <div class="genji-card">
-    <div class="genji-head">
-      <h3 class="genji-title">
-        {% if is_edit %}Edit Genji Record{% else %}Add Genji Record{% endif %}
-      </h3>
-      <div class="genji-sub">
-        Fill in the customer, item, dates, prices, quantity, and notes clearly.
-      </div>
-      <div class="badge-mode">
-        {% if is_edit %}Update Mode{% else %}New Record{% endif %}
-      </div>
+<div class="genji-page">
+
+  <div class="genji-hero">
+    <h3 class="genji-title">
+      <i class="fa-solid fa-sack-dollar text-primary"></i>
+      {% if is_edit %}Edit Genji Record{% else %}Add Genji Record{% endif %}
+    </h3>
+
+    <div class="genji-subtitle">
+      Fill in customer, item, dates, prices, quantity, and notes clearly.
     </div>
 
-    <div class="genji-body">
+    <div class="genji-badge">
+      <i class="fa-solid fa-circle-info"></i>
+      {% if is_edit %}Update Mode{% else %}New Record{% endif %}
+    </div>
+  </div>
+
+  <div class="genji-card">
+    <div class="genji-card-head">
+      <h4>
+        <i class="fa-solid fa-pen-to-square text-primary"></i>
+        Record Details
+      </h4>
+    </div>
+
+    <div class="genji-card-body">
       <form method="post">
         {% csrf_token %}
 
-        <div class="form-grid">
-          <div class="form-group span-6">
+        <div class="genji-grid">
+          <div class="genji-field g-span-6">
             {{ form.customer_name.label_tag }}
             {{ form.customer_name }}
             {{ form.customer_name.errors }}
           </div>
 
-          <div class="form-group span-6">
+          <div class="genji-field g-span-6">
             {{ form.customer_phone.label_tag }}
             {{ form.customer_phone }}
             {{ form.customer_phone.errors }}
           </div>
 
-          <div class="form-group span-12">
+          <div class="genji-field g-span-12">
             {{ form.item_name.label_tag }}
             {{ form.item_name }}
             {{ form.item_name.errors }}
           </div>
 
-          <div class="form-group span-6">
+          <div class="genji-field g-span-6">
             {{ form.buy_date.label_tag }}
             {{ form.buy_date }}
             {{ form.buy_date.errors }}
           </div>
 
-          <div class="form-group span-6">
+          <div class="genji-field g-span-6">
             {{ form.sell_date.label_tag }}
             {{ form.sell_date }}
             {{ form.sell_date.errors }}
           </div>
 
-          <div class="form-group span-4">
+          <div class="genji-field g-span-4">
             {{ form.buying_cost.label_tag }}
             {{ form.buying_cost }}
             {{ form.buying_cost.errors }}
           </div>
 
-          <div class="form-group span-4">
+          <div class="genji-field g-span-4">
             {{ form.selling_price.label_tag }}
             {{ form.selling_price }}
             {{ form.selling_price.errors }}
           </div>
 
-          <div class="form-group span-4">
+          <div class="genji-field g-span-4">
             {{ form.quantity.label_tag }}
             {{ form.quantity }}
             {{ form.quantity.errors }}
           </div>
 
           {% if not is_seller %}
-          <div class="form-group span-12">
+          <div class="genji-field g-span-12">
             {{ form.branch.label_tag }}
             {{ form.branch }}
             {{ form.branch.errors }}
           </div>
           {% else %}
-          <div class="form-group span-12" style="display:none;">
+          <div class="genji-field g-span-12" style="display:none;">
             {{ form.branch }}
           </div>
           {% endif %}
 
-          <div class="form-group span-12">
+          <div class="genji-field g-span-12">
             {{ form.notes.label_tag }}
             {{ form.notes }}
             {{ form.notes.errors }}
           </div>
         </div>
 
-        <div class="actions">
-          <button class="btnx btnx-primary" type="submit">
+        <div class="genji-actions">
+          <button class="genji-btn genji-btn-primary" type="submit">
             <i class="fa-solid fa-floppy-disk"></i>
             {% if is_edit %}Update Record{% else %}Save Record{% endif %}
           </button>
 
-          <a href="{% url 'sales:genji_dashboard' %}" class="btnx btnx-secondary">
+          <a href="{% url 'sales:genji_dashboard' %}" class="genji-btn genji-btn-secondary">
             <i class="fa-solid fa-arrow-left"></i>
             Cancel
           </a>
         </div>
+
+        <div class="genji-note">
+          Keep dates, prices, and quantity accurate so profit and record tracking stay correct.
+        </div>
       </form>
     </div>
   </div>
+
 </div>
 {% endblock %}

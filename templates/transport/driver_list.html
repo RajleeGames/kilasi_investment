@@ -6,340 +6,477 @@
 
 {% block extra_css %}
 <style>
-:root{
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --border:rgba(15,23,42,.10);
-  --border2:rgba(15,23,42,.06);
-  --shadow:0 12px 30px rgba(2,6,23,.08);
-  --shadow2:0 8px 22px rgba(2,6,23,.06);
-  --radius:14px;
-  --accent:#0ea5e9;
-  --focus:rgba(14,165,233,.25);
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+  .driver-page{
+    max-width: 1120px;
+    margin: 0 auto;
+  }
 
-/* -------- Wrapper -------- */
-.driver-wrap{
-  max-width: 1120px;
-  margin: 18px auto;
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 14px;
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow);
-  box-sizing: border-box;
-  font-family: var(--font);
-  color: var(--text);
-}
+  .driver-hero{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    padding:1rem 1rem .95rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
+      #fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    margin-bottom:1rem;
+  }
 
-/* -------- Header -------- */
-.driver-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap: 12px;
-  padding: 4px 4px 12px 4px;
-}
-.driver-title{
-  margin:0;
-  font-size: 1.1rem;
-  font-weight: 900;
-  letter-spacing:.2px;
-  display:flex;
-  align-items:center;
-  gap: 8px;
-}
-.driver-sub{
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: .9rem;
-}
+  .driver-title{
+    margin:0;
+    font-size:1.04rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
 
-.driver-tools{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  flex-wrap: wrap;
-  justify-content:flex-end;
-}
+  .driver-subtitle{
+    font-size:.75rem;
+    color:#64748b;
+    margin-top:.2rem;
+  }
 
-.driver-search{
-  display:flex;
-  align-items:center;
-  gap: 8px;
-  min-width: 300px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(2,6,23,.04);
-}
-.driver-search i{ color: var(--muted); }
-.driver-search input{
-  width:100%;
-  border:none;
-  outline:none;
-  font-size:.95rem;
-  background:transparent;
-}
-.driver-search input::placeholder{ color:#94a3b8; }
+  .driver-hero-actions{
+    display:flex;
+    gap:.7rem;
+    align-items:center;
+    flex-wrap:wrap;
+  }
 
-/* Count chip */
-.driver-chip{
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg,#fff,#fbfdff);
-  color: var(--muted);
-  font-size: .86rem;
-  user-select:none;
-}
-.driver-chip strong{
-  color: var(--text);
-  font-weight: 900;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-}
+  .driver-add-btn{
+    border-radius:12px;
+    font-size:.78rem;
+    font-weight:700;
+    padding:.65rem .95rem;
+    box-shadow:0 10px 22px rgba(37,99,235,.14);
+  }
 
-/* -------- Grid -------- */
-.driver-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
-  margin-top: 6px;
-}
+  .driver-count{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.45rem .72rem;
+    font-weight:700;
+    white-space:nowrap;
+  }
 
-/* -------- Card (NOW matches your screenshot layout) -------- */
-.dcard{
-  border-radius: 14px;
-  border: 1px solid var(--border2);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  box-shadow: var(--shadow2);
-  padding: 12px;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dcard.clickable{ cursor:pointer; }
-.dcard:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 14px 26px rgba(2,6,23,.10);
-  border-color: rgba(14,165,233,.18);
-}
-.dcard:focus,
-.dcard:focus-within{
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
+  .driver-count strong{
+    color:#0f172a;
+    font-weight:800;
+  }
 
-/* ---- Vehicle title pill (FIX for long plate/model) ---- */
-.vbadge{
-  width: 100%;
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: rgba(14,165,233,.10);
-  border: 1px solid rgba(14,165,233,.22);
-  color: #075985;
-  box-sizing: border-box;
-}
-.vbadge i{ flex: 0 0 auto; }
-.vinfo{ min-width:0; display:flex; flex-direction:column; line-height:1.05; }
-.vplate{
-  font-family: var(--mono);
-  font-weight: 900;
-  font-size: .92rem;
-  letter-spacing: .02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.vmodel{
-  font-weight: 800;
-  font-size: .78rem;
-  color: #075985;
-  opacity: .9;
+  .driver-filter-card,
+  .driver-grid-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    overflow:hidden;
+  }
 
-  /* allow wrapping but keep it neat */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;     /* show up to 2 lines */
-  overflow: hidden;
-  word-break: break-word;
-}
-.vbadge.off{
-  background: rgba(100,116,139,.10);
-  border-color: rgba(100,116,139,.18);
-  color: #334155;
-}
-.vbadge.off .vmodel{ color:#334155; }
+  .driver-filter-card{
+    margin-bottom:1rem;
+  }
 
-/* ---- Main row under pill ---- */
-.dmain{
-  display:flex;
-  gap: 12px;
-  align-items:center;
-}
+  .driver-filter-body{
+    padding:1rem;
+  }
 
-/* Avatar */
-.davatar{
-  width: 58px;
-  height: 58px;
-  border-radius: 14px;
-  background: #eef2f7;
-  border: 1px solid rgba(15,23,42,.06);
-  overflow:hidden;
-  display:grid;
-  place-items:center;
-  flex: 0 0 auto;
-  font-weight: 900;
-  color:#334155;
-  font-size: 18px;
-}
-.davatar img{ width:100%; height:100%; object-fit: cover; display:block; }
+  .driver-search-wrap{
+    position:relative;
+  }
 
-/* Body */
-.dbody{ flex: 1; min-width:0; }
-.dname{
-  font-weight: 900;
-  color: var(--text);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-.dmeta{
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: .88rem;
-  line-height: 1.35;
-}
-.dmeta .mono{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .driver-search-icon{
+    position:absolute;
+    left:.85rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:.78rem;
+    pointer-events:none;
+  }
 
-/* Empty */
-.driver-empty{
-  padding: 18px;
-  text-align:center;
-  color: var(--muted);
-  background: linear-gradient(180deg,#fbfdff,#fff);
-  border-radius: 12px;
-  border: 1px dashed rgba(15,23,42,.14);
-}
+  .driver-search{
+    min-height:42px;
+    border-radius:12px;
+    font-size:.79rem;
+    padding-left:2.25rem;
+  }
 
-/* Mobile */
-@media (max-width: 991.98px){
-  .driver-head{ flex-direction:column; align-items:flex-start; }
-  .driver-tools{ justify-content:flex-start; width:100%; }
-  .driver-search{ min-width: 100%; }
-}
-@media (max-width: 576px){
-  .driver-grid{ grid-template-columns: 1fr; }
-  .davatar{ width: 54px; height: 54px; }
-  .vbadge{ padding: 9px 10px; }
-}
+  .driver-grid-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.8rem;
+    padding:.9rem 1rem;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    flex-wrap:wrap;
+  }
 
-/* helper */
-.me-1{ margin-right:6px; }
+  .driver-grid-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .driver-grid-note{
+    font-size:.72rem;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:999px;
+    padding:.35rem .65rem;
+    font-weight:700;
+  }
+
+  .driver-grid-wrap{
+    padding:1rem;
+  }
+
+  .driver-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(270px, 1fr));
+    gap:14px;
+  }
+
+  .driver-card{
+    border:1px solid rgba(15,23,42,.06);
+    border-radius:16px;
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    box-shadow:0 8px 22px rgba(2,6,23,.06);
+    padding:.85rem;
+    transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+    display:flex;
+    flex-direction:column;
+    gap:.75rem;
+  }
+
+  .driver-card.clickable{
+    cursor:pointer;
+  }
+
+  .driver-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 26px rgba(2,6,23,.10);
+    border-color:rgba(37,99,235,.14);
+  }
+
+  .driver-card:focus,
+  .driver-card:focus-within{
+    outline:3px solid rgba(37,99,235,.14);
+    outline-offset:2px;
+  }
+
+  .driver-vehicle-pill{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:.72rem .82rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    border:1px solid rgba(37,99,235,.16);
+    color:#1d4ed8;
+    box-sizing:border-box;
+  }
+
+  .driver-vehicle-pill.off{
+    background:rgba(100,116,139,.08);
+    border-color:rgba(100,116,139,.15);
+    color:#475569;
+  }
+
+  .driver-vehicle-pill i{
+    flex:0 0 auto;
+  }
+
+  .driver-vehicle-info{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    line-height:1.1;
+  }
+
+  .driver-vehicle-plate{
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-weight:800;
+    font-size:.8rem;
+    letter-spacing:.03em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .driver-vehicle-model{
+    font-size:.72rem;
+    font-weight:700;
+    opacity:.9;
+    margin-top:.12rem;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+    word-break:break-word;
+  }
+
+  .driver-main{
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+  }
+
+  .driver-avatar{
+    width:56px;
+    height:56px;
+    border-radius:14px;
+    background:#eef2f7;
+    border:1px solid rgba(15,23,42,.06);
+    overflow:hidden;
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+    font-weight:800;
+    font-size:1rem;
+    color:#334155;
+  }
+
+  .driver-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .driver-body{
+    flex:1;
+    min-width:0;
+  }
+
+  .driver-name{
+    font-size:.83rem;
+    font-weight:800;
+    color:#0f172a;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .driver-meta{
+    margin-top:.35rem;
+    display:flex;
+    flex-direction:column;
+    gap:.28rem;
+    color:#64748b;
+    font-size:.74rem;
+    line-height:1.35;
+  }
+
+  .driver-meta i{
+    width:14px;
+    text-align:center;
+    margin-right:.25rem;
+    color:#94a3b8;
+  }
+
+  .driver-mono{
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric:tabular-nums;
+    color:#334155;
+  }
+
+  .driver-empty{
+    text-align:center;
+    padding:2rem 1rem;
+    color:#64748b;
+    font-size:.8rem;
+  }
+
+  .driver-empty i{
+    display:block;
+    font-size:1.15rem;
+    margin-bottom:.45rem;
+    color:#94a3b8;
+  }
+
+  .driver-empty a{
+    text-decoration:none;
+    font-weight:700;
+  }
+
+  @media (max-width: 767.98px){
+    .driver-hero{
+      padding:.9rem;
+    }
+
+    .driver-title{
+      font-size:.98rem;
+    }
+
+    .driver-subtitle{
+      font-size:.73rem;
+    }
+
+    .driver-filter-body,
+    .driver-grid-wrap{
+      padding:.85rem;
+    }
+
+    .driver-hero-actions{
+      width:100%;
+    }
+
+    .driver-count{
+      width:100%;
+      justify-content:center;
+    }
+
+    .driver-add-btn{
+      width:100%;
+      justify-content:center;
+    }
+
+    .driver-grid{
+      grid-template-columns:1fr;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="driver-wrap">
-  <div class="driver-head">
-    <div>
-      <h1 class="driver-title">
-        <i class="fa-solid fa-id-card-clip"></i>
-        Drivers
-      </h1>
-      <div class="driver-sub">Manage drivers and their assigned vehicles.</div>
-    </div>
+<div class="driver-page">
 
-    <div class="driver-tools" role="toolbar" aria-label="drivers toolbar">
-      <div class="driver-search" role="search" title="Search drivers">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="driverSearch" type="search" placeholder="Search name, phone, license, vehicle..." aria-label="Search drivers">
+  <div class="driver-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h3 class="driver-title">
+          <i class="fa-solid fa-id-card-clip text-primary"></i>
+          Drivers
+        </h3>
+        <div class="driver-subtitle">
+          Manage drivers and their assigned vehicles in one clean view.
+        </div>
       </div>
 
-      <span class="driver-chip" title="Visible cards">
-        Showing <strong id="visibleDrivers">0</strong> / <strong id="totalDrivers">0</strong>
-      </span>
+      <div class="driver-hero-actions">
+        <span class="driver-count" title="Visible cards">
+          Showing <strong id="visibleDrivers">0</strong> / <strong id="totalDrivers">0</strong>
+        </span>
 
-      <a href="{% url 'transport:driver_create' %}" class="btn btn-primary" aria-label="Add driver">
-        <i class="fa-solid fa-plus me-1"></i> Add Driver
-      </a>
+        <a href="{% url 'transport:driver_create' %}" class="btn btn-primary driver-add-btn" aria-label="Add driver">
+          <i class="fa-solid fa-plus me-1"></i> Add Driver
+        </a>
+      </div>
     </div>
   </div>
 
-  {% if drivers %}
-    <div class="driver-grid" id="driverGrid" role="list">
-      {% for d in drivers %}
-        {% with name=d.user.get_full_name|default:d.user.username %}
-        <div class="dcard{% if d.get_absolute_url %} clickable{% endif %}"
-             role="listitem"
-             tabindex="0"
-             {% if d.get_absolute_url %}data-href="{{ d.get_absolute_url }}"{% endif %}
-             aria-label="Driver {{ name }}">
+  <div class="driver-filter-card">
+    <div class="driver-filter-body">
+      <div class="driver-search-wrap">
+        <i class="fa-solid fa-magnifying-glass driver-search-icon"></i>
+        <input id="driverSearch"
+               type="search"
+               class="form-control driver-search"
+               placeholder="Search name, phone, license, vehicle..."
+               aria-label="Search drivers">
+      </div>
+    </div>
+  </div>
 
-          {# Vehicle title pill (plate + model neatly) #}
-          {% if d.vehicle %}
-            <div class="vbadge" title="{{ d.vehicle.plate_number }} {{ d.vehicle.model }}">
-              <i class="fa-solid fa-truck"></i>
-              <div class="vinfo">
-                <div class="vplate">
-                  {{ d.vehicle.plate_number|default:"—" }}
-                </div>
-                <div class="vmodel">
-                  {{ d.vehicle.model|default:"" }}
-                </div>
-              </div>
-            </div>
-          {% else %}
-            <div class="vbadge off" title="No vehicle assigned">
-              <i class="fa-solid fa-truck"></i>
-              <div class="vinfo">
-                <div class="vplate">No vehicle</div>
-                <div class="vmodel">Not assigned</div>
-              </div>
-            </div>
-          {% endif %}
+  <div class="driver-grid-card">
+    <div class="driver-grid-head">
+      <h4 class="driver-grid-title">
+        <i class="fa-solid fa-users text-primary"></i>
+        Driver List
+      </h4>
+      <div class="driver-grid-note">Assigned drivers overview</div>
+    </div>
 
-          <div class="dmain">
-            <div class="davatar" aria-hidden="true">
-              {% if d.photo %}
-                <img src="{{ d.photo.url }}" alt="Photo of {{ name }}">
+    {% if drivers %}
+      <div class="driver-grid-wrap">
+        <div class="driver-grid" id="driverGrid" role="list">
+          {% for d in drivers %}
+            {% with name=d.user.get_full_name|default:d.user.username %}
+            <div class="driver-card{% if d.get_absolute_url %} clickable{% endif %}"
+                 role="listitem"
+                 tabindex="0"
+                 {% if d.get_absolute_url %}data-href="{{ d.get_absolute_url }}"{% endif %}
+                 aria-label="Driver {{ name }}">
+
+              {% if d.vehicle %}
+                <div class="driver-vehicle-pill" title="{{ d.vehicle.plate_number }} {{ d.vehicle.model }}">
+                  <i class="fa-solid fa-truck"></i>
+                  <div class="driver-vehicle-info">
+                    <div class="driver-vehicle-plate">
+                      {{ d.vehicle.plate_number|default:"—" }}
+                    </div>
+                    <div class="driver-vehicle-model">
+                      {{ d.vehicle.model|default:"" }}
+                    </div>
+                  </div>
+                </div>
               {% else %}
-                {{ name|slice:":1"|upper }}
+                <div class="driver-vehicle-pill off" title="No vehicle assigned">
+                  <i class="fa-solid fa-truck"></i>
+                  <div class="driver-vehicle-info">
+                    <div class="driver-vehicle-plate">No vehicle</div>
+                    <div class="driver-vehicle-model">Not assigned</div>
+                  </div>
+                </div>
               {% endif %}
-            </div>
 
-            <div class="dbody">
-              <div class="dname" title="{{ name }}">{{ name }}</div>
+              <div class="driver-main">
+                <div class="driver-avatar" aria-hidden="true">
+                  {% if d.photo %}
+                    <img src="{{ d.photo.url }}" alt="Photo of {{ name }}">
+                  {% else %}
+                    {{ name|slice:":1"|upper }}
+                  {% endif %}
+                </div>
 
-              <div class="dmeta">
-                <div><i class="fa-solid fa-phone"></i> <span class="mono">{{ d.phone|default:"No phone" }}</span></div>
-                <div><i class="fa-solid fa-id-card"></i> License: <span class="mono">{{ d.license_number|default:"—" }}</span></div>
+                <div class="driver-body">
+                  <div class="driver-name" title="{{ name }}">{{ name }}</div>
+
+                  <div class="driver-meta">
+                    <div>
+                      <i class="fa-solid fa-phone"></i>
+                      <span class="driver-mono">{{ d.phone|default:"No phone" }}</span>
+                    </div>
+                    <div>
+                      <i class="fa-solid fa-id-card"></i>
+                      License:
+                      <span class="driver-mono">{{ d.license_number|default:"—" }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
+            </div>
+            {% endwith %}
+          {% endfor %}
         </div>
-        {% endwith %}
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="driver-empty">
-      No drivers yet. <a href="{% url 'transport:driver_create' %}">Add your first driver</a>.
-    </div>
-  {% endif %}
+      </div>
+    {% else %}
+      <div class="driver-empty">
+        <i class="fa-solid fa-user-group"></i>
+        No drivers yet.
+        <a href="{% url 'transport:driver_create' %}">Add your first driver</a>.
+      </div>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}
 
@@ -352,18 +489,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateCounts(){
     if (!grid) return;
-    const cards = Array.from(grid.querySelectorAll('.dcard'));
+    const cards = Array.from(grid.querySelectorAll('.driver-card'));
     const visible = cards.filter(c => c.style.display !== 'none');
     if (totalEl) totalEl.textContent = cards.length;
     if (visibleEl) visibleEl.textContent = visible.length;
   }
 
-  // Click + keyboard open card if href exists
-  document.querySelectorAll('.dcard.clickable').forEach(function (card) {
+  document.querySelectorAll('.driver-card.clickable').forEach(function (card) {
     const href = card.dataset.href;
     if (!href) return;
 
-    card.addEventListener('click', function () {
+    card.addEventListener('click', function (e) {
+      const interactive = e.target.closest('a, button, input, select, textarea');
+      if (interactive) return;
       window.location.assign(href);
     });
 
@@ -375,17 +513,20 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Search filter
   const search = document.getElementById('driverSearch');
+
   function applyFilter(){
     if (!grid) return;
     const q = (search?.value || '').trim().toLowerCase();
-    grid.querySelectorAll('.dcard').forEach(function (c) {
+
+    grid.querySelectorAll('.driver-card').forEach(function (c) {
       const text = c.textContent.trim().toLowerCase();
       c.style.display = (!q || text.includes(q)) ? '' : 'none';
     });
+
     updateCounts();
   }
+
   if (search) search.addEventListener('input', applyFilter);
 
   updateCounts();
