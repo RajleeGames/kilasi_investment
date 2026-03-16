@@ -987,6 +987,12 @@
       {{ loss_value|json_script:"loss-value" }}
     </div>
   </div>
+
+  <audio id="bookingNotifSound" src="{% static 'sounds/notifications.mp3' %}" preload="auto"></audio>
+
+  {{ booking_count_today|default:0|json_script:"booking-count-today" }}
+  {{ booking_count_upcoming|default:0|json_script:"booking-count-upcoming" }}
+  {{ booking_count_overdue|default:0|json_script:"booking-count-overdue" }}
 </div>
 {% endblock %}
 
@@ -1073,46 +1079,52 @@ document.addEventListener('DOMContentLoaded', function () {
   const pie1No = document.getElementById('pie1NoData');
   if (!pie1Has && pie1No) pie1No.style.display = 'grid';
   if (pie1Has) {
-    new Chart(document.getElementById('incomeExpensePie').getContext('2d'), {
-      type:'doughnut',
-      data:{
-        labels:['Income','Expenses'],
-        datasets:[{
-          data:[incomeTotal, expenseTotal],
-          borderWidth:0,
-          backgroundColor:['#06b6d4','#6366f1']
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        cutout:'68%',
-        plugins:{ legend:{position:'bottom'} }
-      }
-    });
+    const pie1Canvas = document.getElementById('incomeExpensePie');
+    if (pie1Canvas) {
+      new Chart(pie1Canvas.getContext('2d'), {
+        type:'doughnut',
+        data:{
+          labels:['Income','Expenses'],
+          datasets:[{
+            data:[incomeTotal, expenseTotal],
+            borderWidth:0,
+            backgroundColor:['#06b6d4','#6366f1']
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          cutout:'68%',
+          plugins:{ legend:{position:'bottom'} }
+        }
+      });
+    }
   }
 
   const pie2Has = (profitValue > 0 || lossValue > 0);
   const pie2No = document.getElementById('pie2NoData');
   if (!pie2Has && pie2No) pie2No.style.display = 'grid';
   if (pie2Has) {
-    new Chart(document.getElementById('profitLossPie').getContext('2d'), {
-      type:'doughnut',
-      data:{
-        labels:['Profit','Loss'],
-        datasets:[{
-          data:[profitValue, lossValue],
-          borderWidth:0,
-          backgroundColor:['#10b981','#ef4444']
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        cutout:'68%',
-        plugins:{ legend:{position:'bottom'} }
-      }
-    });
+    const pie2Canvas = document.getElementById('profitLossPie');
+    if (pie2Canvas) {
+      new Chart(pie2Canvas.getContext('2d'), {
+        type:'doughnut',
+        data:{
+          labels:['Profit','Loss'],
+          datasets:[{
+            data:[profitValue, lossValue],
+            borderWidth:0,
+            backgroundColor:['#10b981','#ef4444']
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          cutout:'68%',
+          plugins:{ legend:{position:'bottom'} }
+        }
+      });
+    }
   }
 });
 </script>
@@ -1134,6 +1146,42 @@ document.addEventListener('DOMContentLoaded', function () {
       const form = this.closest('form');
       if (form) form.submit();
     });
+  }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function readJSON(id, fallback) {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    try {
+      return JSON.parse(el.textContent || '0');
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  const todayCount = Number(readJSON('booking-count-today', 0)) || 0;
+  const upcomingCount = Number(readJSON('booking-count-upcoming', 0)) || 0;
+  const overdueCount = Number(readJSON('booking-count-overdue', 0)) || 0;
+
+  const sound = document.getElementById('bookingNotifSound');
+  const totalAlerts = todayCount + upcomingCount + overdueCount;
+
+  function playBookingSound() {
+    if (!sound) return;
+    sound.currentTime = 0;
+    const playPromise = sound.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(function (err) {
+        console.log('Booking sound autoplay blocked:', err);
+      });
+    }
+  }
+
+  if (totalAlerts > 0) {
+    playBookingSound();
   }
 });
 </script>
