@@ -6,260 +6,574 @@
 {% block extra_css %}
 <style>
   :root{
-    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f8fafc;
-    --card:#ffffff; --dark:#0b1220;
+    --inv-ink:#0f172a;
+    --inv-muted:#64748b;
+    --inv-line:#e2e8f0;
+    --inv-soft:#f8fafc;
+    --inv-card:#ffffff;
+    --inv-dark:#0b1220;
   }
 
-  .receipt-wrap{max-width:980px;margin:1.5rem auto;padding:0 1rem;}
-  .receipt-card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);overflow:hidden;}
-  .receipt-top{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
-    background:radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
-               radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
-               linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.80));
+  .inv-wrap{
+    max-width:980px;
+    margin:1rem auto 1.3rem;
+    padding:0 .85rem;
   }
 
-  .brand{display:flex;gap:12px;align-items:flex-start;}
-  .brand .logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  .inv-card{
+    background:var(--inv-card);
+    border:1px solid var(--inv-line);
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    overflow:hidden;
+  }
+
+  .inv-top{
+    padding:14px 16px;
+    border-bottom:1px solid var(--inv-line);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    background:
+      radial-gradient(900px 380px at 10% 0%, rgba(14,165,233,.10), transparent 55%),
+      radial-gradient(700px 300px at 90% 10%, rgba(96,165,250,.08), transparent 45%),
+      linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.80));
+  }
+
+  .inv-brand{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+
+  .inv-logo{
+    width:42px;
+    height:42px;
+    border-radius:14px;
+    display:grid;
+    place-items:center;
     background:linear-gradient(135deg, rgba(14,165,233,.18), rgba(96,165,250,.12));
-    border:1px solid rgba(15,23,42,.08);color:#0b1220;flex:0 0 auto;
+    border:1px solid rgba(15,23,42,.08);
+    color:#0b1220;
+    flex:0 0 auto;
+    font-size:.95rem;
   }
-  .brand h1{margin:0;font-size:1.15rem;letter-spacing:.3px;color:var(--ink);font-weight:950;line-height:1.15;}
-  .brand .sub{margin-top:4px;line-height:1.35;font-size:.9rem;color:var(--muted);}
-  .brand .sub span{display:inline-block;margin-right:10px;}
-  .mono{font-variant-numeric:tabular-nums;}
 
-  .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
-  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);
-    background:rgba(255,255,255,.85);color:var(--ink);font-size:.85rem;white-space:nowrap;
+  .inv-brand-title{
+    margin:0;
+    font-size:1.02rem;
+    letter-spacing:.2px;
+    color:var(--inv-ink);
+    font-weight:900;
+    line-height:1.15;
   }
-  .pill b{font-weight:950;}
-  .btn-print{border-radius:12px;font-weight:850;padding:7px 12px;}
 
-  .kbadge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.82rem;font-weight:900;border:1px solid transparent;}
-  .b-cash{background:#dcfce7;color:#166534;border-color:#86efac}
-  .b-bank{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
-  .b-ebt {background:#e0e7ff;color:#3730a3;border-color:#c7d2fe}
-  .b-debt{background:#fee2e2;color:#991b1b;border-color:#fecaca}
-  .b-paid{background:#dcfce7;color:#166534;border-color:#86efac}
-  .b-unpaid{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+  .inv-brand-sub{
+    margin-top:4px;
+    line-height:1.35;
+    font-size:.76rem;
+    color:var(--inv-muted);
+  }
 
-  .receipt-body{padding:18px;}
-  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
-  @media (max-width:720px){.meta-grid{grid-template-columns:1fr}}
+  .inv-brand-sub span{
+    display:inline-block;
+    margin-right:10px;
+  }
 
-  .meta-box{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px;}
-  .meta-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed rgba(148,163,184,.45);}
-  .meta-row:last-child{border-bottom:none}
-  .meta-row .k{color:var(--muted);font-size:.9rem}
-  .meta-row .v{color:var(--ink);font-weight:850;text-align:right}
+  .inv-mono{
+    font-variant-numeric:tabular-nums;
+  }
 
-  .table-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px;}
-  table.items{width:100%;border-collapse:collapse;background:#fff;}
-  table.items thead th{background:var(--dark);color:#fff;font-weight:950;font-size:.9rem;padding:10px 12px;border:none;white-space:nowrap;}
-  table.items tbody td{padding:10px 12px;border-top:1px solid var(--line);font-size:.95rem;color:var(--ink);vertical-align:top;}
-  table.items tbody tr:hover{background:#f1f5f9}
+  .inv-top-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-end;
+  }
 
-  .t-right{text-align:right}
-  .t-center{text-align:center}
-  .muted{color:var(--muted)}
+  .inv-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 10px;
+    border-radius:999px;
+    border:1px solid var(--inv-line);
+    background:rgba(255,255,255,.85);
+    color:var(--inv-ink);
+    font-size:.73rem;
+    white-space:nowrap;
+    font-weight:600;
+  }
 
-  .totals{display:flex;justify-content:flex-end;margin-top:14px;}
-  .totals-box{min-width:320px;background:var(--dark);color:#fff;border-radius:14px;padding:14px 14px 12px;}
-  .totals-box .rowx{display:flex;justify-content:space-between;margin:6px 0;font-size:.95rem;opacity:.96;}
-  .totals-box .grand{margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.18);font-size:1.05rem;font-weight:980;}
+  .inv-pill b{
+    font-weight:900;
+  }
 
-  .history-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
-  @media (max-width:720px){.history-grid{grid-template-columns:1fr}}
-  .hist-card{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;}
-  .hist-head{padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
-  .hist-head b{font-weight:950;color:var(--ink)}
-  .hist-body{padding:10px 12px;}
-  .hist-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed rgba(148,163,184,.45);}
-  .hist-item:last-child{border-bottom:none}
-  .hist-left{min-width:0}
-  .hist-left .t{font-weight:850;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .hist-left .s{font-size:.86rem;color:var(--muted)}
-  .hist-right{text-align:right}
-  .hist-right .amt{font-weight:950}
-  .hist-right .dt{font-size:.82rem;color:var(--muted)}
+  .inv-btn{
+    border-radius:12px;
+    font-weight:700;
+    padding:6px 11px;
+    font-size:.74rem;
+  }
 
-  .foot{margin-top:14px;text-align:center;color:var(--muted);font-size:.92rem;}
-  .foot strong{color:var(--ink);}
+  .inv-badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:900;
+    border:1px solid transparent;
+    line-height:1.1;
+  }
+
+  .inv-b-cash{ background:#dcfce7; color:#166534; border-color:#86efac; }
+  .inv-b-bank{ background:#dbeafe; color:#1d4ed8; border-color:#93c5fd; }
+  .inv-b-ebt { background:#e0e7ff; color:#3730a3; border-color:#c7d2fe; }
+  .inv-b-debt{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+  .inv-b-paid{ background:#dcfce7; color:#166534; border-color:#86efac; }
+  .inv-b-unpaid{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+
+  .inv-body{
+    padding:16px;
+  }
+
+  .inv-meta-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:14px;
+  }
+
+  .inv-meta-box{
+    background:var(--inv-soft);
+    border:1px solid var(--inv-line);
+    border-radius:14px;
+    padding:11px;
+  }
+
+  .inv-meta-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:7px 0;
+    border-bottom:1px dashed rgba(148,163,184,.45);
+  }
+
+  .inv-meta-row:last-child{
+    border-bottom:none;
+  }
+
+  .inv-meta-key{
+    color:var(--inv-muted);
+    font-size:.76rem;
+  }
+
+  .inv-meta-value{
+    color:var(--inv-ink);
+    font-weight:800;
+    text-align:right;
+    font-size:.77rem;
+  }
+
+  .inv-table-wrap{
+    border:1px solid var(--inv-line);
+    border-radius:14px;
+    overflow:hidden;
+    margin-top:8px;
+  }
+
+  table.inv-items{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+  }
+
+  table.inv-items thead th{
+    background:var(--inv-dark);
+    color:#fff;
+    font-weight:900;
+    font-size:.76rem;
+    padding:10px 12px;
+    border:none;
+    white-space:nowrap;
+  }
+
+  table.inv-items tbody td{
+    padding:10px 12px;
+    border-top:1px solid var(--inv-line);
+    font-size:.78rem;
+    color:var(--inv-ink);
+    vertical-align:top;
+  }
+
+  table.inv-items tbody tr:hover{
+    background:#f1f5f9;
+  }
+
+  .inv-t-right{text-align:right;}
+  .inv-t-center{text-align:center;}
+  .inv-muted{color:var(--inv-muted);}
+  .inv-product-name{font-weight:900; font-size:.79rem;}
+  .inv-product-sub{font-size:.71rem; color:var(--inv-muted);}
+  .inv-strong{font-weight:900;}
+
+  .inv-totals{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:14px;
+  }
+
+  .inv-totals-box{
+    min-width:320px;
+    background:var(--inv-dark);
+    color:#fff;
+    border-radius:14px;
+    padding:13px 14px 11px;
+  }
+
+  .inv-rowx{
+    display:flex;
+    justify-content:space-between;
+    margin:6px 0;
+    font-size:.78rem;
+    opacity:.96;
+  }
+
+  .inv-grand{
+    margin-top:8px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,.18);
+    font-size:.92rem;
+    font-weight:900;
+  }
+
+  .inv-action-row{
+    margin-top:16px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  .inv-history-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:14px;
+  }
+
+  .inv-hist-card{
+    border:1px solid var(--inv-line);
+    border-radius:14px;
+    background:#fff;
+    overflow:hidden;
+  }
+
+  .inv-hist-head{
+    padding:10px 12px;
+    background:var(--inv-soft);
+    border-bottom:1px solid var(--inv-line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .inv-hist-head b{
+    font-weight:900;
+    color:var(--inv-ink);
+    font-size:.78rem;
+  }
+
+  .inv-hist-body{
+    padding:10px 12px;
+  }
+
+  .inv-hist-item{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px dashed rgba(148,163,184,.45);
+  }
+
+  .inv-hist-item:last-child{
+    border-bottom:none;
+  }
+
+  .inv-hist-left{
+    min-width:0;
+  }
+
+  .inv-hist-title{
+    font-weight:800;
+    color:var(--inv-ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:.77rem;
+  }
+
+  .inv-hist-sub{
+    font-size:.71rem;
+    color:var(--inv-muted);
+  }
+
+  .inv-hist-right{
+    text-align:right;
+  }
+
+  .inv-hist-amt{
+    font-weight:900;
+    font-size:.77rem;
+  }
+
+  .inv-hist-date{
+    font-size:.69rem;
+    color:var(--inv-muted);
+  }
+
+  .inv-foot{
+    margin-top:14px;
+    text-align:center;
+    color:var(--inv-muted);
+    font-size:.76rem;
+  }
+
+  .inv-foot strong{
+    color:var(--inv-ink);
+  }
+
+  @media (max-width:720px){
+    .inv-wrap{
+      padding:0 .7rem;
+    }
+
+    .inv-meta-grid,
+    .inv-history-grid{
+      grid-template-columns:1fr;
+    }
+
+    .inv-top{
+      padding:13px 14px;
+    }
+
+    .inv-body{
+      padding:14px;
+    }
+
+    .inv-brand-title{
+      font-size:.95rem;
+    }
+
+    .inv-brand-sub{
+      font-size:.72rem;
+    }
+
+    table.inv-items thead th,
+    table.inv-items tbody td{
+      font-size:.74rem;
+      padding:9px 10px;
+    }
+
+    .inv-totals-box{
+      min-width:100%;
+    }
+  }
 
   @media print{
     .no-print{display:none !important;}
     body{background:#fff;}
-    .receipt-wrap{max-width:100%;margin:0;padding:0}
-    .receipt-card{box-shadow:none;border:none;border-radius:0}
-    .receipt-top{border-bottom:1px solid #ddd}
+    .inv-wrap{max-width:100%;margin:0;padding:0;}
+    .inv-card{box-shadow:none;border:none;border-radius:0;}
+    .inv-top{border-bottom:1px solid #ddd;}
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="receipt-wrap">
-  <div class="receipt-card">
+<div class="inv-wrap">
+  <div class="inv-card">
 
-    <!-- TOP -->
-    <div class="receipt-top">
-      <div class="brand">
-        <div class="logo"><i class="fa-solid fa-building"></i></div>
+    <div class="inv-top">
+      <div class="inv-brand">
+        <div class="inv-logo"><i class="fa-solid fa-building"></i></div>
         <div>
-          <h1>KILASI INVESTMENT</h1>
-          <div class="sub">
+          <h1 class="inv-brand-title">KILASI INVESTMENT</h1>
+          <div class="inv-brand-sub">
             <span><b>TIN:</b> 155-581-522</span>
             {% if invoice.branch %}<span><b>Branch:</b> {{ invoice.branch.name }}</span>{% endif %}
             <br>
-            <span class="mono"><b>Invoice:</b> #{{ invoice.id }}</span>
+            <span class="inv-mono"><b>Invoice:</b> #{{ invoice.id }}</span>
           </div>
         </div>
       </div>
 
-      <div class="top-actions no-print">
-        <span class="pill"><i class="fa-solid fa-receipt"></i> Invoice <b>#{{ invoice.id }}</b></span>
+      <div class="inv-top-actions no-print">
+        <span class="inv-pill">
+          <i class="fa-solid fa-receipt"></i>
+          Invoice <b>#{{ invoice.id }}</b>
+        </span>
 
-        <a class="btn btn-outline-dark btn-sm btn-print" href="{% url 'sales:seller_dashboard' %}">
+        <a class="btn btn-outline-dark btn-sm inv-btn" href="{% url 'sales:seller_dashboard' %}">
           <i class="fa-solid fa-cart-shopping me-1"></i> POS
         </a>
 
         {% if invoice.customer %}
-          <a class="btn btn-outline-primary btn-sm btn-print"
+          <a class="btn btn-outline-primary btn-sm inv-btn"
              href="{% url 'sales:customer_debt_statement' invoice.customer.id %}">
             <i class="fa-solid fa-file-invoice-dollar me-1"></i> Full Debt History
           </a>
         {% endif %}
 
         {% if invoice.status == "debt" %}
-          <a class="btn btn-outline-danger btn-sm btn-print"
+          <a class="btn btn-outline-danger btn-sm inv-btn"
              href="{% url 'sales:sales_return_create' invoice.id %}">
             <i class="fa-solid fa-rotate-left me-1"></i> Return
           </a>
         {% endif %}
 
-        <button type="button" class="btn btn-primary btn-sm btn-print" onclick="window.print()">
+        <button type="button" class="btn btn-primary btn-sm inv-btn" onclick="window.print()">
           <i class="fa-solid fa-print me-1"></i> Print
         </button>
       </div>
     </div>
 
-    <!-- BODY -->
-    <div class="receipt-body">
+    <div class="inv-body">
 
-      <div class="meta-grid">
-        <!-- LEFT META -->
-        <div class="meta-box">
-          <div class="meta-row"><div class="k">Date</div><div class="v mono">{{ invoice.created_at|date:"D, d M Y H:i" }}</div></div>
-          <div class="meta-row"><div class="k">Seller</div><div class="v">{{ invoice.seller.username }}</div></div>
+      <div class="inv-meta-grid">
+        <div class="inv-meta-box">
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Date</div>
+            <div class="inv-meta-value inv-mono">{{ invoice.created_at|date:"D, d M Y H:i" }}</div>
+          </div>
 
-          <div class="meta-row">
-            <div class="k">Payment Method</div>
-            <div class="v">
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Seller</div>
+            <div class="inv-meta-value">{{ invoice.seller.username }}</div>
+          </div>
+
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Payment Method</div>
+            <div class="inv-meta-value">
               {% if invoice.status == "cash" %}
-                <span class="kbadge b-cash">CASH</span>
+                <span class="inv-badge inv-b-cash">CASH</span>
               {% elif invoice.status == "bank" %}
-                <span class="kbadge b-bank">BANK</span>
+                <span class="inv-badge inv-b-bank">BANK</span>
               {% elif invoice.status == "ebt" %}
-                <span class="kbadge b-ebt">EBT</span>
+                <span class="inv-badge inv-b-ebt">EBT</span>
               {% elif invoice.status == "debt" %}
-                <span class="kbadge b-debt">DEBT</span>
+                <span class="inv-badge inv-b-debt">DEBT</span>
               {% else %}
-                <span class="kbadge b-debt">{{ invoice.status|upper }}</span>
+                <span class="inv-badge inv-b-debt">{{ invoice.status|upper }}</span>
               {% endif %}
             </div>
           </div>
 
-          <div class="meta-row">
-            <div class="k">Payment Status</div>
-            <div class="v">
-              {% if invoice.paid %}<span class="kbadge b-paid">PAID</span>
-              {% else %}<span class="kbadge b-unpaid">UNPAID</span>{% endif %}
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Payment Status</div>
+            <div class="inv-meta-value">
+              {% if invoice.paid %}
+                <span class="inv-badge inv-b-paid">PAID</span>
+              {% else %}
+                <span class="inv-badge inv-b-unpaid">UNPAID</span>
+              {% endif %}
             </div>
           </div>
         </div>
 
-        <!-- RIGHT META -->
-        <div class="meta-box">
-          <div class="meta-row">
-            <div class="k">Customer</div>
-            <div class="v">{% if invoice.customer %}{{ invoice.customer.name }}{% else %}Walk-in{% endif %}</div>
+        <div class="inv-meta-box">
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Customer</div>
+            <div class="inv-meta-value">
+              {% if invoice.customer %}{{ invoice.customer.name }}{% else %}Walk-in{% endif %}
+            </div>
           </div>
 
-          <div class="meta-row">
-            <div class="k">Phone</div>
-            <div class="v">{% if invoice.customer and invoice.customer.phone %}{{ invoice.customer.phone }}{% else %}—{% endif %}</div>
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Phone</div>
+            <div class="inv-meta-value">
+              {% if invoice.customer and invoice.customer.phone %}{{ invoice.customer.phone }}{% else %}—{% endif %}
+            </div>
           </div>
 
-          <div class="meta-row"><div class="k">Items</div><div class="v mono">{{ invoice_items|length }}</div></div>
+          <div class="inv-meta-row">
+            <div class="inv-meta-key">Items</div>
+            <div class="inv-meta-value inv-mono">{{ invoice_items|length }}</div>
+          </div>
 
           {% if invoice.status == "debt" %}
-            <div class="meta-row">
-              <div class="k">Grand Total</div>
-              <div class="v mono">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</div>
+            <div class="inv-meta-row">
+              <div class="inv-meta-key">Grand Total</div>
+              <div class="inv-meta-value inv-mono">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</div>
             </div>
 
-            <div class="meta-row">
-              <div class="k">Returns (Posted)</div>
-              <div class="v mono">- Tsh {{ returns_total|default:0|intcomma }}</div>
+            <div class="inv-meta-row">
+              <div class="inv-meta-key">Returns (Posted)</div>
+              <div class="inv-meta-value inv-mono">- Tsh {{ returns_total|default:0|intcomma }}</div>
             </div>
 
-            <div class="meta-row">
-              <div class="k">Effective Total</div>
-              <div class="v mono">Tsh {{ total_effective|default:0|intcomma }}</div>
+            <div class="inv-meta-row">
+              <div class="inv-meta-key">Effective Total</div>
+              <div class="inv-meta-value inv-mono">Tsh {{ total_effective|default:0|intcomma }}</div>
             </div>
 
-            <div class="meta-row">
-              <div class="k">Paid</div>
-              <div class="v mono">Tsh {{ payments_total|default:0|intcomma }}</div>
+            <div class="inv-meta-row">
+              <div class="inv-meta-key">Paid</div>
+              <div class="inv-meta-value inv-mono">Tsh {{ payments_total|default:0|intcomma }}</div>
             </div>
 
-            <div class="meta-row">
-              <div class="k">Balance</div>
-              <div class="v mono">Tsh {{ balance_value|default:0|intcomma }}</div>
+            <div class="inv-meta-row">
+              <div class="inv-meta-key">Balance</div>
+              <div class="inv-meta-value inv-mono">Tsh {{ balance_value|default:0|intcomma }}</div>
             </div>
           {% endif %}
         </div>
       </div>
 
-      <!-- ITEMS TABLE -->
-      <div class="table-wrap">
+      <div class="inv-table-wrap">
         <div class="table-responsive">
-          <table class="items">
+          <table class="inv-items">
             <thead>
               <tr>
                 <th style="width:40px">#</th>
                 <th>Product</th>
-                <th class="t-center" style="width:90px">Qty</th>
-                <th class="t-right" style="width:130px">Unit (Tsh)</th>
-                <th class="t-right" style="width:120px">Disc</th>
-                <th class="t-right" style="width:150px">Line Total</th>
+                <th class="inv-t-center" style="width:90px">Qty</th>
+                <th class="inv-t-right" style="width:130px">Unit (Tsh)</th>
+                <th class="inv-t-right" style="width:120px">Disc</th>
+                <th class="inv-t-right" style="width:150px">Line Total</th>
               </tr>
             </thead>
             <tbody>
               {% for item in invoice_items %}
               <tr>
-                <td class="t-center muted mono">{{ forloop.counter }}</td>
+                <td class="inv-t-center inv-muted inv-mono">{{ forloop.counter }}</td>
                 <td>
-                  <div style="font-weight:950">{{ item.product.name }}</div>
-                  <div class="muted" style="font-size:.85rem">
+                  <div class="inv-product-name">{{ item.product.name }}</div>
+                  <div class="inv-product-sub">
                     Effective: Tsh {{ item.effective_price|floatformat:0|intcomma }}
                   </div>
                 </td>
-                <td class="t-center mono">{{ item.quantity }}</td>
-                <td class="t-right mono">{{ item.unit_price|floatformat:0|intcomma }}</td>
-                <td class="t-right mono">
+                <td class="inv-t-center inv-mono">{{ item.quantity }}</td>
+                <td class="inv-t-right inv-mono">{{ item.unit_price|floatformat:0|intcomma }}</td>
+                <td class="inv-t-right inv-mono">
                   {% if item.discount and item.discount > 0 %}
                     {{ item.discount|floatformat:0|intcomma }}
                   {% else %}
                     —
                   {% endif %}
                 </td>
-                <td class="t-right mono" style="font-weight:980">
+                <td class="inv-t-right inv-mono inv-strong">
                   {{ item.line_total|floatformat:0|intcomma }}
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="t-center muted" style="padding:16px">No items on this invoice.</td>
+                <td colspan="6" class="inv-t-center inv-muted" style="padding:16px">
+                  No items on this invoice.
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -267,28 +581,39 @@
         </div>
       </div>
 
-      <!-- TOTALS (normal invoice totals) -->
-      <div class="totals">
-        <div class="totals-box">
-          <div class="rowx"><span>Subtotal</span><b class="mono">Tsh {{ invoice.subtotal|default:0|floatformat:0|intcomma }}</b></div>
-          <div class="rowx"><span>Tax</span><b class="mono">Tsh {{ invoice.tax|default:0|floatformat:0|intcomma }}</b></div>
-          <div class="rowx"><span>Shipping</span><b class="mono">Tsh {{ invoice.shipping_fee|default:0|floatformat:0|intcomma }}</b></div>
-          <div class="rowx grand"><span>Grand Total</span><b class="mono">Tsh {{ invoice.total_amount|default:0|floatformat:0|intcomma }}</b></div>
+      <div class="inv-totals">
+        <div class="inv-totals-box">
+          <div class="inv-rowx">
+            <span>Subtotal</span>
+            <b class="inv-mono">Tsh {{ invoice.subtotal|default:0|floatformat:0|intcomma }}</b>
+          </div>
+          <div class="inv-rowx">
+            <span>Tax</span>
+            <b class="inv-mono">Tsh {{ invoice.tax|default:0|floatformat:0|intcomma }}</b>
+          </div>
+          <div class="inv-rowx">
+            <span>Shipping</span>
+            <b class="inv-mono">Tsh {{ invoice.shipping_fee|default:0|floatformat:0|intcomma }}</b>
+          </div>
+          <div class="inv-rowx inv-grand">
+            <span>Grand Total</span>
+            <b class="inv-mono">Tsh {{ invoice.total_amount|default:0|floatformat:0|intcomma }}</b>
+          </div>
         </div>
       </div>
 
       {% if invoice.status == "debt" and balance_value > 0 %}
-        <div class="no-print" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-          <a class="btn btn-outline-primary btn-print" href="{% url 'sales:record_payment' invoice.id %}">
+        <div class="inv-action-row no-print">
+          <a class="btn btn-outline-primary inv-btn" href="{% url 'sales:record_payment' invoice.id %}">
             <i class="fa-solid fa-hand-holding-dollar me-1"></i> Record Payment
           </a>
 
-          <a class="btn btn-outline-danger btn-print" href="{% url 'sales:sales_return_create' invoice.id %}">
+          <a class="btn btn-outline-danger inv-btn" href="{% url 'sales:sales_return_create' invoice.id %}">
             <i class="fa-solid fa-rotate-left me-1"></i> Add Return
           </a>
 
           {% if invoice.customer %}
-            <a class="btn btn-outline-dark btn-print"
+            <a class="btn btn-outline-dark inv-btn"
                href="{% url 'sales:customer_debt_statement' invoice.customer.id %}">
               <i class="fa-solid fa-clock-rotate-left me-1"></i> View Full History
             </a>
@@ -297,26 +622,26 @@
       {% endif %}
 
       {% if invoice.status == "debt" %}
-      <div class="history-grid">
-        <div class="hist-card">
-          <div class="hist-head">
+      <div class="inv-history-grid">
+        <div class="inv-hist-card">
+          <div class="inv-hist-head">
             <b><i class="fa-solid fa-coins me-1"></i> Payments</b>
-            <span class="pill">Tsh <b class="mono">{{ payments_total|default:0|intcomma }}</b></span>
+            <span class="inv-pill">Tsh <b class="inv-mono">{{ payments_total|default:0|intcomma }}</b></span>
           </div>
-          <div class="hist-body">
+          <div class="inv-hist-body">
             {% if payments %}
               {% for p in payments %}
-                <div class="hist-item">
-                  <div class="hist-left">
-                    <div class="t">Payment #{{ p.id }}</div>
-                    <div class="s">
+                <div class="inv-hist-item">
+                  <div class="inv-hist-left">
+                    <div class="inv-hist-title">Payment #{{ p.id }}</div>
+                    <div class="inv-hist-sub">
                       {% if p.created_by %}By {{ p.created_by.username }} • {% endif %}
                       {{ p.timestamp|date:"d M Y, H:i" }}
                     </div>
                   </div>
-                  <div class="hist-right">
-                    <div class="amt mono">Tsh {{ p.amount|intcomma }}</div>
-                    <div class="dt">Paid</div>
+                  <div class="inv-hist-right">
+                    <div class="inv-hist-amt inv-mono">Tsh {{ p.amount|intcomma }}</div>
+                    <div class="inv-hist-date">Paid</div>
                   </div>
                 </div>
               {% endfor %}
@@ -326,25 +651,25 @@
           </div>
         </div>
 
-        <div class="hist-card">
-          <div class="hist-head">
+        <div class="inv-hist-card">
+          <div class="inv-hist-head">
             <b><i class="fa-solid fa-rotate-left me-1"></i> Returns</b>
-            <span class="pill">Tsh <b class="mono">{{ returns_total|default:0|intcomma }}</b></span>
+            <span class="inv-pill">Tsh <b class="inv-mono">{{ returns_total|default:0|intcomma }}</b></span>
           </div>
-          <div class="hist-body">
+          <div class="inv-hist-body">
             {% if returns %}
               {% for r in returns %}
-                <div class="hist-item">
-                  <div class="hist-left">
-                    <div class="t">Return #{{ r.id }} {% if r.status %}({{ r.status|upper }}){% endif %}</div>
-                    <div class="s">
+                <div class="inv-hist-item">
+                  <div class="inv-hist-left">
+                    <div class="inv-hist-title">Return #{{ r.id }} {% if r.status %}({{ r.status|upper }}){% endif %}</div>
+                    <div class="inv-hist-sub">
                       {% if r.created_by %}By {{ r.created_by.username }} • {% endif %}
                       {{ r.created_at|date:"d M Y, H:i" }}
                     </div>
                   </div>
-                  <div class="hist-right">
-                    <div class="amt mono">Tsh {{ r.total_amount|floatformat:0|intcomma }}</div>
-                    <div class="dt">Returned</div>
+                  <div class="inv-hist-right">
+                    <div class="inv-hist-amt inv-mono">Tsh {{ r.total_amount|floatformat:0|intcomma }}</div>
+                    <div class="inv-hist-date">Returned</div>
                   </div>
                 </div>
               {% endfor %}
@@ -356,7 +681,7 @@
       </div>
       {% endif %}
 
-      <div class="foot">
+      <div class="inv-foot">
         <strong>THANK YOU FOR BUYING WITH US</strong><br>
         KILASI INVESTMENT • TIN: 155-581-522
       </div>

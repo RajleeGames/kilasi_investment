@@ -421,26 +421,31 @@
   .sd-submit-wrap{
     display:flex;
     flex-direction:column;
-    gap:.7rem;
+    gap:.6rem;
   }
 
+  /* === NEW: payment + customer on one row, submit button moved below === */
   .sd-submit-grid{
     display:grid;
-    grid-template-columns:1fr;
-    gap:.75rem;
-    align-items:end;
+    grid-template-columns:1fr 1fr;
+    gap:.6rem;
+    align-items:start;
   }
 
-  @media(min-width:992px){
-    .sd-submit-grid{
-      grid-template-columns:1fr 1.2fr auto;
-    }
+  /* submit action row (button sits below the two columns) */
+  .sd-submit-action{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    margin-top:0.2rem;
   }
 
+  /* label appearance kept small (we previously hid labels in an earlier edit;
+     keep placeholders for clarity so users can fill inputs). */
   .sd-submit-label{
     display:block;
-    margin-bottom:.35rem;
-    font-size:.71rem;
+    margin-bottom:.3rem;
+    font-size:.70rem;
     font-weight:700;
     color:#64748b;
     text-transform:uppercase;
@@ -454,73 +459,81 @@
   }
 
   .sd-note{
-    font-size:.71rem;
+    font-size:.69rem;
     color:var(--sd-muted);
   }
 
-  #debtFields{
-    display:none;
-    gap:.55rem;
+  /* Payment badge compact — keep only icon visible (text hidden via zero font-size)
+     but ensure placeholder icon shows */
+  .sd-payment-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.32rem;
+    margin-top:.3rem;
+    padding:.22rem .46rem;
+    border-radius:12px;
+    font-size:.67rem;
+    font-weight:700;
+    border:1px solid var(--sd-line);
+    background:#f8fafc;
+    color:#475569;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+    line-height:1;
+    border-width:1px;
+  }
+
+  /* hide paymentBadge text by making font-size 0 but keep icon visible */
+  .sd-payment-badge { font-size:0; }
+  .sd-payment-badge i{ font-size:15px; color:var(--sd-muted); }
+
+  /* smaller select and inputs for compact layout */
+  #paymentMethod.sd-control,
+  #paymentMethod.form-select{
+    height:36px;
+    font-size:.76rem;
+    padding:.28rem .6rem;
+    border-radius:10px;
+  }
+
+  #customerFields{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:.45rem;
     align-items:center;
   }
 
-  @media(max-width:768px){
-    #debtFields{
-      flex-direction:column;
-    }
+  #customerFields input.sd-control{
+    height:36px;
+    font-size:.75rem;
+    padding:.28rem .6rem;
+    border-radius:10px;
   }
 
-  #lowStockToast{
-    position:fixed;
-    top:1rem;
-    right:1rem;
-    z-index:1100;
-    min-width:280px;
+  /* submit button - moved below: keep it visible and easy to click */
+  .sd-submit-action .sd-btn.sd-btn-success{
+    height:40px;
+    padding:0 1rem;
+    font-size:.9rem;
+    border-radius:10px;
+    min-width:160px;
   }
 
-  @media(max-width:768px){
-    .sd-wrap{
-      padding:0 .65rem;
-    }
-
-    .sd-card-b,
-    .sd-card-h{
-      padding:.85rem;
-    }
-
-    .sd-table thead{
-      display:none;
-    }
-
-    .sd-table,
-    .sd-table tbody,
-    .sd-table tr,
-    .sd-table td{
-      display:block;
-      width:100%;
-    }
-
-    .sd-table tbody tr{
-      padding:.2rem 0;
-    }
-
-    .sd-table tbody td{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-    }
-
-    .sd-table tbody td::before{
-      content:attr(data-label);
-      font-size:.66rem;
-      font-weight:700;
-      color:#64748b;
-      text-transform:uppercase;
-      letter-spacing:.05em;
-      min-width:84px;
-    }
+  /* small screens: stack everything */
+  @media(max-width:991px){
+    .sd-submit-grid{ grid-template-columns:1fr; }
+    #customerFields{ grid-template-columns:1fr; }
+    .sd-submit-action{ justify-content:flex-start; }
+    .sd-submit-action .sd-btn.sd-btn-success{ min-width:120px; width:100%; }
   }
+
+  /* Slightly reduce vertical padding inside card body so area looks denser */
+  .sd-card-b{ padding:.8rem; }
+
+  /* Reduce icon sizes inside badges so text fits nicely */
+  .sd-sel-badge i, .sd-pill i{ font-size:.82rem; }
 </style>
 {% endblock %}
 
@@ -543,7 +556,7 @@
         </h2>
 
         <div class="sd-sub">
-          Search, scan, add items, apply discount per item, then submit cash, bank, EBT or debt.
+          Search, scan, add items, apply discount per item, then submit cash, bank, EBT or debt with optional customer details.
         </div>
       </div>
 
@@ -718,29 +731,35 @@
                       <option value="ebt">EBT (Mobile/Transfer)</option>
                       <option value="debt">Debt</option>
                     </select>
-                  </div>
-
-                  <div>
-                    <label class="sd-submit-label">Customer (only for debt)</label>
-                    <div id="debtFields">
-                      <input name="customer_name" type="text" class="form-control sd-control" placeholder="Customer name">
-                      <input name="customer_phone" type="tel" class="form-control sd-control" placeholder="Phone">
+                    <div id="paymentHint" class="sd-payment-badge">
+                      <i class="fa-solid fa-user"></i>
+                      Customer details can be saved for all payment methods
                     </div>
-                    <div class="sd-submit-help">Cash, bank and EBT can stay walk-in.</div>
                   </div>
 
                   <div>
-                    <label class="sd-submit-label d-none d-lg-block">&nbsp;</label>
-                    <button type="submit" class="sd-btn sd-btn-success w-100">
-                      <i class="fa-solid fa-circle-check"></i>
-                      Submit Sale
-                    </button>
+                    <label class="sd-submit-label">Customer Details</label>
+                    <div id="customerFields">
+                      <input name="customer_name" type="text" class="form-control sd-control" placeholder="Customer name (optional)">
+                      <input name="customer_phone" type="tel" class="form-control sd-control" placeholder="Phone number (optional)">
+                    </div>
+                    <div class="sd-submit-help">
+                      For debt you can still require name/phone in backend. For cash, bank and EBT these details are optional but allowed.
+                    </div>
                   </div>
 
                 </div>
 
-                <div class="sd-note">
-                  You can add multiple items before submitting. The invoice will include all cart items.
+                <!-- Submit button moved down here so name/phone fields have full width -->
+                <div class="sd-submit-action">
+                  <button type="submit" class="sd-btn sd-btn-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Submit Sale
+                  </button>
+                </div>
+
+                <div class="sd-note" style="margin-top:8px;">
+                  You can add multiple items before submitting. The invoice will include all cart items and can also store customer details for any payment type.
                 </div>
               </div>
             </form>
@@ -890,7 +909,7 @@
           if(!found){
             found = {
               id: pd.id,
-              display: `${pd.name} — Tsh${parseFloat(pd.price).toFixed(2)} (Stock: ${pd.stock})`,
+              display: `${pd.name} — Tsh ${parseFloat(pd.price).toFixed(2)} (Stock: ${pd.stock})`,
               category: null,
               stock: pd.stock,
               reorder_level: 0
@@ -907,6 +926,32 @@
         }
       })
       .catch(() => alert("Barcode lookup failed"));
+  }
+
+  function updatePaymentHint(){
+    const pm = document.getElementById('paymentMethod');
+    const hint = document.getElementById('paymentHint');
+    if(!pm || !hint) return;
+
+    let text = 'Customer details can be saved for all payment methods';
+    let icon = 'fa-user';
+
+    if(pm.value === 'debt'){
+      text = 'For debt, customer name and phone are recommended';
+      icon = 'fa-hand-holding-dollar';
+    }else if(pm.value === 'cash'){
+      text = 'Cash sale can also save customer details';
+      icon = 'fa-money-bill-wave';
+    }else if(pm.value === 'bank'){
+      text = 'Bank sale can also save customer details';
+      icon = 'fa-building-columns';
+    }else if(pm.value === 'ebt'){
+      text = 'EBT sale can also save customer details';
+      icon = 'fa-mobile-screen-button';
+    }
+
+    /* keep updating icon only (text is present in DOM but visually hidden) */
+    hint.innerHTML = `<i class="fa-solid ${icon}"></i> ${text}`;
   }
 
   txt.addEventListener('input', showResults);
@@ -931,11 +976,9 @@
     notifyLowStock();
 
     const pm = document.getElementById('paymentMethod');
-    const df = document.getElementById('debtFields');
-    if (pm && df){
-      const toggle = () => { df.style.display = pm.value === 'debt' ? 'flex' : 'none'; };
-      pm.addEventListener('change', toggle);
-      toggle();
+    if(pm){
+      pm.addEventListener('change', updatePaymentHint);
+      updatePaymentHint();
     }
   });
 </script>

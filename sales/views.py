@@ -869,6 +869,8 @@ def submit_sale(request):
       - debt => paid=False and appears in debts list
       - stock updates ONLY via StockEntry
       - branch-aware: seller sells only from their branch
+      - customer name/phone allowed for ALL payment methods
+      - saved contacts also go to Customer table
     """
     if request.method != "POST":
         return redirect("sales:seller_dashboard")
@@ -887,22 +889,27 @@ def submit_sale(request):
     if payment not in ("cash", "debt", "ebt", "bank"):
         payment = "debt"
 
+    # debt can require at least some customer identification
+    if payment == "debt" and not customer_name and not customer_phone:
+        messages.error(request, "For debt sale, enter at least customer name or phone number.")
+        return redirect("sales:seller_dashboard")
+
     customer = None
 
-    # Save customer for any sale if name/phone was entered
+    # Save customer for ALL payment methods if any info entered
     if customer_name or customer_phone:
         customer = _save_customer_contact(customer_name, customer_phone)
 
-    # For debt, make sure customer exists even if blank
+    # For debt, force customer creation even if one field missing
     if payment == "debt" and customer is None:
-        customer = _save_customer_contact("Customer", customer_phone or "")
+        customer = _save_customer_contact(customer_name or "Customer", customer_phone or "")
 
-    # IMPORTANT: always define paid_flag
+    # IMPORTANT: paid flag
     paid_flag = payment in ("cash", "bank", "ebt")
 
     try:
         with transaction.atomic():
-            # 1) Validate stock FIRST
+            # 1) Validate stock first
             if branch:
                 for pid, data in cart.items():
                     qty = max(1, int(data.get("qty", 1)))
@@ -915,6 +922,7 @@ def submit_sale(request):
                         .first()
                     )
                     available = int(ps.quantity) if ps else 0
+
                     if qty > available:
                         raise ValueError(
                             f"Insufficient stock for '{prod.name}' in your branch. "
@@ -969,12 +977,20 @@ def submit_sale(request):
             if hasattr(inv, "calculate_totals") and callable(getattr(inv, "calculate_totals")):
                 inv.calculate_totals()
 
+            # 5) Extra safety: if invoice has no customer but form had data, attach saved customer again
+            if (customer_name or customer_phone) and getattr(inv, "customer", None) is None:
+                customer = _save_customer_contact(customer_name, customer_phone)
+                if customer:
+                    inv.customer = customer
+                    inv.save(update_fields=["customer"])
+
     except (ValueError, ValidationError) as e:
         messages.error(request, str(e))
         return redirect("sales:seller_dashboard")
 
     request.session["cart"] = {}
     request.session.modified = True
+    messages.success(request, "Sale submitted successfully.")
     return redirect("sales:invoice_detail", pk=inv.pk)
 # ───────────────────────────────────────────────────────────────
 

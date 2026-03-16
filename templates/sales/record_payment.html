@@ -5,104 +5,354 @@
 
 {% block extra_css %}
 <style>
-  .page-wrap{max-width:980px;margin:1.5rem auto;padding:0 1rem;}
-  .header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
-  .title{display:flex;gap:.75rem;align-items:center;margin:0;}
-  .title .icon{
-    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
-    background:rgba(25,135,84,.12);color:#198754;
-  }
-  .subtext{color:#6c757d;margin:.35rem 0 0 0;}
-  .pill{
-    display:inline-flex;align-items:center;gap:.4rem;
-    padding:.35rem .65rem;border-radius:999px;
-    background:#f8f9fa;border:1px solid #e9ecef;
-    color:#495057;font-size:.85rem;
+  :root{
+    --pay-bg:#f8fafc;
+    --pay-card:#ffffff;
+    --pay-line:#e2e8f0;
+    --pay-line-soft:#eef2f7;
+    --pay-text:#0f172a;
+    --pay-muted:#64748b;
+    --pay-success:#16a34a;
+    --pay-success-soft:rgba(22,163,74,.08);
+    --pay-primary:#2563eb;
+    --pay-primary-soft:rgba(37,99,235,.08);
+    --pay-danger:#dc2626;
+    --pay-shadow:0 10px 30px rgba(15,23,42,.06);
   }
 
-  .grid{margin-top:1rem;}
-  .cardx{
-    border:1px solid #e9ecef;border-radius:18px;background:#fff;
-    box-shadow:0 6px 24px rgba(0,0,0,.04);
+  .pay-wrap{
+    max-width:980px;
+    margin:1rem auto 1.4rem;
+    padding:0 .85rem;
+    color:var(--pay-text);
   }
-  .cardx .card-body{padding:1.1rem 1.1rem;}
-  .label{color:#6c757d;font-size:.85rem;margin:0;}
-  .value{font-weight:800;font-size:1.35rem;margin:.15rem 0 0 0;}
-  .value.big{font-size:1.8rem;}
-  .muted{color:#6c757d;}
-  .btn-soft{border-radius:999px;padding:.45rem .85rem;}
-  .form-control{border-radius:12px;}
-  .help{font-size:.85rem;color:#6c757d;margin-top:.25rem;}
-  .list-wrap{
-    border:1px solid #e9ecef;border-radius:18px;overflow:hidden;background:#fff;
-    box-shadow:0 6px 24px rgba(0,0,0,.04);
+
+  .pay-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.75rem;
+    flex-wrap:wrap;
+    margin-bottom:.9rem;
   }
-  .list-head{padding:.9rem 1.1rem;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;gap:.75rem;flex-wrap:wrap;}
-  .list-head .h{font-weight:800;margin:0;}
+
+  .pay-title{
+    display:flex;
+    gap:.6rem;
+    align-items:center;
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    color:var(--pay-text);
+  }
+
+  .pay-icon{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    background:var(--pay-success-soft);
+    color:var(--pay-success);
+    font-size:.95rem;
+    flex-shrink:0;
+  }
+
+  .pay-subtext{
+    color:var(--pay-muted);
+    margin:.28rem 0 0 0;
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .pay-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .6rem;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid var(--pay-line);
+    color:#475569;
+    font-size:.71rem;
+    font-weight:600;
+    line-height:1;
+  }
+
+  .pay-grid{
+    margin-top:.2rem;
+  }
+
+  .pay-card,
+  .pay-list-wrap{
+    border:1px solid var(--pay-line);
+    border-radius:18px;
+    background:var(--pay-card);
+    box-shadow:var(--pay-shadow);
+  }
+
+  .pay-card .card-body{
+    padding:1rem;
+  }
+
+  .pay-label{
+    color:var(--pay-muted);
+    font-size:.71rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin:0;
+  }
+
+  .pay-value{
+    font-weight:800;
+    font-size:1.02rem;
+    margin:.16rem 0 0 0;
+    line-height:1.2;
+    color:var(--pay-text);
+  }
+
+  .pay-value.pay-big{
+    font-size:1.38rem;
+  }
+
+  .pay-muted{
+    color:var(--pay-muted);
+    font-size:.75rem;
+  }
+
+  .pay-btn{
+    border-radius:12px;
+    padding:.48rem .85rem;
+    font-size:.76rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.35rem;
+    min-height:38px;
+    text-decoration:none;
+  }
+
+  .pay-form-label{
+    font-size:.73rem;
+    font-weight:700;
+    color:#475569;
+    margin-bottom:.38rem;
+  }
+
+  .pay-control{
+    border-radius:12px;
+    min-height:40px;
+    font-size:.78rem;
+    border:1px solid var(--pay-line);
+    box-shadow:none !important;
+  }
+
+  .pay-control:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .16rem rgba(37,99,235,.10) !important;
+  }
+
+  .pay-help{
+    font-size:.7rem;
+    color:var(--pay-muted);
+    margin-top:.28rem;
+  }
+
+  .pay-list-wrap{
+    overflow:hidden;
+  }
+
+  .pay-list-head{
+    padding:.85rem 1rem;
+    border-bottom:1px solid var(--pay-line-soft);
+    display:flex;
+    justify-content:space-between;
+    gap:.75rem;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .pay-list-title{
+    font-weight:700;
+    margin:0;
+    font-size:.82rem;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+    color:var(--pay-text);
+  }
+
+  .pay-item{
+    padding:.82rem 1rem;
+    border-color:var(--pay-line-soft) !important;
+    font-size:.77rem;
+  }
+
+  .pay-item-main{
+    font-size:.77rem;
+    font-weight:600;
+    color:var(--pay-text);
+  }
+
+  .pay-item-amount{
+    font-size:.8rem;
+    font-weight:700;
+    color:var(--pay-text);
+  }
+
+  .pay-divider{
+    border-color:var(--pay-line-soft);
+    opacity:1;
+  }
+
+  .pay-alert{
+    border-radius:14px;
+    font-size:.75rem;
+    padding:.8rem .9rem;
+  }
+
+  .pay-section-title{
+    font-size:.9rem;
+    font-weight:700;
+    color:var(--pay-text);
+    margin:0 0 .35rem 0;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  @media(max-width:768px){
+    .pay-wrap{
+      padding:0 .7rem;
+    }
+
+    .pay-card .card-body,
+    .pay-list-head,
+    .pay-item{
+      padding:.88rem;
+    }
+
+    .pay-title{
+      font-size:.95rem;
+    }
+
+    .pay-icon{
+      width:36px;
+      height:36px;
+      font-size:.88rem;
+    }
+
+    .pay-value{
+      font-size:.96rem;
+    }
+
+    .pay-value.pay-big{
+      font-size:1.24rem;
+    }
+
+    .pay-btn{
+      width:100%;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-wrap">
+<div class="pay-wrap">
 
-  <div class="header mb-3">
+  <div class="pay-header">
     <div>
-      <h2 class="title">
-        <span class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+      <h2 class="pay-title">
+        <span class="pay-icon">
+          <i class="fa-solid fa-hand-holding-dollar"></i>
+        </span>
         Record Payment
       </h2>
 
-      <p class="subtext">
-        Invoice: <span class="pill"><i class="fa-solid fa-file-invoice me-1"></i>#{{ invoice.id }}</span>
+      <p class="pay-subtext">
+        <span class="pay-pill">
+          <i class="fa-solid fa-file-invoice"></i>
+          #{{ invoice.id }}
+        </span>
+
         {% if branch %}
-          <span class="pill ms-2"><i class="fa-solid fa-shop me-1"></i>{{ branch.name }}</span>
+          <span class="pay-pill">
+            <i class="fa-solid fa-shop"></i>
+            {{ branch.name }}
+          </span>
         {% endif %}
+
         {% if is_seller %}
-          <span class="pill ms-2"><i class="fa-solid fa-user-tag me-1"></i>Seller mode</span>
+          <span class="pay-pill">
+            <i class="fa-solid fa-user-tag"></i>
+            Seller mode
+          </span>
         {% endif %}
       </p>
     </div>
 
     <div class="d-flex gap-2 flex-wrap">
-      <!-- Back: seller goes to debts list, admin/cashier can also go there -->
-      <a href="{% url 'sales:outstanding_debts' %}" class="btn btn-outline-secondary btn-soft">
-        <i class="fa-solid fa-arrow-left me-1"></i>Back to Debts
+      <a href="{% url 'sales:outstanding_debts' %}" class="btn btn-outline-secondary pay-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Debts
       </a>
 
-      <!-- Optional: open invoice -->
-      <a href="{% url 'sales:invoice_detail' invoice.id %}" class="btn btn-outline-primary btn-soft">
-        <i class="fa-solid fa-receipt me-1"></i>View Invoice
+      <a href="{% url 'sales:invoice_detail' invoice.id %}" class="btn btn-outline-primary pay-btn">
+        <i class="fa-solid fa-receipt"></i>
+        View Invoice
       </a>
     </div>
   </div>
 
-  <div class="row g-3 grid">
+  <div class="row g-3 pay-grid">
     <div class="col-12 col-lg-5">
-      <div class="cardx">
+      <div class="pay-card">
         <div class="card-body">
-          <p class="label">Customer</p>
-          <p class="value">{{ invoice.customer.name|default:"Walk-in" }}</p>
+          <p class="pay-label">Customer</p>
+          <p class="pay-value">{{ invoice.customer.name|default:"Walk-in" }}</p>
+
           <div class="d-flex gap-2 flex-wrap mt-2">
-            <span class="pill"><i class="fa-solid fa-phone me-1"></i>{{ invoice.customer.phone|default:"—" }}</span>
-            <span class="pill"><i class="fa-solid fa-calendar-day me-1"></i>{{ invoice.created_at|date:"Y-m-d H:i" }}</span>
+            <span class="pay-pill">
+              <i class="fa-solid fa-phone"></i>
+              {{ invoice.customer.phone|default:"—" }}
+            </span>
+
+            <span class="pay-pill">
+              <i class="fa-solid fa-calendar-day"></i>
+              {{ invoice.created_at|date:"Y-m-d H:i" }}
+            </span>
           </div>
 
-          <hr class="my-3">
+          <hr class="my-3 pay-divider">
 
-          <p class="label">Total Amount</p>
-          <p class="value">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</p>
+          <p class="pay-label">Total Amount</p>
+          <p class="pay-value">Tsh {{ invoice.total_amount|floatformat:0|intcomma }}</p>
 
-          <p class="label mt-3">Current Balance</p>
-          <p class="value big text-danger">Tsh {{ balance|floatformat:0|intcomma }}</p>
+          <p class="pay-label mt-3">Current Balance</p>
+          <p class="pay-value pay-big text-danger">Tsh {{ balance|floatformat:0|intcomma }}</p>
 
-          <div class="mt-2">
+          <div class="mt-2 d-flex gap-2 flex-wrap">
             {% if invoice.paid %}
-              <span class="pill"><i class="fa-solid fa-circle-check me-1"></i>Marked Paid</span>
+              <span class="pay-pill">
+                <i class="fa-solid fa-circle-check"></i>
+                Marked Paid
+              </span>
             {% else %}
-              <span class="pill"><i class="fa-regular fa-circle-xmark me-1"></i>Not Paid</span>
+              <span class="pay-pill">
+                <i class="fa-regular fa-circle-xmark"></i>
+                Not Paid
+              </span>
             {% endif %}
-            <span class="pill ms-2">
-              <i class="fa-solid fa-credit-card me-1"></i>{{ invoice.get_status_display }}
+
+            <span class="pay-pill">
+              <i class="fa-solid fa-credit-card"></i>
+              {{ invoice.get_status_display }}
             </span>
           </div>
         </div>
@@ -110,10 +360,14 @@
     </div>
 
     <div class="col-12 col-lg-7">
-      <div class="cardx">
+      <div class="pay-card">
         <div class="card-body">
-          <h5 class="mb-2 fw-bold"><i class="fa-solid fa-plus me-2"></i>Add Payment</h5>
-          <p class="muted mb-3">
+          <h5 class="pay-section-title">
+            <i class="fa-solid fa-plus"></i>
+            Add Payment
+          </h5>
+
+          <p class="pay-muted mb-3">
             Enter an amount up to the current balance. When balance reaches 0, invoice becomes paid automatically.
           </p>
 
@@ -121,70 +375,77 @@
             {% csrf_token %}
 
             <div class="mb-3">
-              <label for="amount" class="form-label fw-semibold">Amount to Pay (TSH)</label>
+              <label for="amount" class="form-label pay-form-label">Amount to Pay (TSH)</label>
               <input
                 type="number"
                 name="amount"
                 id="amount"
                 min="1"
                 max="{{ balance|floatformat:0 }}"
-                class="form-control"
+                class="form-control pay-control"
                 required
                 placeholder="e.g. 5000"
                 {% if balance <= 0 %}disabled{% endif %}
               >
-              <div class="help">Max allowed: Tsh {{ balance|floatformat:0|intcomma }}</div>
+              <div class="pay-help">
+                Max allowed: Tsh {{ balance|floatformat:0|intcomma }}
+              </div>
             </div>
 
             <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-success btn-soft" {% if balance <= 0 %}disabled{% endif %}>
-                <i class="fa-solid fa-check me-1"></i>Submit Payment
+              <button class="btn btn-success pay-btn" {% if balance <= 0 %}disabled{% endif %}>
+                <i class="fa-solid fa-check"></i>
+                Submit Payment
               </button>
 
-              <!-- ✅ Cancel goes to correct dashboard based on role -->
               {% if is_seller %}
-                <a href="{% url 'sales:seller_dashboard' %}" class="btn btn-outline-secondary btn-soft">
+                <a href="{% url 'sales:seller_dashboard' %}" class="btn btn-outline-secondary pay-btn">
                   Cancel
                 </a>
               {% else %}
-                <a href="{% url 'sales:admin_dashboard' %}" class="btn btn-outline-secondary btn-soft">
+                <a href="{% url 'sales:admin_dashboard' %}" class="btn btn-outline-secondary pay-btn">
                   Cancel
                 </a>
               {% endif %}
             </div>
 
             {% if balance <= 0 %}
-              <div class="alert alert-success mt-3 mb-0">
-                <i class="fa-solid fa-circle-check me-1"></i>This invoice is already fully paid.
+              <div class="alert alert-success pay-alert mt-3 mb-0">
+                <i class="fa-solid fa-circle-check me-1"></i>
+                This invoice is already fully paid.
               </div>
             {% endif %}
           </form>
         </div>
       </div>
 
-      <div class="list-wrap mt-3">
-        <div class="list-head">
-          <p class="h"><i class="fa-solid fa-clock-rotate-left me-2"></i>Payment History</p>
-          <span class="pill">
-            <i class="fa-solid fa-list me-1"></i>{{ history|length }} payment(s)
+      <div class="pay-list-wrap mt-3">
+        <div class="pay-list-head">
+          <p class="pay-list-title">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Payment History
+          </p>
+
+          <span class="pay-pill">
+            <i class="fa-solid fa-list"></i>
+            {{ history|length }} payment(s)
           </span>
         </div>
 
         <ul class="list-group list-group-flush">
           {% for p in history %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
+            <li class="list-group-item pay-item d-flex justify-content-between align-items-center">
               <div>
-                <div class="fw-semibold">{{ p.timestamp|date:"Y-m-d H:i" }}</div>
-                <div class="muted" style="font-size:.85rem;">Recorded by: {{ p.invoice.seller.username|default:"—" }}</div>
+                <div class="pay-item-main">{{ p.timestamp|date:"Y-m-d H:i" }}</div>
+                <div class="pay-muted">Recorded by: {{ p.invoice.seller.username|default:"—" }}</div>
               </div>
-              <span class="fw-bold">Tsh {{ p.amount|intcomma }}</span>
+              <span class="pay-item-amount">Tsh {{ p.amount|intcomma }}</span>
             </li>
           {% empty %}
-            <li class="list-group-item text-muted">No payments yet.</li>
+            <li class="list-group-item pay-item text-muted">No payments yet.</li>
           {% endfor %}
         </ul>
       </div>
-
     </div>
   </div>
 
