@@ -2355,7 +2355,6 @@ def product_details_json(request, pk):
         "history": history,
     })
 
-
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def product_detail(request, pk):
@@ -2368,33 +2367,67 @@ def product_detail(request, pk):
 
     if request.method == "POST":
         if not is_admin:
-            return HttpResponseForbidden("Only admin can restock.")
+            return HttpResponseForbidden("Only admin can manage stock.")
 
-        add_qty = _safe_int(request.POST.get("add_qty"), 0) or 0
+        action = (request.POST.get("action") or "add").strip().lower()
         note = (request.POST.get("note") or "").strip()
         branch_id = (request.POST.get("branch_id") or "").strip()
 
-        restock_branch = Branch.objects.filter(pk=branch_id).first() if branch_id else None
-        if not restock_branch:
-            restock_branch = Branch.objects.filter(is_active=True).first() or Branch.objects.first()
+        target_branch = Branch.objects.filter(pk=branch_id).first() if branch_id else None
+        if not target_branch:
+            target_branch = Branch.objects.filter(is_active=True).first() or Branch.objects.first()
 
-        if add_qty <= 0:
-            messages.error(request, "Enter a valid quantity greater than 0.")
-            return redirect("sales:product_detail", pk=pk)
-
-        if not restock_branch:
+        if not target_branch:
             messages.error(request, "No branch found. Please create a branch first.")
             return redirect("sales:product_detail", pk=pk)
 
         try:
             with transaction.atomic():
-                StockEntry.objects.create(
-                    product=product,
-                    change=add_qty,
-                    branch=restock_branch,
-                    note=note or "Restocked via UI",
+                current_branch_qty = int(
+                    ProductStock.objects.filter(product=product, branch=target_branch)
+                    .values_list("quantity", flat=True)
+                    .first() or 0
                 )
-            messages.success(request, f"Added {add_qty} to '{product.name}' in {restock_branch.name}.")
+
+                if action == "reset":
+                    if current_branch_qty <= 0:
+                        messages.warning(
+                            request,
+                            f"'{product.name}' already has 0 stock in {target_branch.name}."
+                        )
+                        return redirect("sales:product_detail", pk=pk)
+
+                    StockEntry.objects.create(
+                        product=product,
+                        change=-current_branch_qty,
+                        branch=target_branch,
+                        note=note or f"Stock reset to zero in {target_branch.name}",
+                    )
+
+                    messages.success(
+                        request,
+                        f"Stock for '{product.name}' in {target_branch.name} has been reset to 0."
+                    )
+
+                else:
+                    add_qty = _safe_int(request.POST.get("add_qty"), 0) or 0
+
+                    if add_qty <= 0:
+                        messages.error(request, "Enter a valid quantity greater than 0.")
+                        return redirect("sales:product_detail", pk=pk)
+
+                    StockEntry.objects.create(
+                        product=product,
+                        change=add_qty,
+                        branch=target_branch,
+                        note=note or "Restocked via UI",
+                    )
+
+                    messages.success(
+                        request,
+                        f"Added {add_qty} to '{product.name}' in {target_branch.name}."
+                    )
+
         except (ValidationError, ValueError) as e:
             messages.error(request, str(e))
 
@@ -2407,7 +2440,12 @@ def product_detail(request, pk):
 
     branch_stocks = []
     if is_admin:
-        branch_stocks = ProductStock.objects.filter(product=product).select_related("branch").order_by("branch__name")
+        branch_stocks = (
+            ProductStock.objects
+            .filter(product=product)
+            .select_related("branch")
+            .order_by("branch__name")
+        )
 
     current_stock = _get_branch_qty(product.pk, branch) if branch else int(getattr(product, "stock", 0) or 0)
 

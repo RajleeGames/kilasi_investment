@@ -300,6 +300,13 @@
     box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
   }
 
+  .pd-action-group{
+    display:flex;
+    gap:.55rem;
+    align-items:end;
+    flex-wrap:wrap;
+  }
+
   .pd-btn{
     height:40px;
     border:none;
@@ -313,9 +320,19 @@
     align-items:center;
     gap:.42rem;
     white-space:nowrap;
+    transition:.18s ease;
   }
 
   .pd-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .pd-btn-danger{
+    background:linear-gradient(135deg, #dc2626, #ef4444);
+  }
+
+  .pd-btn-danger:hover{
     color:#fff;
     transform:translateY(-1px);
   }
@@ -324,6 +341,21 @@
     margin-top:.7rem;
     font-size:.72rem;
     color:var(--pd-muted);
+  }
+
+  .pd-warning-box{
+    margin-top:.8rem;
+    padding:.75rem .85rem;
+    border-radius:14px;
+    border:1px solid rgba(245,158,11,.20);
+    background:rgba(245,158,11,.08);
+    color:#92400e;
+    font-size:.73rem;
+    line-height:1.5;
+  }
+
+  .pd-warning-box i{
+    margin-right:.35rem;
   }
 
   .pd-table-card{
@@ -410,6 +442,15 @@
 
     .pd-form-row{
       grid-template-columns:1fr;
+    }
+
+    .pd-action-group{
+      width:100%;
+    }
+
+    .pd-btn{
+      width:100%;
+      justify-content:center;
     }
 
     .pd-table thead{
@@ -512,7 +553,7 @@
     <div class="pd-stat">
       <div class="pd-stat-label">Selling Price</div>
       <div class="pd-stat-value">
-        <span class="pd-price-pill">Tsh {{ product.price|floatformat:2|intcomma }}</span>
+        <span class="pd-price-pill">Tsh {{ product.selling_price|floatformat:2|intcomma }}</span>
       </div>
     </div>
 
@@ -555,8 +596,8 @@
   {% if is_admin %}
   <div class="pd-section">
     <h4 class="pd-section-title">
-      <i class="fa-solid fa-plus"></i>
-      Restock Product
+      <i class="fa-solid fa-boxes-stacked"></i>
+      Manage Product Stock
     </h4>
 
     <form method="post">
@@ -569,7 +610,7 @@
 
         <div class="pd-field">
           <label>Branch</label>
-          <select name="branch_id">
+          <select name="branch_id" required>
             <option value="">— Select branch —</option>
             {% for b in branches %}
               <option value="{{ b.id }}">{{ b.name }}</option>
@@ -579,17 +620,35 @@
 
         <div class="pd-field">
           <label>Note</label>
-          <input type="text" name="note" placeholder="e.g. Supplier delivery">
+          <input type="text" name="note" placeholder="e.g. Supplier delivery or stock reset">
         </div>
 
-        <button type="submit" class="pd-btn">
-          <i class="fa-solid fa-floppy-disk"></i>
-          Save
-        </button>
+        <div class="pd-action-group">
+          <button type="submit" name="action" value="add" class="pd-btn">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save
+          </button>
+
+          <button
+            type="submit"
+            name="action"
+            value="reset"
+            class="pd-btn pd-btn-danger"
+            onclick="return confirm('Are you sure you want to reset this branch stock to 0?');"
+          >
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset Stock
+          </button>
+        </div>
       </div>
 
       <div class="pd-tip">
-        Tip: choose the correct branch so stock is added to the right location.
+        Tip: Save adds stock to the selected branch. Reset Stock safely creates an adjustment entry and returns selected branch stock to zero.
+      </div>
+
+      <div class="pd-warning-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Reset does not delete history. It creates a stock adjustment so your records stay correct.
       </div>
     </form>
   </div>

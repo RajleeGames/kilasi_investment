@@ -5,6 +5,8 @@ from django.db import models, transaction
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 # -------------------------
@@ -60,12 +62,14 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True)
 
-    # ✅ NEW: buying + selling
     buying_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     selling_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
 
-    # Cached total stock across branches (auto-updated)
-    stock = models.IntegerField(default=0, help_text="(Auto) Total stock across branches — do not edit manually.")
+    # Cached total stock across branches
+    stock = models.IntegerField(
+        default=0,
+        help_text="(Auto) Total stock across branches — do not edit manually."
+    )
 
     barcode = models.CharField(max_length=50, unique=True, blank=True)
     reorder_level = models.PositiveIntegerField(default=10)
@@ -95,11 +99,8 @@ class Product(models.Model):
         return int(total)
 
     def save(self, *args, **kwargs):
-        # ✅ only barcode generation here
         if not self.barcode:
             self.barcode = self._generate_unique_barcode()
-
-        # ✅ DO NOT recalc stock here (prevents double-add + recursion)
         super().save(*args, **kwargs)
 
 
@@ -131,8 +132,15 @@ class ProductStock(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-        # ✅ ONLY HERE update cached Product.stock
         Product.recalc_total_stock(self.product_id)
+
+
+# -------------------------
+# Signal: recalc cached total when ProductStock is deleted
+# -------------------------
+@receiver(post_delete, sender=ProductStock)
+def recalc_product_stock_after_delete(sender, instance, **kwargs):
+    Product.recalc_total_stock(instance.product_id)
 
 
 # -------------------------
@@ -150,7 +158,13 @@ class StockEntry(models.Model):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="stock_entries")
     change = models.IntegerField(help_text="Positive if stock was added, negative if removed")
-    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, null=True, blank=True, related_name="stock_entries")
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_entries"
+    )
     timestamp = models.DateTimeField(default=timezone.now)
     note = models.CharField(max_length=255, blank=True)
 
@@ -172,14 +186,17 @@ class StockEntry(models.Model):
 
         if not is_new:
             old = StockEntry.objects.get(pk=self.pk)
-            if old.change != self.change or old.product_id != self.product_id or old.branch_id != self.branch_id:
+            if (
+                old.change != self.change
+                or old.product_id != self.product_id
+                or old.branch_id != self.branch_id
+            ):
                 raise ValidationError(
                     "You cannot edit product/branch/change of an existing StockEntry. "
                     "Create a new StockEntry adjustment instead."
                 )
             return super().save(*args, **kwargs)
 
-        # ✅ resolve branch (always required)
         self.branch = self._effective_branch()
         if not self.branch:
             raise ValidationError("No branch found. Create at least one Branch before adding stock.")
@@ -202,7 +219,6 @@ class StockEntry(models.Model):
 
             ps.quantity = new_qty
             ps.save(update_fields=["quantity"])
-            # ProductStock.save() will auto recalc Product.stock ✅
 
     def delete(self, *args, **kwargs):
         branch = self._effective_branch()
@@ -210,7 +226,11 @@ class StockEntry(models.Model):
             raise ValidationError("Cannot delete StockEntry because no branch exists.")
 
         with transaction.atomic():
-            ps = ProductStock.objects.select_for_update().filter(product=self.product, branch=branch).first()
+            ps = ProductStock.objects.select_for_update().filter(
+                product=self.product,
+                branch=branch
+            ).first()
+
             if not ps:
                 raise ValidationError("Cannot delete: branch stock row is missing.")
 
@@ -220,6 +240,5 @@ class StockEntry(models.Model):
 
             ps.quantity = new_qty
             ps.save(update_fields=["quantity"])
-            # ProductStock.save() auto recalc Product.stock ✅
 
             return super().delete(*args, **kwargs)
