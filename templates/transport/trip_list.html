@@ -263,6 +263,67 @@
     color:#94a3b8;
   }
 
+  .trips-pagination-wrap{
+    padding:1rem;
+    border-top:1px solid #eef2f7;
+    background:#fff;
+  }
+
+  .trips-pagination{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:.45rem;
+    margin:0;
+    padding:0;
+    list-style:none;
+  }
+
+  .trips-pagination .page-link{
+    min-width:40px;
+    height:40px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 .85rem;
+    border-radius:12px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#334155;
+    text-decoration:none;
+    font-size:.76rem;
+    font-weight:800;
+    transition:.18s ease;
+  }
+
+  .trips-pagination .page-link:hover{
+    background:#eff6ff;
+    border-color:#bfdbfe;
+    color:#1d4ed8;
+  }
+
+  .trips-pagination .active .page-link{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    border-color:#2563eb;
+    color:#fff;
+    box-shadow:0 10px 22px rgba(37,99,235,.16);
+  }
+
+  .trips-pagination .disabled .page-link{
+    background:#f8fafc;
+    color:#94a3b8;
+    border-color:#e2e8f0;
+    pointer-events:none;
+  }
+
+  .trips-page-summary{
+    text-align:center;
+    font-size:.74rem;
+    color:#64748b;
+    font-weight:700;
+    margin-top:.75rem;
+  }
+
   .td-label{
     display:none;
   }
@@ -361,8 +422,12 @@
       </div>
 
       <div class="trips-hero-actions">
-        <span class="trips-chip" title="Visible rows">
-          Showing <strong id="visibleTrips">0</strong> / <strong id="totalTrips">0</strong>
+        <span class="trips-chip" title="Visible rows on this page">
+          Showing <strong id="visibleTrips">0</strong> / <strong id="pageTrips">{{ trips|length }}</strong> on this page
+        </span>
+
+        <span class="trips-chip" title="Total rows in database after filter">
+          Total <strong>{{ total_trips_count|intcomma }}</strong>
         </span>
 
         <a href="{% url 'transport:trip_create' %}" class="btn btn-primary trips-add-btn">
@@ -420,6 +485,15 @@
                   All
                 {% endif %}
               </strong>
+              &nbsp;•&nbsp;
+              Vehicle:
+              <strong>
+                {% if selected_vehicle_id %}
+                  Selected
+                {% else %}
+                  All
+                {% endif %}
+              </strong>
             </div>
           </div>
         </div>
@@ -433,7 +507,13 @@
         <i class="fa-solid fa-list-ul text-primary"></i>
         Trip List
       </h4>
-      <div class="trips-table-note">Transport trip overview</div>
+      <div class="trips-table-note">
+        {% if page_obj %}
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        {% else %}
+          Transport trip overview
+        {% endif %}
+      </div>
     </div>
 
     {% if trips %}
@@ -497,6 +577,65 @@
           </tbody>
         </table>
       </div>
+
+      {% if page_obj and page_obj.paginator.num_pages > 1 %}
+      <div class="trips-pagination-wrap">
+        <ul class="trips-pagination">
+
+          {% if page_obj.has_previous %}
+            <li>
+              <a class="page-link" href="?page=1{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                <i class="fa-solid fa-angles-left"></i>
+              </a>
+            </li>
+            <li>
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                <i class="fa-solid fa-angle-left"></i>
+              </a>
+            </li>
+          {% else %}
+            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angles-left"></i></span></li>
+            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angle-left"></i></span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+              {% if page_obj.number == num %}
+                <li class="active"><span class="page-link">{{ num }}</span></li>
+              {% else %}
+                <li>
+                  <a class="page-link" href="?page={{ num }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                    {{ num }}
+                  </a>
+                </li>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li>
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                <i class="fa-solid fa-angle-right"></i>
+              </a>
+            </li>
+            <li>
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                <i class="fa-solid fa-angles-right"></i>
+              </a>
+            </li>
+          {% else %}
+            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angle-right"></i></span></li>
+            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angles-right"></i></span></li>
+          {% endif %}
+        </ul>
+
+        <div class="trips-page-summary">
+          Showing page <strong>{{ page_obj.number }}</strong> of <strong>{{ page_obj.paginator.num_pages }}</strong>
+          • Total trips: <strong>{{ total_trips_count|intcomma }}</strong>
+        </div>
+      </div>
+      {% endif %}
+
     {% else %}
       <div class="trip-empty">
         <i class="fa-solid fa-road-circle-xmark"></i>
@@ -512,14 +651,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const table = document.getElementById('tripsTable');
-  const totalEl = document.getElementById('totalTrips');
   const visibleEl = document.getElementById('visibleTrips');
+  const pageTripsEl = document.getElementById('pageTrips');
 
   function updateCounts(){
     if (!table) return;
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     const visible = rows.filter(r => r.style.display !== 'none');
-    if (totalEl) totalEl.textContent = rows.length;
+    if (pageTripsEl) pageTripsEl.textContent = rows.length;
     if (visibleEl) visibleEl.textContent = visible.length;
   }
 

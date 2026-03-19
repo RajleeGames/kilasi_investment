@@ -309,6 +309,8 @@ def driver_create(request):
 # -------------------------
 # Trips
 # -------------------------
+from django.core.paginator import Paginator
+
 @login_required
 @role_required(['admin', 'cashier', 'transport'])
 def trip_list(request):
@@ -332,13 +334,21 @@ def trip_list(request):
 
     trips = trips.order_by('-trip_date', '-id')
 
+    # -------------------------
+    # Pagination
+    # -------------------------
+    paginator = Paginator(trips, 50)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'transport/trip_list.html', {
-        'trips': trips,
+        'trips': page_obj.object_list,
+        'page_obj': page_obj,
         'selected_date': filter_date.isoformat() if filter_date else "",
         'vehicles': vehicles,
         'selected_vehicle_id': selected_vehicle_id or "",
+        'total_trips_count': paginator.count,
     })
-
 
 @login_required
 @role_required(['admin', 'transport'])
