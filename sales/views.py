@@ -2271,7 +2271,6 @@ def expense_overview(request):
         "selected_branch_obj": selected_branch,
         "is_admin": _is_admin(request),
     })
-
 # ───────────────────────────────────────────────────────────────
 # PRODUCTS (seller sees ONLY branch stock)
 # ───────────────────────────────────────────────────────────────
@@ -2279,6 +2278,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import OuterRef, Subquery, IntegerField, Value, Q
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.page import PageMargins
 
 @login_required
 @role_required(["admin", "cashier", "seller"])
@@ -2350,6 +2354,179 @@ def product_list(request):
         "selected_branch_id": str(selected_branch.id) if selected_branch else "",
         "is_seller": is_seller,
     })
+
+
+@login_required
+@role_required(["admin", "cashier", "seller"])
+def export_products_excel(request):
+    q = (request.GET.get("q") or "").strip()
+    selected_branch_id = (request.GET.get("branch") or "").strip()
+
+    user_branch = _get_user_branch(request) if _is_seller(request) else None
+    is_seller = bool(user_branch)
+
+    qs = Product.objects.select_related("category")
+
+    selected_branch = None
+    use_branch_stock = False
+
+    if is_seller:
+        selected_branch = user_branch
+        use_branch_stock = True
+
+        ps = ProductStock.objects.filter(
+            product=OuterRef("pk"),
+            branch=selected_branch
+        ).values("quantity")[:1]
+
+        qs = qs.annotate(
+            branch_qty=Coalesce(Subquery(ps, output_field=IntegerField()), Value(0))
+        ).filter(branch_qty__gt=0)
+
+    else:
+        if selected_branch_id.isdigit():
+            selected_branch = Branch.objects.filter(id=selected_branch_id).first()
+
+        if selected_branch:
+            use_branch_stock = True
+            ps = ProductStock.objects.filter(
+                product=OuterRef("pk"),
+                branch=selected_branch
+            ).values("quantity")[:1]
+
+            qs = qs.annotate(
+                branch_qty=Coalesce(Subquery(ps, output_field=IntegerField()), Value(0))
+            ).filter(branch_qty__gt=0)
+
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(category__name__icontains=q)
+        )
+
+    qs = qs.order_by("name")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Products Report"
+
+    # ---------- STYLES ----------
+    title_font = Font(bold=True, size=16, color="1E3A8A")
+    subtitle_font = Font(bold=False, size=10, color="475569")
+    header_font = Font(bold=True, color="FFFFFF")
+    body_font = Font(size=11, color="0F172A")
+
+    header_fill = PatternFill("solid", fgColor="2563EB")
+    thin_side = Side(style="thin", color="CBD5E1")
+    border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+
+    center = Alignment(horizontal="center", vertical="center")
+    left = Alignment(horizontal="left", vertical="center")
+    right = Alignment(horizontal="right", vertical="center")
+
+    # ---------- PAGE / PRINT SETUP ----------
+    ws.page_setup.orientation = "landscape"
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.print_options.horizontalCentered = False
+    ws.print_options.verticalCentered = False
+    ws.page_margins = PageMargins(left=0.3, right=0.3, top=0.5, bottom=0.5, header=0.2, footer=0.2)
+    ws.freeze_panes = "A5"
+    ws.sheet_view.showGridLines = False
+    ws.print_title_rows = "4:4"
+
+    # ---------- TITLE ----------
+    ws.merge_cells("A1:C1")
+    ws["A1"] = "KILASI INVESTMENT - PRODUCTS STOCK REPORT"
+    ws["A1"].font = title_font
+    ws["A1"].alignment = left
+
+    branch_label = selected_branch.name if selected_branch else "All Branches"
+    ws.merge_cells("A2:C2")
+    ws["A2"] = f"Branch: {branch_label}"
+    ws["A2"].font = subtitle_font
+    ws["A2"].alignment = left
+
+    ws.merge_cells("A3:C3")
+    ws["A3"] = f"Search Filter: {q if q else 'All Products'}"
+    ws["A3"].font = subtitle_font
+    ws["A3"].alignment = left
+
+    # ---------- HEADERS ----------
+    headers = ["PRODUCT", "CATEGORY", "CURRENT STOCK"]
+    header_row = 4
+
+    for col_num, header in enumerate(headers, start=1):
+        cell = ws.cell(row=header_row, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+
+    # ---------- DATA ----------
+    start_row = 5
+    row_num = start_row
+
+    for product in qs:
+        stock = product.branch_qty if use_branch_stock else (product.stock or 0)
+
+        ws.cell(row=row_num, column=1, value=product.name or "")
+        ws.cell(row=row_num, column=2, value=product.category.name if product.category else "-")
+        ws.cell(row=row_num, column=3, value=stock)
+
+        ws.cell(row=row_num, column=1).font = body_font
+        ws.cell(row=row_num, column=2).font = body_font
+        ws.cell(row=row_num, column=3).font = body_font
+
+        ws.cell(row=row_num, column=1).alignment = left
+        ws.cell(row=row_num, column=2).alignment = left
+        ws.cell(row=row_num, column=3).alignment = center
+
+        ws.cell(row=row_num, column=1).border = border
+        ws.cell(row=row_num, column=2).border = border
+        ws.cell(row=row_num, column=3).border = border
+
+        row_num += 1
+
+    # ---------- EMPTY CASE ----------
+    if row_num == start_row:
+        ws.merge_cells(start_row=5, start_column=1, end_row=5, end_column=3)
+        ws["A5"] = "No products found."
+        ws["A5"].alignment = center
+        ws["A5"].font = Font(bold=True, color="64748B")
+
+    # ---------- COLUMN WIDTHS ----------
+    ws.column_dimensions["A"].width = 42
+    ws.column_dimensions["B"].width = 24
+    ws.column_dimensions["C"].width = 18
+
+    # ---------- TOTAL ----------
+    total_row = row_num + 1
+    ws.cell(row=total_row, column=1, value="Total Products")
+    ws.cell(row=total_row, column=1).font = Font(bold=True, color="0F172A")
+    ws.cell(row=total_row, column=1).border = border
+    ws.cell(row=total_row, column=1).alignment = left
+
+    ws.cell(row=total_row, column=2, value="")
+    ws.cell(row=total_row, column=2).border = border
+
+    ws.cell(row=total_row, column=3, value=max(row_num - start_row, 0))
+    ws.cell(row=total_row, column=3).font = Font(bold=True, color="0F172A")
+    ws.cell(row=total_row, column=3).border = border
+    ws.cell(row=total_row, column=3).alignment = center
+
+    filename = "products_report.xlsx"
+    if selected_branch:
+        safe_branch = "".join(c for c in selected_branch.name if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
+        filename = f"products_report_{safe_branch}.xlsx"
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
 
 
 @login_required
