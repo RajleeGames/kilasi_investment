@@ -1386,18 +1386,21 @@ def compute_debt_stats(inv_qs, selected_branch=None, month=None, year=None):
     return num_debts, total_outstanding, total_credit
 
 
-
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime, timedelta
+import json
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from django.shortcuts import render
 from django.utils.timezone import localdate
+from django.db.models.functions import TruncDate
 
 from users.utils import role_required
 from inventory.models import Product
 from .models import Invoice, InvoiceItem, Payment, Expense
+
 
 @login_required
 @role_required(["admin", "cashier"])
@@ -1519,9 +1522,18 @@ def admin_dashboard(request):
     # -------------------------------------------------
     # OVERALL CASHFLOW (branch-aware)
     # -------------------------------------------------
-    overall_cash = inv_qs.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    overall_bank = inv_qs.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    overall_ebt = inv_qs.filter(status="ebt", paid=True).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+    overall_cash = (
+        inv_qs.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"]
+        or Decimal("0.00")
+    )
+    overall_bank = (
+        inv_qs.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"]
+        or Decimal("0.00")
+    )
+    overall_ebt = (
+        inv_qs.filter(status="ebt", paid=True).aggregate(t=Sum("total_amount"))["t"]
+        or Decimal("0.00")
+    )
     overall_debt_payments = pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
     expenses_total = exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
@@ -1543,6 +1555,8 @@ def admin_dashboard(request):
     cogs_period = Decimal("0.00")
     cogs_today = Decimal("0.00")
 
+    inv_today_all = inv_qs.filter(created_at__date=today)
+
     if profit_enabled:
         out = DecimalField(max_digits=18, decimal_places=2)
         cogs_line = ExpressionWrapper(F("quantity") * cost_expr, output_field=out)
@@ -1550,19 +1564,22 @@ def admin_dashboard(request):
         items_period = InvoiceItem.objects.filter(invoice__in=period_inv_qs)
         cogs_period = items_period.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
 
-        inv_today_all = inv_qs.filter(created_at__date=today)
         items_today = InvoiceItem.objects.filter(invoice__in=inv_today_all)
         cogs_today = items_today.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
-    else:
-        inv_today_all = inv_qs.filter(created_at__date=today)
 
     revenue_today = inv_today_all.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
 
+    # Main profit math
     gross_profit_period = revenue_period - cogs_period
     net_profit_period = gross_profit_period - expenses_period
 
     gross_profit_today = revenue_today - cogs_today
     net_profit_today = gross_profit_today - expenses_today
+
+    # New card math:
+    # Revenue - Expenses = Remaining (before COGS)
+    remaining_after_expenses_period = revenue_period - expenses_period
+    remaining_after_expenses_today = revenue_today - expenses_today
 
     # -------------------------------------------------
     # DEBTS
@@ -1661,25 +1678,30 @@ def admin_dashboard(request):
 
         month_labels.append(mstart.strftime("%b %Y"))
 
-        m_cash = inv_qs.filter(
-            created_at__date__range=[mstart, mend], status="cash", paid=True
-        ).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        m_cash = (
+            inv_qs.filter(created_at__date__range=[mstart, mend], status="cash", paid=True)
+            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        )
 
-        m_bank = inv_qs.filter(
-            created_at__date__range=[mstart, mend], status="bank", paid=True
-        ).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        m_bank = (
+            inv_qs.filter(created_at__date__range=[mstart, mend], status="bank", paid=True)
+            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        )
 
-        m_ebt = inv_qs.filter(
-            created_at__date__range=[mstart, mend], status="ebt", paid=True
-        ).aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        m_ebt = (
+            inv_qs.filter(created_at__date__range=[mstart, mend], status="ebt", paid=True)
+            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        )
 
-        m_debt_pay = pay_qs.filter(
-            timestamp__date__range=[mstart, mend]
-        ).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        m_debt_pay = (
+            pay_qs.filter(timestamp__date__range=[mstart, mend])
+            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        )
 
-        m_exp = exp_qs.filter(
-            date__range=[mstart, mend]
-        ).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        m_exp = (
+            exp_qs.filter(date__range=[mstart, mend])
+            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        )
 
         month_received_values.append(float(m_cash + m_bank + m_ebt + m_debt_pay))
         month_expense_values.append(float(m_exp))
@@ -1730,6 +1752,10 @@ def admin_dashboard(request):
         "cogs_period": cogs_period,
         "gross_profit_period": gross_profit_period,
         "net_profit_period": net_profit_period,
+
+        # new remaining card
+        "remaining_after_expenses_period": remaining_after_expenses_period,
+        "remaining_after_expenses_today": remaining_after_expenses_today,
 
         # debts
         "num_debts": num_debts,
