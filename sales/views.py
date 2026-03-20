@@ -1042,34 +1042,54 @@ def invoice_detail(request, pk=None, invoice_id=None):
         items_qs = InvoiceItem.objects.filter(invoice=invoice).select_related("product")
 
     invoice_items = []
+    total_items_profit = Decimal("0.00")
+    total_items_discount = Decimal("0.00")
+
     for it in items_qs:
         qty = int(getattr(it, "quantity", 0) or 0)
         disc = _d(getattr(it, "discount", 0) or 0)
 
+        prod = getattr(it, "product", None)
+
+        # selling/unit price
         up = getattr(it, "unit_price", None)
         if up is None:
             up = getattr(it, "selling_price", None)
-        if up is None:
-            prod = getattr(it, "product", None)
-            up = getattr(prod, "selling_price", None) if prod else None
-        if up is None:
-            prod = getattr(it, "product", None)
-            up = getattr(prod, "price", 0) if prod else 0
-
+        if up is None and prod:
+            up = getattr(prod, "selling_price", None)
+        if up is None and prod:
+            up = getattr(prod, "price", 0)
         unit_price = _d(up or 0)
+
+        # buying price
+        buy = getattr(it, "buying_cost", None)
+        if buy is None and prod:
+            buy = getattr(prod, "buying_price", None)
+        if buy is None:
+            buy = 0
+        buying_price = _d(buy or 0)
+
         effective_price = unit_price - disc
         if effective_price < 0:
             effective_price = Decimal("0.00")
 
-        line_total = (effective_price * _d(qty))
+        line_total = effective_price * _d(qty)
+        line_discount = disc * _d(qty)
+        line_profit = (effective_price - buying_price) * _d(qty)
+
+        total_items_profit += line_profit
+        total_items_discount += line_discount
 
         invoice_items.append({
-            "product": it.product,
+            "product": prod,
             "quantity": qty,
             "discount": disc,
             "unit_price": unit_price,
+            "buying_price": buying_price,
             "effective_price": effective_price,
             "line_total": line_total,
+            "line_discount": line_discount,
+            "line_profit": line_profit,
         })
 
     # -----------------------------
@@ -1083,7 +1103,7 @@ def invoice_detail(request, pk=None, invoice_id=None):
         payments_total_int = int(Payment.objects.filter(invoice=invoice).aggregate(t=Sum("amount"))["t"] or 0)
 
     # -----------------------------
-    # RETURNS (safe even if not implemented)
+    # RETURNS
     # -----------------------------
     returns = []
     returns_total = Decimal("0.00")
@@ -1096,7 +1116,7 @@ def invoice_detail(request, pk=None, invoice_id=None):
         returns_total = Decimal("0.00")
 
     # -----------------------------
-    # EFFECTIVE TOTAL + BALANCE (after returns)
+    # EFFECTIVE TOTAL + BALANCE
     # -----------------------------
     total_amount = _d(getattr(invoice, "total_amount", 0) or 0)
     total_effective = total_amount - returns_total
@@ -1106,14 +1126,11 @@ def invoice_detail(request, pk=None, invoice_id=None):
     effective_total_int = int(total_effective.to_integral_value())
     balance_value = max(0, effective_total_int - payments_total_int)
 
-    # only debt uses balance logic
     if (getattr(invoice, "status", "") or "").lower() != "debt":
         balance_value = 0
 
     return render(request, "sales/invoice_detail.html", {
         "invoice": invoice,
-
-        # ✅ use these in template (DO NOT set invoice.returns_total etc)
         "invoice_items": invoice_items,
         "payments": payments,
         "returns": returns,
@@ -1122,8 +1139,11 @@ def invoice_detail(request, pk=None, invoice_id=None):
         "total_effective": effective_total_int,
         "payments_total": payments_total_int,
         "balance_value": balance_value,
-    })
 
+        # extra totals
+        "total_items_profit": total_items_profit,
+        "total_items_discount": total_items_discount,
+    })
 
 @login_required
 @role_required(["seller", "admin", "cashier"])
@@ -1793,16 +1813,41 @@ def admin_dashboard(request):
 def sales_history(request):
     selected = _selected_branch(request)
 
-    qs = _invoice_scope_qs(request)
+    qs = _invoice_scope_qs(request).prefetch_related("items__product")
 
     if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
         qs = qs.filter(branch=selected)
 
-    paginator = Paginator(qs.order_by("-created_at"), 30)
+    qs = qs.order_by("-created_at")
+
+    paginator = Paginator(qs, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
+
+    invoice_rows = []
+
+    for inv in page_obj.object_list:
+        items_qs = inv.items.select_related("product").all() if hasattr(inv, "items") else InvoiceItem.objects.filter(invoice=inv).select_related("product")
+
+        first_item = items_qs.first()
+        first_product_name = "No items"
+        more_items_count = 0
+        items_count = 0
+
+        if first_item:
+            first_product_name = getattr(getattr(first_item, "product", None), "name", "Unknown Product") or "Unknown Product"
+            items_count = items_qs.count()
+            more_items_count = max(items_count - 1, 0)
+
+        invoice_rows.append({
+            "invoice": inv,
+            "first_product_name": first_product_name,
+            "items_count": items_count,
+            "more_items_count": more_items_count,
+        })
 
     return _render(request, ["sales/sales_history.html", "sales_history.html"], {
         "invoices": page_obj.object_list,
+        "invoice_rows": invoice_rows,
         "page_obj": page_obj,
         "is_paginated": page_obj.has_other_pages(),
         "paginator": paginator,
@@ -1815,7 +1860,6 @@ def sales_history(request):
         "is_cashier": _is_cashier(request),
         "is_seller": _is_seller(request),
     })
-
 
 from decimal import Decimal
 from datetime import datetime, timedelta
