@@ -502,10 +502,7 @@
           </span>
         </div>
 
-        <div class="dashboard-note">
-          <i class="fa-solid fa-circle-info"></i>
-          Dashboard totals, charts, debts, revenue, COGS and profit should be calculated from <strong>active invoices only</strong>. Cancelled invoices must not count in sales totals.
-        </div>
+        
 
         {% if not profit_enabled %}
           <div class="small text-danger mt-2">
@@ -771,10 +768,7 @@
     </div>
   </div>
 
-  <div class="dashboard-danger-note">
-    <i class="fa-solid fa-ban"></i>
-    If an invoice is cancelled, it should not appear in revenue, profit, debt, transaction count, charts, or payment mix. Make sure your view uses <strong>Invoice.objects.filter(invoice_state="active")</strong>.
-  </div>
+  
 
   <div class="section-head">
     <h5 class="section-title">Charts & Trends</h5>
