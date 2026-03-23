@@ -23,6 +23,9 @@
     --dash-purple:#7c3aed;
     --dash-info:#0891b2;
     --dash-dark:#111827;
+    --dash-cancel-bg:#fef2f2;
+    --dash-cancel-line:#fecaca;
+    --dash-cancel-text:#991b1b;
   }
 
   .dash-shell{
@@ -64,6 +67,34 @@
     background:rgba(37,99,235,.09);
     color:var(--dash-primary);
     border:1px solid rgba(37,99,235,.12);
+  }
+
+  .dashboard-note{
+    margin-top:.85rem;
+    padding:.78rem .9rem;
+    border-radius:16px;
+    border:1px solid #dbeafe;
+    background:linear-gradient(180deg,#eff6ff,#f8fbff);
+    color:#1e40af;
+    font-size:.74rem;
+    line-height:1.45;
+    font-weight:700;
+  }
+
+  .dashboard-note i{
+    margin-right:.4rem;
+  }
+
+  .dashboard-danger-note{
+    margin-top:.75rem;
+    padding:.82rem .95rem;
+    border-radius:16px;
+    border:1px solid var(--dash-cancel-line);
+    background:var(--dash-cancel-bg);
+    color:var(--dash-cancel-text);
+    font-size:.74rem;
+    line-height:1.45;
+    font-weight:700;
   }
 
   .filter-card{
@@ -465,6 +496,15 @@
             {{ selected_branch_obj.name }}
           </span>
           {% endif %}
+          <span class="hero-chip">
+            <i class="fa-solid fa-circle-check"></i>
+            Active invoices only
+          </span>
+        </div>
+
+        <div class="dashboard-note">
+          <i class="fa-solid fa-circle-info"></i>
+          Dashboard totals, charts, debts, revenue, COGS and profit should be calculated from <strong>active invoices only</strong>. Cancelled invoices must not count in sales totals.
         </div>
 
         {% if not profit_enabled %}
@@ -534,7 +574,6 @@
     </form>
   </div>
 
-  <!-- MAIN CARDS -->
   <div class="row g-3 mb-4">
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
       <div class="card stat-card">
@@ -589,7 +628,6 @@
     </div>
   </div>
 
-  <!-- SECONDARY CARDS -->
   <div class="row g-3 mb-4">
 
     <div class="col-12 col-lg-6 animate__animated animate__fadeInUp">
@@ -659,7 +697,6 @@
     </div>
   </div>
 
-  <!-- EXTRA SUMMARY STRIP -->
   <div class="row g-3 mb-4">
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
       <div class="card stat-card">
@@ -714,7 +751,6 @@
     </div>
   </div>
 
-  <!-- MINI OVERVIEW -->
   <div class="mini-grid mb-4">
     <div class="mini-tile mini-dark">
       <small>Unpaid Debts</small>
@@ -735,7 +771,11 @@
     </div>
   </div>
 
-  <!-- CHARTS -->
+  <div class="dashboard-danger-note">
+    <i class="fa-solid fa-ban"></i>
+    If an invoice is cancelled, it should not appear in revenue, profit, debt, transaction count, charts, or payment mix. Make sure your view uses <strong>Invoice.objects.filter(invoice_state="active")</strong>.
+  </div>
+
   <div class="section-head">
     <h5 class="section-title">Charts & Trends</h5>
   </div>
@@ -778,7 +818,6 @@
     </div>
   </div>
 
-  <!-- TRANSACTION TYPES -->
   <div class="section-head">
     <h5 class="section-title">Transaction Types</h5>
   </div>
@@ -821,7 +860,6 @@
     </div>
   </div>
 
-  <!-- RECENT PRODUCTS -->
   <div class="section-head">
     <h5 class="section-title">Recently Added Products</h5>
     <a href="{% url 'sales:product_list' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">

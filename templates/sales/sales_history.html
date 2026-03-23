@@ -258,6 +258,14 @@
     background:#fbfdff;
   }
 
+  .sh-row-cancelled{
+    background:#fff7f7;
+  }
+
+  .sh-row-cancelled:hover{
+    background:#fff1f1 !important;
+  }
+
   .sh-id-link{
     text-decoration:none;
     font-weight:800;
@@ -349,6 +357,12 @@
     border-color:rgba(220,38,38,.14);
   }
 
+  .sh-status.cancelled{
+    background:rgba(220,38,38,.10);
+    color:#991b1b;
+    border-color:rgba(220,38,38,.18);
+  }
+
   .sh-action{
     display:inline-flex;
     align-items:center;
@@ -381,6 +395,14 @@
   .sh-action.receipt:hover{
     background:rgba(15,23,42,.10);
     color:#0f172a;
+  }
+
+  .sh-action.disabled{
+    border:1px solid var(--sh-line);
+    background:#f8fafc;
+    color:#94a3b8;
+    cursor:not-allowed;
+    pointer-events:none;
   }
 
   .sh-empty{
@@ -613,7 +635,7 @@
           <tbody>
             {% for row in invoice_rows %}
               {% with inv=row.invoice %}
-              <tr>
+              <tr class="{% if inv.invoice_state == 'cancelled' %}sh-row-cancelled{% endif %}">
                 <td data-label="ID" class="sh-mono">
                   <a class="sh-id-link" href="{% url 'sales:invoice_detail' inv.id %}">
                     #{{ inv.id }}
@@ -643,6 +665,10 @@
                 </td>
 
                 <td data-label="Status">
+                  {% if inv.invoice_state == "cancelled" %}
+                    <span class="sh-status cancelled">Cancelled</span>
+                  {% endif %}
+
                   {% if inv.status == "cash" %}
                     <span class="sh-status cash">Cash</span>
                   {% elif inv.status == "bank" %}
@@ -655,7 +681,9 @@
                     <span class="sh-status paid">{{ inv.status|upper }}</span>
                   {% endif %}
 
-                  {% if inv.paid %}
+                  {% if inv.invoice_state == "cancelled" %}
+                    <span class="sh-status cancelled">Balance 0</span>
+                  {% elif inv.paid %}
                     <span class="sh-status paid">Paid</span>
                   {% else %}
                     {% if inv.status == "debt" %}
@@ -665,7 +693,11 @@
                 </td>
 
                 <td data-label="Total" class="text-end sh-mono fw-bold">
-                  Tsh {{ inv.total_amount|floatformat:0|intcomma }}
+                  {% if inv.invoice_state == "cancelled" %}
+                    Tsh 0
+                  {% else %}
+                    Tsh {{ inv.total_amount|floatformat:0|intcomma }}
+                  {% endif %}
                 </td>
 
                 <td data-label="Actions" class="text-end">
@@ -676,12 +708,19 @@
                       <span class="d-none d-md-inline">View</span>
                     </a>
 
-                    <a class="sh-action receipt"
-                       href="{% url 'sales:invoice_receipt' inv.id %}?autoprint=1"
-                       target="_blank" rel="noopener">
-                      <i class="fa-solid fa-receipt"></i>
-                      <span class="d-none d-md-inline">Receipt</span>
-                    </a>
+                    {% if inv.invoice_state == "cancelled" %}
+                      <span class="sh-action disabled">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span class="d-none d-md-inline">Receipt Disabled</span>
+                      </span>
+                    {% else %}
+                      <a class="sh-action receipt"
+                         href="{% url 'sales:invoice_receipt' inv.id %}?autoprint=1"
+                         target="_blank" rel="noopener">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span class="d-none d-md-inline">Receipt</span>
+                      </a>
+                    {% endif %}
                   </div>
                 </td>
               </tr>

@@ -16,6 +16,8 @@
     --inv-green:#16a34a;
     --inv-red:#dc2626;
     --inv-amber:#f59e0b;
+    --inv-cancel-bg:#fef2f2;
+    --inv-cancel-line:#fecaca;
   }
 
   .inv-wrap{
@@ -138,9 +140,21 @@
   .inv-b-debt{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
   .inv-b-paid{ background:#dcfce7; color:#166534; border-color:#86efac; }
   .inv-b-unpaid{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+  .inv-b-cancelled{ background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
 
   .inv-body{
     padding:15px;
+  }
+
+  .inv-alert{
+    margin-bottom:14px;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid var(--inv-cancel-line);
+    background:var(--inv-cancel-bg);
+    color:#991b1b;
+    font-size:.74rem;
+    line-height:1.45;
   }
 
   .inv-meta-grid{
@@ -493,6 +507,10 @@
           Invoice <b>#{{ invoice.id }}</b>
         </span>
 
+        {% if is_cancelled %}
+          <span class="inv-badge inv-b-cancelled">CANCELLED</span>
+        {% endif %}
+
         <a class="btn btn-outline-dark btn-sm inv-btn" href="{% url 'sales:seller_dashboard' %}">
           <i class="fa-solid fa-cart-shopping me-1"></i> POS
         </a>
@@ -504,11 +522,29 @@
           </a>
         {% endif %}
 
+        {% if can_cancel_invoice %}
+          <form method="post"
+                action="{% url 'sales:cancel_invoice' invoice.id %}"
+                style="display:inline;"
+                onsubmit="return confirm('Cancel this invoice? Stock will be restored and this invoice will stop counting in reports.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm inv-btn">
+              <i class="fa-solid fa-ban me-1"></i> Cancel Invoice
+            </button>
+          </form>
+        {% endif %}
+
         {% if invoice.status == "debt" %}
-          <a class="btn btn-outline-danger btn-sm inv-btn"
-             href="{% url 'sales:sales_return_create' invoice.id %}">
-            <i class="fa-solid fa-rotate-left me-1"></i> Return
-          </a>
+          {% if is_cancelled %}
+            <button type="button" class="btn btn-outline-secondary btn-sm inv-btn" disabled>
+              <i class="fa-solid fa-rotate-left me-1"></i> Return Disabled
+            </button>
+          {% else %}
+            <a class="btn btn-outline-danger btn-sm inv-btn"
+               href="{% url 'sales:sales_return_create' invoice.id %}">
+              <i class="fa-solid fa-rotate-left me-1"></i> Return
+            </a>
+          {% endif %}
         {% endif %}
 
         <button type="button" class="btn btn-primary btn-sm inv-btn" onclick="window.print()">
@@ -518,6 +554,13 @@
     </div>
 
     <div class="inv-body">
+
+      {% if is_cancelled %}
+        <div class="inv-alert">
+          <strong>This invoice is cancelled.</strong>
+          Payments and returns are disabled, stock should already be restored, and balance is 0.
+        </div>
+      {% endif %}
 
       <div class="inv-meta-grid">
         <div class="inv-meta-box">
@@ -549,9 +592,22 @@
           </div>
 
           <div class="inv-meta-row">
+            <div class="inv-meta-key">Invoice State</div>
+            <div class="inv-meta-value">
+              {% if is_cancelled %}
+                <span class="inv-badge inv-b-cancelled">CANCELLED</span>
+              {% else %}
+                <span class="inv-badge inv-b-paid">ACTIVE</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="inv-meta-row">
             <div class="inv-meta-key">Payment Status</div>
             <div class="inv-meta-value">
-              {% if invoice.paid %}
+              {% if is_cancelled %}
+                <span class="inv-badge inv-b-cancelled">CANCELLED</span>
+              {% elif invoice.paid %}
                 <span class="inv-badge inv-b-paid">PAID</span>
               {% else %}
                 <span class="inv-badge inv-b-unpaid">UNPAID</span>
@@ -753,15 +809,36 @@
         </div>
       </div>
 
-      {% if invoice.status == "debt" and balance_value > 0 %}
+      {% if invoice.status == "debt" %}
         <div class="inv-action-row no-print">
-          <a class="btn btn-outline-primary inv-btn" href="{% url 'sales:record_payment' invoice.id %}">
-            <i class="fa-solid fa-hand-holding-dollar me-1"></i> Record Payment
-          </a>
+          {% if can_cancel_invoice %}
+            <form method="post"
+                  action="{% url 'sales:cancel_invoice' invoice.id %}"
+                  style="display:inline;"
+                  onsubmit="return confirm('Cancel this invoice? Stock will be restored and this invoice will stop counting in reports.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger inv-btn">
+                <i class="fa-solid fa-ban me-1"></i> Cancel Invoice
+              </button>
+            </form>
+          {% endif %}
 
-          <a class="btn btn-outline-danger inv-btn" href="{% url 'sales:sales_return_create' invoice.id %}">
-            <i class="fa-solid fa-rotate-left me-1"></i> Add Return
-          </a>
+          {% if is_cancelled %}
+            <button class="btn btn-outline-secondary inv-btn" disabled>
+              <i class="fa-solid fa-hand-holding-dollar me-1"></i> Record Payment Disabled
+            </button>
+            <button class="btn btn-outline-secondary inv-btn" disabled>
+              <i class="fa-solid fa-rotate-left me-1"></i> Add Return Disabled
+            </button>
+          {% elif balance_value > 0 %}
+            <a class="btn btn-outline-primary inv-btn" href="{% url 'sales:record_payment' invoice.id %}">
+              <i class="fa-solid fa-hand-holding-dollar me-1"></i> Record Payment
+            </a>
+
+            <a class="btn btn-outline-danger inv-btn" href="{% url 'sales:sales_return_create' invoice.id %}">
+              <i class="fa-solid fa-rotate-left me-1"></i> Add Return
+            </a>
+          {% endif %}
 
           {% if invoice.customer %}
             <a class="btn btn-outline-dark inv-btn"
@@ -770,6 +847,20 @@
             </a>
           {% endif %}
         </div>
+      {% else %}
+        {% if can_cancel_invoice %}
+          <div class="inv-action-row no-print">
+            <form method="post"
+                  action="{% url 'sales:cancel_invoice' invoice.id %}"
+                  style="display:inline;"
+                  onsubmit="return confirm('Cancel this invoice? Stock will be restored and this invoice will stop counting in reports.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger inv-btn">
+                <i class="fa-solid fa-ban me-1"></i> Cancel Invoice
+              </button>
+            </form>
+          </div>
+        {% endif %}
       {% endif %}
 
       {% if invoice.status == "debt" %}

@@ -245,7 +245,7 @@ def _invoice_scope_qs(request):
     - seller => own branch only (if branch exists), else own invoices
     - admin/cashier => all
     """
-    qs = Invoice.objects.select_related("customer", "seller")
+    qs = Invoice.objects.select_related("customer", "seller").filter(invoice_state="active")
     if hasattr(Invoice, "branch_id"):
         qs = qs.select_related("branch")
 
@@ -337,17 +337,23 @@ def _invoice_balance(inv) -> int:
     """
     ✅ REAL debt balance after returns:
       balance = max(0, (total_amount - returns_total) - payments_total)
+
+    Cancelled invoices = no debt balance
     """
+    # cancelled invoice should not count as debt
+    if (getattr(inv, "invoice_state", "active") or "active").lower() == "cancelled":
+        return 0
+
+    # only debt invoices use balance
+    if (getattr(inv, "status", "") or "").lower() != "debt":
+        return 0
+
     total_amount = int(getattr(inv, "total_amount", 0) or 0)
     returns_total = _invoice_returns_total(inv)
     payments_total = _invoice_payments_total(inv)
 
     effective_total = max(0, total_amount - returns_total)
     balance = max(0, effective_total - payments_total)
-
-    # only debt invoices use balance
-    if (getattr(inv, "status", "") or "").lower() != "debt":
-        return 0
 
     return balance
 
@@ -935,6 +941,7 @@ def submit_sale(request):
                 "seller": request.user,
                 "status": payment,
                 "paid": paid_flag,
+                "invoice_state": "active"
             }
             if branch and hasattr(Invoice, "branch_id"):
                 inv_kwargs["branch"] = branch
@@ -1021,17 +1028,44 @@ from users.utils import role_required
 
 from .models import Invoice, InvoiceItem, Payment
 
+
 def _d(value, default="0.00"):
     try:
         return Decimal(str(value))
     except Exception:
         return Decimal(default)
 
+
 @login_required
 @role_required(["seller", "admin", "cashier"])
 def invoice_detail(request, pk=None, invoice_id=None):
     inv_id = pk if pk is not None else invoice_id
     invoice = get_object_or_404(Invoice, pk=inv_id)
+
+    is_cancelled = (getattr(invoice, "invoice_state", "active") or "active").lower() == "cancelled"
+
+    # role flags for template
+    is_admin = False
+    is_cashier = False
+    is_seller = False
+
+    try:
+        from sales.views import _is_admin, _is_cashier, _is_seller
+        is_admin = _is_admin(request)
+        is_cashier = _is_cashier(request)
+        is_seller = _is_seller(request)
+    except Exception:
+        role = ""
+        try:
+            role = (getattr(getattr(request.user, "profile", None), "role", "") or "").lower()
+        except Exception:
+            role = ""
+
+        is_admin = role == "admin" or request.user.is_superuser
+        is_cashier = role == "cashier"
+        is_seller = role == "seller"
+
+    can_cancel_invoice = (not is_cancelled) and (is_admin or is_cashier)
 
     # -----------------------------
     # ITEMS (safe computed list)
@@ -1124,10 +1158,16 @@ def invoice_detail(request, pk=None, invoice_id=None):
         total_effective = Decimal("0.00")
 
     effective_total_int = int(total_effective.to_integral_value())
-    balance_value = max(0, effective_total_int - payments_total_int)
 
-    if (getattr(invoice, "status", "") or "").lower() != "debt":
+    # cancelled invoice should always show 0 balance
+    if is_cancelled:
         balance_value = 0
+    else:
+        balance_value = max(0, effective_total_int - payments_total_int)
+
+        # only debt invoices use balance
+        if (getattr(invoice, "status", "") or "").lower() != "debt":
+            balance_value = 0
 
     return render(request, "sales/invoice_detail.html", {
         "invoice": invoice,
@@ -1139,12 +1179,20 @@ def invoice_detail(request, pk=None, invoice_id=None):
         "total_effective": effective_total_int,
         "payments_total": payments_total_int,
         "balance_value": balance_value,
+        "is_cancelled": is_cancelled,
+
+        # role flags
+        "is_admin": is_admin,
+        "is_cashier": is_cashier,
+        "is_seller": is_seller,
+        "can_cancel_invoice": can_cancel_invoice,
 
         # extra totals
         "total_items_profit": total_items_profit,
         "total_items_discount": total_items_discount,
     })
-
+    
+    
 @login_required
 @role_required(["seller", "admin", "cashier"])
 def invoice_receipt(request, pk):
@@ -1157,6 +1205,7 @@ def invoice_receipt(request, pk):
         return HttpResponseForbidden("You cannot access this invoice.")
 
     autoprint = (request.GET.get("autoprint") or "") == "1"
+    is_cancelled = (getattr(inv, "invoice_state", "active") or "active").lower() == "cancelled"
 
     company = {
         "name": "KILASI INVESTMENT",
@@ -1166,40 +1215,65 @@ def invoice_receipt(request, pk):
         "footer": "THANK YOU FOR BUYING WITH US",
     }
 
-    # ✅ safe status label (works even without choices)
+    # payment method label
     status_map = {"cash": "CASH", "bank": "BANK", "ebt": "EBT", "debt": "DEBT"}
-
     status_label = status_map.get((inv.status or "").lower(), (inv.status or "").upper() or "—")
 
-    # ✅ safe customer label
+    # invoice state label
+    invoice_state_label = "CANCELLED" if is_cancelled else "ACTIVE"
+
+    # safe customer label
     customer_label = "Walk-in"
     if getattr(inv, "customer", None):
         customer_label = getattr(inv.customer, "name", None) or str(inv.customer)
 
-    # ✅ safe debt numbers (works whether you use property or method)
-    def _safe_balance(i):
-        b = getattr(i, "balance", 0)
-        try:
-            v = b() if callable(b) else b
-            return int(v or 0)
-        except Exception:
-            return 0
-
+    # safe payments total
     payments_total = 0
     try:
         payments_total = int(inv.payments.aggregate(t=Sum("amount"))["t"] or 0)
     except Exception:
         payments_total = 0
 
+    # safe returns total
+    returns_total = 0
+    try:
+        if hasattr(inv, "returns"):
+            returns_total = int(inv.returns.aggregate(t=Sum("total_amount"))["t"] or 0)
+    except Exception:
+        returns_total = 0
+
+    # safe total effective
+    total_amount = int(getattr(inv, "total_amount", 0) or 0)
+    total_effective = max(0, total_amount - returns_total)
+
+    # cancelled invoice must show 0 balance
+    def _safe_balance(i):
+        if is_cancelled:
+            return 0
+        try:
+            return int(_invoice_balance(i) or 0)
+        except Exception:
+            b = getattr(i, "balance", 0)
+            try:
+                v = b() if callable(b) else b
+                return int(v or 0)
+            except Exception:
+                return 0
+
     return _render(request, ["sales/thermal_receipt.html", "thermal_receipt.html"], {
         "invoice": inv,
         "autoprint": autoprint,
         "company": company,
-        "status_label": status_label,
+        "status_label": status_label,               # payment method
+        "invoice_state_label": invoice_state_label, # ACTIVE / CANCELLED
+        "is_cancelled": is_cancelled,
         "customer_label": customer_label,
         "payments_total": payments_total,
+        "returns_total": returns_total,
+        "total_effective": total_effective,
         "balance_value": _safe_balance(inv),
     })
+
 
 @login_required
 @role_required(["seller", "admin", "cashier"])
@@ -1207,7 +1281,8 @@ def outstanding_debts(request):
     q = (request.GET.get("q") or "").strip()
     selected = _selected_branch(request)
 
-    qs = _invoice_scope_qs(request).filter(status="debt")
+    # only ACTIVE debt invoices
+    qs = _invoice_scope_qs(request).filter(status="debt", invoice_state="active")
 
     if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
         qs = qs.filter(branch=selected)
@@ -1217,11 +1292,14 @@ def outstanding_debts(request):
 
     debts_rows = []
     for inv in qs.order_by("-created_at"):
+        # _invoice_balance already returns 0 for cancelled invoices,
+        # but we also filtered active only above for safety
         bal = _invoice_balance(inv)
         if bal > 0:
             debts_rows.append({
                 "invoice": inv,
                 "balance": bal,
+                "is_cancelled": (getattr(inv, "invoice_state", "active") or "active").lower() == "cancelled",
             })
 
     total_outstanding = sum(r["balance"] for r in debts_rows)
@@ -1248,7 +1326,12 @@ def outstanding_debts(request):
 @login_required
 @role_required(["seller", "admin"])
 def record_payment(request, invoice_id):
-    inv = get_object_or_404(Invoice, pk=invoice_id, status="debt")
+    inv = get_object_or_404(
+    Invoice,
+    pk=invoice_id,
+    status="debt",
+    invoice_state="active",
+)
 
     if not _must_own_invoice_if_seller(request, inv):
         return HttpResponseForbidden("You cannot record payment for this invoice.")
@@ -1339,7 +1422,7 @@ def compute_debt_stats(inv_qs, selected_branch=None, month=None, year=None):
     """
     from .models import Payment, SalesReturn
 
-    debt_qs = inv_qs.filter(status="debt")
+    debt_qs = inv_qs.filter(status="debt", invoice_state="active")
 
     # Optional filter (keep if you really want debt created in that month/year)
     if month and year:
@@ -1434,7 +1517,7 @@ def admin_dashboard(request):
     branch_id = (request.GET.get("branch") or "").strip()
     selected_branch = branches_qs.filter(pk=branch_id).first() if branch_id else None
 
-    inv_qs = Invoice.objects.all()
+    inv_qs = Invoice.objects.filter(invoice_state="active")
     pay_qs = Payment.objects.select_related("invoice")
     exp_qs = Expense.objects.all()
 
@@ -1813,7 +1896,7 @@ def admin_dashboard(request):
 def sales_history(request):
     selected = _selected_branch(request)
 
-    qs = _invoice_scope_qs(request).prefetch_related("items__product")
+    qs = Invoice.objects.select_related("customer", "seller").prefetch_related("items__product")
 
     if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
         qs = qs.filter(branch=selected)
@@ -2011,7 +2094,7 @@ def sales_report(request):
     selected = _selected_branch(request)
 
     # base scopes (respect role permissions)
-    inv_qs = _invoice_scope_qs(request)
+    inv_qs = _invoice_scope_qs(request).filter(invoice_state="active")
     exp_qs = _expense_scope_qs(request)
     pay_qs = _payment_scope_qs(request)  # ✅ IMPORTANT: scope payments too (seller => branch)
 
@@ -2090,7 +2173,6 @@ def sales_report(request):
         }
     )
 
-
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def enhanced_sales_report(request):
@@ -2104,9 +2186,10 @@ def enhanced_sales_report(request):
     doughnut_month = _safe_int(request.GET.get("doughnut_month")) or today.month
     doughnut_year = _safe_int(request.GET.get("doughnut_year")) or today.year
 
-    inv_qs = _invoice_scope_qs(request)
+    # ACTIVE invoices only
+    inv_qs = _invoice_scope_qs(request).filter(invoice_state="active")
     exp_qs = _expense_scope_qs(request)
-    pay_qs = _payment_scope_qs(request)
+    pay_qs = _payment_scope_qs(request).filter(invoice__invoice_state="active")
 
     if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
         inv_qs = inv_qs.filter(branch=selected)
@@ -2138,8 +2221,13 @@ def enhanced_sales_report(request):
     )
     daily_map = {r["day"]: float(r["total"] or 0) for r in daily_raw}
     days_count = (end - start).days + 1
-    daily = [{"day": (start + timedelta(days=i)).isoformat(),
-              "total": daily_map.get(start + timedelta(days=i), 0)} for i in range(days_count)]
+    daily = [
+        {
+            "day": (start + timedelta(days=i)).isoformat(),
+            "total": daily_map.get(start + timedelta(days=i), 0),
+        }
+        for i in range(days_count)
+    ]
 
     # Weekly chart
     weekly_raw = (
@@ -2180,7 +2268,11 @@ def enhanced_sales_report(request):
             continue
         if year_filter and m.year != year_filter:
             continue
-        monthly.append({"month": m.month, "year": m.year, "total": monthly_map.get(m, 0)})
+        monthly.append({
+            "month": m.month,
+            "year": m.year,
+            "total": monthly_map.get(m, 0),
+        })
 
     # Yearly chart (last 5 years)
     years_list = [today.year - 4, today.year - 3, today.year - 2, today.year - 1, today.year]
@@ -2194,7 +2286,7 @@ def enhanced_sales_report(request):
     yearly = [{"year": y, "total": yearly_map.get(y, 0)} for y in years_list if not year_filter or y == year_filter]
 
     # Doughnut: revenue received + expenses + COGS + profit/loss
-    # ✅ include EBT here
+    # includes EBT
     income_sales = inv_qs.filter(
         created_at__year=doughnut_year,
         created_at__month=doughnut_month,
@@ -2214,17 +2306,25 @@ def enhanced_sales_report(request):
         date__month=doughnut_month
     ).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
-    doughnut_inv_qs = inv_qs.filter(created_at__year=doughnut_year, created_at__month=doughnut_month)
-    doughnut_items = InvoiceItem.objects.filter(invoice__in=doughnut_inv_qs)
+    doughnut_inv_qs = inv_qs.filter(
+        created_at__year=doughnut_year,
+        created_at__month=doughnut_month
+    )
+    doughnut_items = InvoiceItem.objects.filter(
+        invoice__in=doughnut_inv_qs,
+        invoice__invoice_state="active"
+    )
 
     if hasattr(InvoiceItem, "line_cost_cache"):
         doughnut_cogs_total = doughnut_items.aggregate(t=Sum("line_cost_cache"))["t"] or Decimal("0.00")
     elif hasattr(InvoiceItem, "buying_cost"):
         doughnut_cogs_total = doughnut_items.aggregate(
-            t=Sum(ExpressionWrapper(
-                F("buying_cost") * F("quantity"),
-                output_field=DecimalField(max_digits=18, decimal_places=2)
-            ))
+            t=Sum(
+                ExpressionWrapper(
+                    F("buying_cost") * F("quantity"),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
         )["t"] or Decimal("0.00")
     else:
         doughnut_cogs_total = Decimal("0.00")
@@ -2266,8 +2366,6 @@ def enhanced_sales_report(request):
         "doughnut_profit_for_chart": float(doughnut_profit_for_chart),
         "profit_is_negative": profit_is_negative,
     })
-
-
 # ───────────────────────────────────────────────────────────────
 # EXPENSES
 # ───────────────────────────────────────────────────────────────
@@ -4151,3 +4249,21 @@ def genji_delete(request, pk):
     return _render(request, ["sales/genji_delete.html", "genji_delete.html"], {
         "obj": obj,
     })
+    
+@login_required
+@role_required(["admin", "cashier"])
+def cancel_invoice(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if request.method != "POST":
+        return HttpResponseForbidden("Invalid request method.")
+
+    try:
+        invoice.cancel_invoice(user=request.user)
+        messages.success(request, f"Invoice #{invoice.id} cancelled successfully. Stock restored.")
+    except ValidationError as e:
+        messages.error(request, str(e))
+    except Exception as e:
+        messages.error(request, f"Failed to cancel invoice: {e}")
+
+    return redirect("sales:invoice_detail", pk=invoice.pk)

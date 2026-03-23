@@ -91,4 +91,5 @@ path("genji/add/", views.genji_create, name="genji_create"),
 path("genji/<int:pk>/edit/", views.genji_update, name="genji_update"),
 path("genji/<int:pk>/delete/", views.genji_delete, name="genji_delete"),
 path("products/export/excel/", views.export_products_excel, name="export_products_excel"),
+path("invoice/<int:pk>/cancel/", views.cancel_invoice, name="cancel_invoice"),
 ]
