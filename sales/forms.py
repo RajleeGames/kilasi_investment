@@ -168,3 +168,30 @@ class GenjiSaleForm(forms.ModelForm):
             "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
             "branch": forms.Select(attrs={"class": "form-select"}),
         }
+        
+        
+        from django import forms
+from .models import MyDebt, MyDebtPayment
+
+
+class MyDebtForm(forms.ModelForm):
+    class Meta:
+        model = MyDebt
+        fields = ["name", "phone", "amount_owed", "description", "is_active"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter name"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter phone number"}),
+            "amount_owed": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Enter amount"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Optional description"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+
+class MyDebtPaymentForm(forms.ModelForm):
+    class Meta:
+        model = MyDebtPayment
+        fields = ["amount", "note"]
+        widgets = {
+            "amount": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Enter payment amount"}),
+            "note": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional note"}),
+        }

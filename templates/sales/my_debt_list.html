@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Ninaowadai Mimi{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --dl-bg:#f8fafc;
+    --dl-card:#ffffff;
+    --dl-text:#0f172a;
+    --dl-muted:#64748b;
+    --dl-line:#e2e8f0;
+    --dl-soft:#f8fafc;
+
+    --dl-primary:#2563eb;
+    --dl-success:#16a34a;
+    --dl-danger:#dc2626;
+    --dl-warning:#f59e0b;
+
+    --dl-shadow:0 8px 22px rgba(15,23,42,.06);
+    --dl-radius:16px;
+  }
+
+  .dl-wrap{
+    max-width:1150px;
+    margin:0 auto;
+    color:var(--dl-text);
+    font-size:13px;
+  }
+
+  .dl-top{
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid var(--dl-line);
+    border-radius:18px;
+    box-shadow:var(--dl-shadow);
+    padding:15px;
+    margin-bottom:14px;
+  }
+
+  .dl-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    color:var(--dl-primary);
+    background:rgba(37,99,235,.08);
+    border:1px solid rgba(37,99,235,.10);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+
+  .dl-title{
+    font-size:22px;
+    font-weight:800;
+    margin:0;
+    line-height:1.15;
+  }
+
+  .dl-sub{
+    color:var(--dl-muted);
+    margin-top:5px;
+    font-size:12px;
+  }
+
+  .dl-top-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .dl-btn{
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+    padding:9px 13px;
+  }
+
+  .dl-btn-primary{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+
+  .dl-btn-primary:hover{
+    background:#1d4ed8;
+    border-color:#1d4ed8;
+    color:#fff;
+  }
+
+  .dl-stat{
+    background:var(--dl-card);
+    border:1px solid var(--dl-line);
+    border-radius:16px;
+    box-shadow:var(--dl-shadow);
+    padding:14px;
+    height:100%;
+  }
+
+  .dl-stat-label{
+    color:var(--dl-muted);
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:6px;
+  }
+
+  .dl-stat-value{
+    font-size:20px;
+    font-weight:800;
+    line-height:1.1;
+    margin:0;
+  }
+
+  .dl-stat-value.success{ color:var(--dl-success); }
+  .dl-stat-value.warning{ color:#d97706; }
+
+  .dl-stat-note{
+    margin-top:4px;
+    color:var(--dl-muted);
+    font-size:11px;
+  }
+
+  .dl-card{
+    background:var(--dl-card);
+    border:1px solid var(--dl-line);
+    border-radius:18px;
+    box-shadow:var(--dl-shadow);
+    overflow:hidden;
+  }
+
+  .dl-card-head{
+    padding:13px 15px;
+    border-bottom:1px solid var(--dl-line);
+    background:#fbfdff;
+  }
+
+  .dl-card-title{
+    margin:0;
+    font-size:15px;
+    font-weight:800;
+  }
+
+  .dl-card-sub{
+    margin:4px 0 0;
+    color:var(--dl-muted);
+    font-size:12px;
+  }
+
+  .dl-search{
+    padding:13px 15px;
+    border-bottom:1px solid var(--dl-line);
+    background:#fff;
+  }
+
+  .dl-search-wrap{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .dl-search-box{
+    flex:1 1 300px;
+    position:relative;
+  }
+
+  .dl-search-icon{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:12px;
+  }
+
+  .dl-input{
+    width:100%;
+    height:42px;
+    border:1px solid var(--dl-line);
+    border-radius:12px;
+    padding:0 12px 0 35px;
+    font-size:13px;
+    outline:none;
+    background:#fff;
+  }
+
+  .dl-input:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+
+  .dl-search-btn{
+    height:42px;
+    min-width:110px;
+  }
+
+  .dl-table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .dl-table{
+    width:100%;
+    min-width:760px;
+    margin:0;
+  }
+
+  .dl-table thead th{
+    background:#f8fafc;
+    color:var(--dl-muted);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:800;
+    padding:12px 14px;
+    border-bottom:1px solid var(--dl-line);
+    white-space:nowrap;
+  }
+
+  .dl-table tbody td{
+    padding:12px 14px;
+    border-bottom:1px solid var(--dl-line);
+    font-size:13px;
+    vertical-align:middle;
+  }
+
+  .dl-table tbody tr:last-child td{
+    border-bottom:none;
+  }
+
+  .dl-name{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:200px;
+  }
+
+  .dl-avatar{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(37,99,235,.08);
+    color:var(--dl-primary);
+    border:1px solid rgba(37,99,235,.10);
+    flex-shrink:0;
+    font-size:13px;
+  }
+
+  .dl-name-main{
+    font-size:13px;
+    font-weight:800;
+    line-height:1.2;
+    color:var(--dl-text);
+  }
+
+  .dl-name-sub{
+    font-size:11px;
+    color:var(--dl-muted);
+    margin-top:2px;
+    max-width:220px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .dl-money{
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .dl-money.paid{ color:var(--dl-success); }
+  .dl-money.balance{ color:var(--dl-danger); }
+
+  .dl-status{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+    line-height:1;
+    white-space:nowrap;
+  }
+
+  .dl-status.active{
+    color:var(--dl-danger);
+    background:rgba(220,38,38,.08);
+    border:1px solid rgba(220,38,38,.10);
+  }
+
+  .dl-status.closed{
+    color:var(--dl-success);
+    background:rgba(22,163,74,.08);
+    border:1px solid rgba(22,163,74,.10);
+  }
+
+  .dl-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+
+  .dl-action-btn{
+    border-radius:10px;
+    font-size:11px;
+    font-weight:700;
+    padding:7px 10px;
+    white-space:nowrap;
+  }
+
+  .dl-empty{
+    text-align:center;
+    padding:34px 16px;
+  }
+
+  .dl-empty i{
+    font-size:26px;
+    color:#94a3b8;
+    margin-bottom:8px;
+  }
+
+  .dl-empty-title{
+    font-size:15px;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+
+  .dl-empty-sub{
+    color:var(--dl-muted);
+    font-size:12px;
+    margin-bottom:12px;
+  }
+
+  .dl-pagination{
+    padding:12px 15px;
+    border-top:1px solid var(--dl-line);
+    background:#fff;
+  }
+
+  .dl-pagination .pagination{
+    margin:0;
+  }
+
+  .dl-pagination .page-link{
+    border:none;
+    background:#f8fafc;
+    color:var(--dl-text);
+    font-size:12px;
+    font-weight:700;
+    border-radius:10px !important;
+    margin:0 2px;
+    min-width:34px;
+    text-align:center;
+    box-shadow:none;
+  }
+
+  .dl-pagination .page-item.active .page-link{
+    background:#2563eb;
+    color:#fff;
+  }
+
+  .dl-pagination .page-item.disabled .page-link{
+    color:#94a3b8;
+    background:#f1f5f9;
+  }
+
+  @media(max-width:767.98px){
+    .dl-wrap{
+      font-size:12px;
+    }
+
+    .dl-top,
+    .dl-stat,
+    .dl-search,
+    .dl-card-head,
+    .dl-pagination{
+      padding:12px;
+    }
+
+    .dl-title{
+      font-size:19px;
+    }
+
+    .dl-top-actions{
+      justify-content:flex-start;
+      margin-top:10px;
+    }
+
+    .dl-stat-value{
+      font-size:17px;
+    }
+
+    .dl-table{
+      min-width:700px;
+    }
+  }
+</style>
+
+<div class="dl-wrap">
+  <div class="dl-top">
+    <div class="row g-3 align-items-center">
+      <div class="col-lg-8">
+        <div class="dl-kicker">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          My Debts
+        </div>
+        <h1 class="dl-title">Ninaowadai Mimi</h1>
+        <div class="dl-sub">
+          Simple list of people and suppliers you owe.
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="dl-top-actions">
+          <a href="{% url 'sales:my_debt_create' %}" class="btn dl-btn dl-btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Add Debt
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-4">
+      <div class="dl-stat">
+        <div class="dl-stat-label">Total Active Debt</div>
+        <h3 class="dl-stat-value">TZS {{ total_owed|floatformat:0|intcomma }}</h3>
+        <div class="dl-stat-note">Not fully paid yet</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-4">
+      <div class="dl-stat">
+        <div class="dl-stat-label">Active</div>
+        <h3 class="dl-stat-value success">{{ active_count }}</h3>
+        <div class="dl-stat-note">Still open</div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="dl-stat">
+        <div class="dl-stat-label">Closed</div>
+        <h3 class="dl-stat-value warning">{{ closed_count }}</h3>
+        <div class="dl-stat-note">Already settled</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dl-card">
+    <div class="dl-card-head">
+      <h5 class="dl-card-title">Debt Records</h5>
+      <div class="dl-card-sub">Search and manage your debt records.</div>
+    </div>
+
+    <div class="dl-search">
+      <form method="get">
+        <div class="dl-search-wrap">
+          <div class="dl-search-box">
+            <i class="fa-solid fa-magnifying-glass dl-search-icon"></i>
+            <input
+              type="text"
+              name="q"
+              value="{{ query }}"
+              class="dl-input"
+              placeholder="Search name..."
+            >
+          </div>
+          <button class="btn btn-primary dl-btn dl-search-btn">
+            <i class="fa-solid fa-search me-1"></i> Search
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="dl-table-wrap">
+      <table class="table dl-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Total Debt</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in debts %}
+          <tr>
+            <td>
+              <div class="dl-name">
+                <div class="dl-avatar">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                  <div class="dl-name-main">{{ row.obj.name }}</div>
+                  <div class="dl-name-sub">
+                    {% if row.obj.description %}
+                      {{ row.obj.description|truncatechars:30 }}
+                    {% else %}
+                      Debt record
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ row.obj.phone|default:"-" }}</td>
+
+            <td>
+              <span class="dl-money">
+                TZS {{ row.obj.amount_owed|floatformat:0|intcomma }}
+              </span>
+            </td>
+
+            <td>
+              <span class="dl-money paid">
+                TZS {{ row.paid|floatformat:0|intcomma }}
+              </span>
+            </td>
+
+            <td>
+              <span class="dl-money balance">
+                TZS {{ row.balance|floatformat:0|intcomma }}
+              </span>
+            </td>
+
+            <td>
+              {% if row.obj.is_active %}
+                <span class="dl-status active">
+                  <i class="fa-solid fa-clock"></i> Active
+                </span>
+              {% else %}
+                <span class="dl-status closed">
+                  <i class="fa-solid fa-circle-check"></i> Closed
+                </span>
+              {% endif %}
+            </td>
+
+            <td class="text-end">
+              <div class="dl-actions">
+                <a href="{% url 'sales:my_debt_detail' row.obj.id %}" class="btn btn-outline-primary dl-action-btn">
+                  <i class="fa-solid fa-eye me-1"></i> View
+                </a>
+                <a href="{% url 'sales:my_debt_update' row.obj.id %}" class="btn btn-outline-warning dl-action-btn">
+                  <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="dl-empty">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <div class="dl-empty-title">No debt records found</div>
+                <div class="dl-empty-sub">Add your first debt record to start tracking.</div>
+                <a href="{% url 'sales:my_debt_create' %}" class="btn dl-btn dl-btn-primary">
+                  <i class="fa-solid fa-plus me-1"></i> Add Debt
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+    <div class="dl-pagination">
+      <nav aria-label="Debt pagination">
+        <ul class="pagination justify-content-center flex-wrap">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|urlencode }}&page=1">First</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}">Prev</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">First</span></li>
+            <li class="page-item disabled"><span class="page-link">Prev</span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+              <li class="page-item">
+                <a class="page-link" href="?q={{ query|urlencode }}&page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|urlencode }}&page={{ page_obj.paginator.num_pages }}">Last</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            <li class="page-item disabled"><span class="page-link">Last</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

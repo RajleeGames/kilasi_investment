@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+  {% if is_edit %}Edit Debt{% else %}Add Debt{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --df-bg:#f8fafc;
+    --df-card:#ffffff;
+    --df-text:#0f172a;
+    --df-muted:#64748b;
+    --df-line:#e2e8f0;
+    --df-soft:#f8fafc;
+
+    --df-primary:#2563eb;
+    --df-danger:#dc2626;
+
+    --df-shadow:0 8px 22px rgba(15,23,42,.06);
+    --df-radius:16px;
+  }
+
+  .df-wrap{
+    max-width:900px;
+    margin:0 auto;
+    color:var(--df-text);
+    font-size:13px;
+  }
+
+  .df-top{
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid var(--df-line);
+    border-radius:18px;
+    box-shadow:var(--df-shadow);
+    padding:15px;
+    margin-bottom:14px;
+  }
+
+  .df-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    color:var(--df-primary);
+    background:rgba(37,99,235,.08);
+    border:1px solid rgba(37,99,235,.10);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+
+  .df-title{
+    font-size:22px;
+    font-weight:800;
+    margin:0;
+    line-height:1.15;
+  }
+
+  .df-sub{
+    color:var(--df-muted);
+    margin-top:5px;
+    font-size:12px;
+  }
+
+  .df-top-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .df-btn{
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+    padding:9px 13px;
+  }
+
+  .df-btn-primary{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+
+  .df-btn-primary:hover{
+    background:#1d4ed8;
+    border-color:#1d4ed8;
+    color:#fff;
+  }
+
+  .df-card{
+    background:var(--df-card);
+    border:1px solid var(--df-line);
+    border-radius:18px;
+    box-shadow:var(--df-shadow);
+    overflow:hidden;
+  }
+
+  .df-card-head{
+    padding:13px 15px;
+    border-bottom:1px solid var(--df-line);
+    background:#fbfdff;
+  }
+
+  .df-card-title{
+    margin:0;
+    font-size:15px;
+    font-weight:800;
+  }
+
+  .df-card-sub{
+    margin:4px 0 0;
+    color:var(--df-muted);
+    font-size:12px;
+  }
+
+  .df-card-body{
+    padding:15px;
+  }
+
+  .df-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .df-col-12{
+    grid-column:1 / -1;
+  }
+
+  .df-label{
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:700;
+    color:#334155;
+  }
+
+  .df-help{
+    margin-top:5px;
+    color:var(--df-muted);
+    font-size:11px;
+    line-height:1.45;
+  }
+
+  .df-errors{
+    margin-top:5px;
+    color:var(--df-danger);
+    font-size:11px;
+    font-weight:700;
+  }
+
+  .df-card input[type="text"],
+  .df-card input[type="number"],
+  .df-card input[type="tel"],
+  .df-card input[type="email"],
+  .df-card textarea,
+  .df-card select{
+    width:100%;
+    min-height:42px;
+    border:1px solid var(--df-line);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:13px;
+    outline:none;
+    box-shadow:none;
+    background:#fff;
+  }
+
+  .df-card textarea{
+    min-height:95px;
+    resize:vertical;
+  }
+
+  .df-card input:focus,
+  .df-card textarea:focus,
+  .df-card select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+
+  .df-switch-box{
+    min-height:42px;
+    border:1px solid var(--df-line);
+    border-radius:12px;
+    background:#fff;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .df-switch-text{
+    font-size:12px;
+    color:var(--df-text);
+    font-weight:700;
+  }
+
+  .df-switch-note{
+    display:block;
+    font-size:11px;
+    color:var(--df-muted);
+    font-weight:500;
+    margin-top:2px;
+  }
+
+  .df-switch-box .form-check-input{
+    width:2.6rem;
+    height:1.35rem;
+    margin:0;
+    box-shadow:none;
+    cursor:pointer;
+  }
+
+  .df-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:16px;
+  }
+
+  .df-alert{
+    border-radius:14px;
+    font-size:12px;
+    padding:12px 14px;
+    margin-bottom:12px;
+  }
+
+  .df-side{
+    margin-top:14px;
+    background:var(--df-card);
+    border:1px solid var(--df-line);
+    border-radius:18px;
+    box-shadow:var(--df-shadow);
+    padding:14px;
+  }
+
+  .df-side-title{
+    font-size:14px;
+    font-weight:800;
+    margin-bottom:10px;
+  }
+
+  .df-info{
+    display:grid;
+    gap:10px;
+  }
+
+  .df-info-item{
+    border:1px solid var(--df-line);
+    border-radius:12px;
+    padding:11px 12px;
+    background:#fbfdff;
+  }
+
+  .df-info-label{
+    display:block;
+    font-size:10px;
+    color:var(--df-muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+
+  .df-info-value{
+    font-size:12px;
+    font-weight:700;
+    color:var(--df-text);
+  }
+
+  @media(max-width:767.98px){
+    .df-wrap{
+      font-size:12px;
+    }
+
+    .df-top,
+    .df-card-body,
+    .df-side{
+      padding:12px;
+    }
+
+    .df-card-head{
+      padding:12px;
+    }
+
+    .df-title{
+      font-size:19px;
+    }
+
+    .df-top-actions{
+      justify-content:flex-start;
+      margin-top:10px;
+    }
+
+    .df-grid{
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+
+    .df-actions{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .df-actions .btn{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="df-wrap">
+  <div class="df-top">
+    <div class="row g-3 align-items-center">
+      <div class="col-lg-8">
+        <div class="df-kicker">
+          <i class="fa-solid fa-file-pen"></i>
+          Debt Form
+        </div>
+
+        <h1 class="df-title">
+          {% if is_edit %}Edit Ninaowadai{% else %}Add Ninaowadai{% endif %}
+        </h1>
+
+        <div class="df-sub">
+          {% if is_edit %}
+            Update this debt record details.
+          {% else %}
+            Add a simple debt record for a person or supplier you owe.
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="df-top-actions">
+          <a href="{% url 'sales:my_debt_list' %}" class="btn btn-outline-secondary df-btn">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="df-card">
+    <div class="df-card-head">
+      <h5 class="df-card-title">
+        {% if is_edit %}Update Debt Record{% else %}Create Debt Record{% endif %}
+      </h5>
+      <div class="df-card-sub">Fill the fields below and save.</div>
+    </div>
+
+    <div class="df-card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger df-alert">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="df-grid">
+          <div>
+            <label class="df-label">Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="df-errors">{{ form.name.errors }}</div>
+            {% endif %}
+            <div class="df-help">Person or supplier name.</div>
+          </div>
+
+          <div>
+            <label class="df-label">Phone</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}
+              <div class="df-errors">{{ form.phone.errors }}</div>
+            {% endif %}
+            <div class="df-help">Optional phone number.</div>
+          </div>
+
+          <div>
+            <label class="df-label">Amount Owed</label>
+            {{ form.amount_owed }}
+            {% if form.amount_owed.errors %}
+              <div class="df-errors">{{ form.amount_owed.errors }}</div>
+            {% endif %}
+            <div class="df-help">Starting total debt amount.</div>
+          </div>
+
+          <div>
+            <label class="df-label">Status</label>
+            <div class="df-switch-box">
+              <div>
+                <div class="df-switch-text">Active Debt</div>
+                <span class="df-switch-note">Turn off only when fully settled.</span>
+              </div>
+              <div class="form-check form-switch m-0">
+                {{ form.is_active }}
+              </div>
+            </div>
+            {% if form.is_active.errors %}
+              <div class="df-errors">{{ form.is_active.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="df-col-12">
+            <label class="df-label">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="df-errors">{{ form.description.errors }}</div>
+            {% endif %}
+            <div class="df-help">Optional short note for this debt.</div>
+          </div>
+        </div>
+
+        <div class="df-actions">
+          <a href="{% url 'sales:my_debt_list' %}" class="btn btn-light border df-btn">
+            <i class="fa-solid fa-xmark me-1"></i> Cancel
+          </a>
+
+          <button type="submit" class="btn df-btn df-btn-primary">
+            <i class="fa-solid fa-floppy-disk me-1"></i>
+            {% if is_edit %}Update Debt{% else %}Save Debt{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if is_edit and debt %}
+  <div class="df-side">
+    <div class="df-side-title">Current Record</div>
+
+    <div class="df-info">
+      <div class="df-info-item">
+        <span class="df-info-label">Name</span>
+        <div class="df-info-value">{{ debt.name }}</div>
+      </div>
+
+      <div class="df-info-item">
+        <span class="df-info-label">Created</span>
+        <div class="df-info-value">{{ debt.created_at|date:"d M Y H:i" }}</div>
+      </div>
+
+      <div class="df-info-item">
+        <span class="df-info-label">Actions</span>
+        <div class="d-flex gap-2 flex-wrap mt-1">
+          <a href="{% url 'sales:my_debt_detail' debt.id %}" class="btn btn-outline-primary btn-sm">
+            <i class="fa-solid fa-eye me-1"></i> View
+          </a>
+          <a href="{% url 'sales:my_debt_delete' debt.id %}" class="btn btn-outline-danger btn-sm">
+            <i class="fa-solid fa-trash me-1"></i> Delete
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,4 +1,3 @@
-{# templates/sales/kilasi_sales_history.html #}
 {% extends "base.html" %}
 {% load humanize %}
 {% block title %}Sales History — Kilasi Investment{% endblock %}
@@ -540,6 +539,13 @@
               All Branches
             </span>
           {% endif %}
+
+          {% if sale_date %}
+            <span class="sh-badge soft">
+              <i class="fa-solid fa-calendar-days"></i>
+              {{ sale_date }}
+            </span>
+          {% endif %}
         </div>
 
         <h2 class="sh-title">
@@ -553,13 +559,13 @@
       </div>
 
       <div class="sh-top-actions">
-        <a href="{% url 'sales:kilasi_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+        <a href="{% url 'sales:kilasi_sales_report' %}?{% if selected_branch %}branch={{ selected_branch }}&{% endif %}{% if sale_date %}sale_date={{ sale_date }}{% endif %}"
            class="sh-link-btn">
           <i class="fa-solid fa-calendar-day"></i>
           Daily Report
         </a>
 
-        <a href="{% url 'sales:enhanced_sales_report' %}{% if selected_branch %}?branch={{ selected_branch }}{% endif %}"
+        <a href="{% url 'sales:enhanced_sales_report' %}?{% if selected_branch %}branch={{ selected_branch }}&{% endif %}{% if sale_date %}sale_date={{ sale_date }}{% endif %}"
            class="sh-link-btn">
           <i class="fa-solid fa-chart-simple"></i>
           Enhanced
@@ -572,7 +578,7 @@
   <div class="sh-filter-card">
     <div class="sh-filter-body">
       <form method="get" class="row g-3 align-items-end">
-        <div class="col-12 col-md-7">
+        <div class="col-12 col-md-4">
           <div class="sh-field">
             <label>Branch</label>
             <select name="branch" class="form-select sh-control">
@@ -586,8 +592,15 @@
           </div>
         </div>
 
-        <div class="col-12 col-md-5 d-flex gap-2">
-          <button class="btn sh-btn w-100">
+        <div class="col-12 col-md-4">
+          <div class="sh-field">
+            <label>Date</label>
+            <input type="date" name="sale_date" value="{{ sale_date }}" class="form-control sh-control">
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 d-flex gap-2">
+          <button class="btn sh-btn w-100" type="submit">
             <i class="fa-solid fa-filter"></i>
             Apply
           </button>
@@ -733,7 +746,7 @@
       <div class="sh-empty">
         <i class="fa-regular fa-face-frown"></i>
         <h6>No invoices found</h6>
-        <p>Try changing the selected branch or create a new sale.</p>
+        <p>Try changing the selected branch or date, or create a new sale.</p>
       </div>
     {% endif %}
 
@@ -744,7 +757,7 @@
             {% if page_obj.has_previous %}
               <li class="page-item">
                 <a class="page-link"
-                   href="?page={{ page_obj.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                   href="?page={{ page_obj.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if sale_date %}&sale_date={{ sale_date }}{% endif %}">
                   ‹ Prev
                 </a>
               </li>
@@ -759,7 +772,7 @@
             {% if page_obj.has_next %}
               <li class="page-item">
                 <a class="page-link"
-                   href="?page={{ page_obj.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+                   href="?page={{ page_obj.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if sale_date %}&sale_date={{ sale_date }}{% endif %}">
                   Next ›
                 </a>
               </li>

@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Debt Detail{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --dd-bg:#f8fafc;
+    --dd-card:#ffffff;
+    --dd-text:#0f172a;
+    --dd-muted:#64748b;
+    --dd-line:#e2e8f0;
+    --dd-soft:#f1f5f9;
+
+    --dd-primary:#2563eb;
+    --dd-success:#16a34a;
+    --dd-danger:#dc2626;
+    --dd-warning:#f59e0b;
+
+    --dd-shadow:0 8px 22px rgba(15,23,42,.06);
+    --dd-radius:16px;
+  }
+
+  .dd-wrap{
+    max-width:1100px;
+    margin:0 auto;
+    color:var(--dd-text);
+    font-size:13px;
+  }
+
+  .dd-top{
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid var(--dd-line);
+    border-radius:20px;
+    box-shadow:var(--dd-shadow);
+    padding:16px;
+    margin-bottom:14px;
+  }
+
+  .dd-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    color:var(--dd-primary);
+    background:rgba(37,99,235,.08);
+    border:1px solid rgba(37,99,235,.10);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+
+  .dd-title{
+    font-size:24px;
+    font-weight:800;
+    margin:0;
+    line-height:1.15;
+  }
+
+  .dd-sub{
+    color:var(--dd-muted);
+    margin-top:5px;
+    font-size:13px;
+  }
+
+  .dd-top-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .dd-btn{
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+    padding:9px 13px;
+  }
+
+  .dd-btn-primary{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+
+  .dd-btn-primary:hover{
+    background:#1d4ed8;
+    border-color:#1d4ed8;
+    color:#fff;
+  }
+
+  .dd-stat{
+    background:var(--dd-card);
+    border:1px solid var(--dd-line);
+    border-radius:16px;
+    box-shadow:var(--dd-shadow);
+    padding:14px;
+    height:100%;
+  }
+
+  .dd-stat-label{
+    color:var(--dd-muted);
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:6px;
+  }
+
+  .dd-stat-value{
+    font-size:22px;
+    font-weight:800;
+    line-height:1.1;
+    margin:0;
+  }
+
+  .dd-stat-value.success{ color:var(--dd-success); }
+  .dd-stat-value.danger{ color:var(--dd-danger); }
+  .dd-stat-note{
+    margin-top:4px;
+    color:var(--dd-muted);
+    font-size:12px;
+  }
+
+  .dd-card{
+    background:var(--dd-card);
+    border:1px solid var(--dd-line);
+    border-radius:18px;
+    box-shadow:var(--dd-shadow);
+    overflow:hidden;
+    margin-bottom:14px;
+  }
+
+  .dd-card-head{
+    padding:13px 15px;
+    border-bottom:1px solid var(--dd-line);
+    background:#fbfdff;
+  }
+
+  .dd-card-title{
+    margin:0;
+    font-size:15px;
+    font-weight:800;
+  }
+
+  .dd-card-sub{
+    margin:4px 0 0;
+    color:var(--dd-muted);
+    font-size:12px;
+  }
+
+  .dd-card-body{
+    padding:15px;
+  }
+
+  .dd-form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:10px;
+    align-items:end;
+  }
+
+  .dd-label{
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:700;
+    color:#334155;
+  }
+
+  .dd-card input,
+  .dd-card textarea,
+  .dd-card select{
+    width:100%;
+    min-height:42px;
+    border:1px solid var(--dd-line);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:13px;
+    outline:none;
+    box-shadow:none;
+  }
+
+  .dd-card textarea{
+    min-height:42px;
+    resize:vertical;
+  }
+
+  .dd-card input:focus,
+  .dd-card textarea:focus,
+  .dd-card select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+
+  .dd-save-btn{
+    min-width:130px;
+    height:42px;
+  }
+
+  .dd-info-list{
+    display:grid;
+    gap:10px;
+  }
+
+  .dd-info-item{
+    border:1px solid var(--dd-line);
+    background:#fbfdff;
+    border-radius:14px;
+    padding:12px;
+  }
+
+  .dd-info-label{
+    display:block;
+    font-size:11px;
+    color:var(--dd-muted);
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:4px;
+  }
+
+  .dd-info-value{
+    font-size:13px;
+    font-weight:700;
+    color:var(--dd-text);
+    word-break:break-word;
+  }
+
+  .dd-table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .dd-table{
+    width:100%;
+    min-width:620px;
+    margin:0;
+  }
+
+  .dd-table thead th{
+    background:#f8fafc;
+    color:var(--dd-muted);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:800;
+    padding:12px 14px;
+    border-bottom:1px solid var(--dd-line);
+    white-space:nowrap;
+  }
+
+  .dd-table tbody td{
+    padding:12px 14px;
+    border-bottom:1px solid var(--dd-line);
+    font-size:13px;
+    vertical-align:middle;
+  }
+
+  .dd-table tbody tr:last-child td{
+    border-bottom:none;
+  }
+
+  .dd-paid{
+    color:var(--dd-success);
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .dd-empty{
+    text-align:center;
+    padding:34px 16px;
+  }
+
+  .dd-empty i{
+    font-size:26px;
+    color:#94a3b8;
+    margin-bottom:8px;
+  }
+
+  .dd-empty-title{
+    font-size:15px;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+
+  .dd-empty-sub{
+    color:var(--dd-muted);
+    font-size:12px;
+  }
+
+  @media (max-width: 991.98px){
+    .dd-title{
+      font-size:20px;
+    }
+    .dd-top-actions{
+      justify-content:flex-start;
+      margin-top:10px;
+    }
+  }
+
+  @media (max-width: 767.98px){
+    .dd-wrap{
+      font-size:12px;
+    }
+
+    .dd-top{
+      padding:13px;
+      border-radius:16px;
+    }
+
+    .dd-card,
+    .dd-stat{
+      border-radius:14px;
+    }
+
+    .dd-card-head,
+    .dd-card-body{
+      padding:12px;
+    }
+
+    .dd-form-grid{
+      grid-template-columns:1fr;
+    }
+
+    .dd-save-btn{
+      width:100%;
+      min-width:unset;
+    }
+
+    .dd-stat-value{
+      font-size:18px;
+    }
+
+    .dd-table{
+      min-width:560px;
+    }
+  }
+</style>
+
+<div class="dd-wrap">
+  <div class="dd-top">
+    <div class="row g-3 align-items-center">
+      <div class="col-lg-8">
+        <div class="dd-kicker">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          Debt Detail
+        </div>
+        <h1 class="dd-title">{{ debt.name }}</h1>
+        <div class="dd-sub">
+          Manage payments and track the remaining balance.
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="dd-top-actions">
+          <a href="{% url 'sales:my_debt_list' %}" class="btn btn-outline-secondary dd-btn">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back
+          </a>
+          <a href="{% url 'sales:my_debt_update' debt.id %}" class="btn btn-outline-warning dd-btn">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="dd-stat">
+        <div class="dd-stat-label">Amount Owed</div>
+        <h3 class="dd-stat-value">TZS {{ debt.amount_owed|floatformat:0|intcomma }}</h3>
+        <div class="dd-stat-note">Original debt</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="dd-stat">
+        <div class="dd-stat-label">Paid</div>
+        <h3 class="dd-stat-value success">TZS {{ total_paid|floatformat:0|intcomma }}</h3>
+        <div class="dd-stat-note">Already paid</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="dd-stat">
+        <div class="dd-stat-label">Balance</div>
+        <h3 class="dd-stat-value danger">TZS {{ balance|floatformat:0|intcomma }}</h3>
+        <div class="dd-stat-note">Remaining</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="dd-stat">
+        <div class="dd-stat-label">Payments</div>
+        <h3 class="dd-stat-value">{{ payments|length }}</h3>
+        <div class="dd-stat-note">Entries</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-xl-8">
+      <div class="dd-card">
+        <div class="dd-card-head">
+          <h5 class="dd-card-title">Add Payment</h5>
+          <div class="dd-card-sub">Save a payment for this debt.</div>
+        </div>
+
+        <div class="dd-card-body">
+          <form method="post" action="{% url 'sales:my_debt_add_payment' debt.id %}">
+            {% csrf_token %}
+            <div class="dd-form-grid">
+              <div>
+                <label class="dd-label">Amount</label>
+                {{ pay_form.amount }}
+              </div>
+
+              <div>
+                <label class="dd-label">Note</label>
+                {{ pay_form.note }}
+              </div>
+
+              <div>
+                <label class="dd-label d-none d-md-block">&nbsp;</label>
+                <button class="btn dd-btn dd-btn-primary dd-save-btn w-100">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Save
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="dd-card">
+        <div class="dd-card-head">
+          <h5 class="dd-card-title">Payment History</h5>
+          <div class="dd-card-sub">All saved payments for this debt.</div>
+        </div>
+
+        <div class="dd-table-wrap">
+          <table class="table dd-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Note</th>
+                <th>By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payments %}
+              <tr>
+                <td>
+                  <div class="fw-bold">{{ p.created_at|date:"d M Y" }}</div>
+                  <div class="text-muted small">{{ p.created_at|date:"H:i" }}</div>
+                </td>
+                <td class="dd-paid">TZS {{ p.amount|floatformat:0|intcomma }}</td>
+                <td>{{ p.note|default:"-" }}</td>
+                <td>{{ p.created_by|default:"-" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4">
+                  <div class="dd-empty">
+                    <i class="fa-solid fa-receipt"></i>
+                    <div class="dd-empty-title">No payments yet</div>
+                    <div class="dd-empty-sub">Payments you add will show here.</div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="dd-card">
+        <div class="dd-card-head">
+          <h5 class="dd-card-title">Debt Info</h5>
+          <div class="dd-card-sub">Simple details for this record.</div>
+        </div>
+
+        <div class="dd-card-body">
+          <div class="dd-info-list">
+            <div class="dd-info-item">
+              <span class="dd-info-label">Name</span>
+              <div class="dd-info-value">{{ debt.name }}</div>
+            </div>
+
+            <div class="dd-info-item">
+              <span class="dd-info-label">Phone</span>
+              <div class="dd-info-value">{{ debt.phone|default:"-" }}</div>
+            </div>
+
+            <div class="dd-info-item">
+              <span class="dd-info-label">Description</span>
+              <div class="dd-info-value">{{ debt.description|default:"No description" }}</div>
+            </div>
+
+            <div class="dd-info-item">
+              <span class="dd-info-label">Status</span>
+              <div class="dd-info-value">
+                {% if balance > 0 %}
+                  <span class="text-danger fw-bold">Active</span>
+                {% else %}
+                  <span class="text-success fw-bold">Closed</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="dd-info-item">
+              <span class="dd-info-label">Created</span>
+              <div class="dd-info-value">{{ debt.created_at|date:"d M Y H:i" }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

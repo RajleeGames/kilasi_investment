@@ -824,3 +824,64 @@ class GenjiSale(models.Model):
     @property
     def profit(self):
         return self.total_selling - self.total_buying
+    
+    
+    
+    from decimal import Decimal
+from django.conf import settings
+from django.db import models
+
+
+class MyDebt(models.Model):
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    amount_owed = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_my_debts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return self.name
+
+    def total_paid(self):
+        total = self.payments.aggregate(t=models.Sum("amount"))["t"] or Decimal("0.00")
+        return total
+
+    def balance(self):
+        bal = Decimal(str(self.amount_owed or 0)) - Decimal(str(self.total_paid() or 0))
+        return bal if bal > 0 else Decimal("0.00")
+
+
+class MyDebtPayment(models.Model):
+    debt = models.ForeignKey(
+        MyDebt,
+        on_delete=models.CASCADE,
+        related_name="payments"
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    note = models.CharField(max_length=255, blank=True, null=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="my_debt_payments",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"{self.debt.name} - {self.amount}"

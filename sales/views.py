@@ -29,7 +29,8 @@ from django.utils.dateformat import format as datefmt
 
 from users.utils import role_required
 from users.models import Role
-
+from .models import MyDebt, MyDebtPayment
+from .forms import MyDebtForm, MyDebtPaymentForm
 from inventory.models import Product, Category, StockEntry, Supplier, Branch, ProductStock
 from .models import Invoice, InvoiceItem, Customer, Payment, Expense
 from .models import GenjiSale
@@ -1891,15 +1892,22 @@ def admin_dashboard(request):
 # ───────────────────────────────────────────────────────────────
 # REPORTS (admin/cashier filter branch, seller locked to branch)
 # ───────────────────────────────────────────────────────────────
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def sales_history(request):
     selected = _selected_branch(request)
+    sale_date = (request.GET.get("sale_date") or "").strip()
 
     qs = Invoice.objects.select_related("customer", "seller").prefetch_related("items__product")
 
     if selected and hasattr(Invoice, "branch_id") and _can_filter_branch(request):
         qs = qs.filter(branch=selected)
+
+    if sale_date:
+        qs = qs.filter(created_at__date=sale_date)
 
     qs = qs.order_by("-created_at")
 
@@ -1909,7 +1917,11 @@ def sales_history(request):
     invoice_rows = []
 
     for inv in page_obj.object_list:
-        items_qs = inv.items.select_related("product").all() if hasattr(inv, "items") else InvoiceItem.objects.filter(invoice=inv).select_related("product")
+        items_qs = (
+            inv.items.select_related("product").all()
+            if hasattr(inv, "items")
+            else InvoiceItem.objects.filter(invoice=inv).select_related("product")
+        )
 
         first_item = items_qs.first()
         first_product_name = "No items"
@@ -1917,7 +1929,10 @@ def sales_history(request):
         items_count = 0
 
         if first_item:
-            first_product_name = getattr(getattr(first_item, "product", None), "name", "Unknown Product") or "Unknown Product"
+            first_product_name = (
+                getattr(getattr(first_item, "product", None), "name", "Unknown Product")
+                or "Unknown Product"
+            )
             items_count = items_qs.count()
             more_items_count = max(items_count - 1, 0)
 
@@ -1938,12 +1953,13 @@ def sales_history(request):
         "branches": _branches_for_sales_dropdown() if _can_filter_branch(request) else [],
         "selected_branch": str(selected.id) if selected else "",
         "selected_branch_obj": selected,
+        "sale_date": sale_date,
 
         "is_admin": _is_admin(request),
         "is_cashier": _is_cashier(request),
         "is_seller": _is_seller(request),
     })
-
+    
 from decimal import Decimal
 from datetime import datetime, timedelta
 
@@ -4267,3 +4283,171 @@ def cancel_invoice(request, pk):
         messages.error(request, f"Failed to cancel invoice: {e}")
 
     return redirect("sales:invoice_detail", pk=invoice.pk)
+
+
+@login_required
+@role_required(["admin"])
+def my_debt_list(request):
+    q = (request.GET.get("q") or "").strip()
+
+    qs = MyDebt.objects.all().order_by("-id")
+    if q:
+        qs = qs.filter(name__icontains=q)
+
+    rows = []
+    total_owed_active = Decimal("0.00")
+    active_count = 0
+    closed_count = 0
+
+    for d in qs:
+        paid = MyDebtPayment.objects.filter(debt=d).aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        owed = Decimal(str(d.amount_owed or 0))
+        balance = owed - Decimal(str(paid or 0))
+        if balance < 0:
+            balance = Decimal("0.00")
+
+        is_active = bool(balance > 0)
+        if d.is_active != is_active:
+            d.is_active = is_active
+            d.save(update_fields=["is_active"])
+
+        if is_active:
+            total_owed_active += balance
+            active_count += 1
+        else:
+            closed_count += 1
+
+        rows.append({
+            "obj": d,
+            "paid": paid,
+            "balance": balance,
+        })
+
+    paginator = Paginator(rows, 20)
+    page_obj = paginator.get_page(request.GET.get("page", 1))
+
+    return render(request, "sales/my_debt_list.html", {
+        "debts": page_obj.object_list,
+        "page_obj": page_obj,
+        "query": q,
+        "total_owed": total_owed_active,
+        "active_count": active_count,
+        "closed_count": closed_count,
+    })
+
+
+@login_required
+@role_required(["admin"])
+def my_debt_create(request):
+    if request.method == "POST":
+        form = MyDebtForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.created_by = request.user
+            obj.save()
+            messages.success(request, "Debt added successfully.")
+            return redirect("sales:my_debt_list")
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = MyDebtForm()
+
+    return render(request, "sales/my_debt_form.html", {
+        "form": form,
+        "is_edit": False,
+    })
+
+
+@login_required
+@role_required(["admin"])
+def my_debt_update(request, pk):
+    debt = get_object_or_404(MyDebt, pk=pk)
+
+    if request.method == "POST":
+        form = MyDebtForm(request.POST, instance=debt)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Debt updated.")
+            return redirect("sales:my_debt_list")
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = MyDebtForm(instance=debt)
+
+    return render(request, "sales/my_debt_form.html", {
+        "form": form,
+        "is_edit": True,
+        "debt": debt,
+    })
+
+
+@login_required
+@role_required(["admin"])
+def my_debt_delete(request, pk):
+    debt = get_object_or_404(MyDebt, pk=pk)
+
+    if request.method == "POST":
+        debt.delete()
+        messages.success(request, "Debt deleted.")
+        return redirect("sales:my_debt_list")
+
+    return render(request, "sales/my_debt_delete.html", {
+        "debt": debt
+    })
+
+
+@login_required
+@role_required(["admin"])
+def my_debt_detail(request, pk):
+    debt = get_object_or_404(MyDebt, pk=pk)
+    payments = debt.payments.select_related("created_by").all()
+    pay_form = MyDebtPaymentForm()
+
+    return render(request, "sales/my_debt_detail.html", {
+        "debt": debt,
+        "payments": payments,
+        "total_paid": debt.total_paid(),
+        "balance": debt.balance(),
+        "pay_form": pay_form,
+    })
+
+
+@login_required
+@role_required(["admin"])
+def my_debt_add_payment(request, pk):
+    debt = get_object_or_404(MyDebt, pk=pk)
+
+    if request.method != "POST":
+        return redirect("sales:my_debt_detail", pk=debt.id)
+
+    form = MyDebtPaymentForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Fix payment errors.")
+        return redirect("sales:my_debt_detail", pk=debt.id)
+
+    amount = Decimal(form.cleaned_data["amount"] or 0)
+    if amount <= 0:
+        messages.error(request, "Payment must be greater than 0.")
+        return redirect("sales:my_debt_detail", pk=debt.id)
+
+    current_balance = debt.balance()
+    if amount > current_balance:
+        amount = current_balance
+        messages.warning(request, f"Payment reduced to balance: {current_balance}")
+
+    try:
+        with transaction.atomic():
+            p = form.save(commit=False)
+            p.debt = debt
+            p.amount = amount
+            p.created_by = request.user
+            p.save()
+
+            if debt.balance() <= 0:
+                debt.is_active = False
+                debt.save(update_fields=["is_active", "updated_at"])
+
+    except Exception as e:
+        messages.error(request, f"Failed: {e}")
+        return redirect("sales:my_debt_detail", pk=debt.id)
+
+    messages.success(request, "Payment recorded.")
+    return redirect("sales:my_debt_detail", pk=debt.id)

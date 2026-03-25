@@ -714,6 +714,11 @@
                href="{% url 'sales:debtor_list' %}">
               <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
             </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name in 'my_debt_list my_debt_create my_debt_detail my_debt_update my_debt_delete my_debt_add_payment' %}active{% endif %}"
+               href="{% url 'sales:my_debt_list' %}">
+              <i class="fa-solid fa-file-invoice-dollar"></i> <span class="label">Ninaowadai</span>
+            </a>
           {% endif %}
 
           <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
@@ -1054,6 +1059,11 @@
             <a class="sb-link {% if request.resolver_match.url_name == 'debtor_list' %}active{% endif %}"
                href="{% url 'sales:debtor_list' %}">
               <i class="fa-solid fa-hand-holding-dollar"></i> <span class="label">Wanaodai</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name in 'my_debt_list my_debt_create my_debt_detail my_debt_update my_debt_delete my_debt_add_payment' %}active{% endif %}"
+               href="{% url 'sales:my_debt_list' %}">
+              <i class="fa-solid fa-file-invoice-dollar"></i> <span class="label">Ninaowadai</span>
             </a>
           {% endif %}
 

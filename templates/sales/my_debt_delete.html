@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Delete Debt{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --xdd-bg:#f8fafc;
+    --xdd-card:#ffffff;
+    --xdd-text:#0f172a;
+    --xdd-muted:#64748b;
+    --xdd-line:#e2e8f0;
+    --xdd-soft:#f8fafc;
+
+    --xdd-danger:#dc2626;
+    --xdd-danger-soft:rgba(220,38,38,.08);
+    --xdd-shadow:0 8px 22px rgba(15,23,42,.06);
+  }
+
+  .xdd-wrap{
+    max-width:760px;
+    margin:0 auto;
+    color:var(--xdd-text);
+    font-size:13px;
+  }
+
+  .xdd-card{
+    background:var(--xdd-card);
+    border:1px solid var(--xdd-line);
+    border-radius:18px;
+    box-shadow:var(--xdd-shadow);
+    overflow:hidden;
+  }
+
+  .xdd-head{
+    padding:16px;
+    border-bottom:1px solid var(--xdd-line);
+    background:linear-gradient(135deg,#ffffff 0%,#fff8f8 100%);
+    text-align:center;
+  }
+
+  .xdd-icon{
+    width:58px;
+    height:58px;
+    margin:0 auto 10px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--xdd-danger-soft);
+    color:var(--xdd-danger);
+    border:1px solid rgba(220,38,38,.10);
+    font-size:24px;
+  }
+
+  .xdd-title{
+    margin:0;
+    font-size:20px;
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .xdd-sub{
+    margin-top:6px;
+    font-size:12px;
+    color:var(--xdd-muted);
+  }
+
+  .xdd-body{
+    padding:16px;
+  }
+
+  .xdd-info{
+    display:grid;
+    gap:10px;
+    margin-bottom:16px;
+  }
+
+  .xdd-item{
+    border:1px solid var(--xdd-line);
+    border-radius:14px;
+    padding:12px;
+    background:#fbfdff;
+  }
+
+  .xdd-label{
+    display:block;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--xdd-muted);
+    font-weight:800;
+    margin-bottom:4px;
+  }
+
+  .xdd-value{
+    font-size:13px;
+    font-weight:700;
+    color:var(--xdd-text);
+    word-break:break-word;
+  }
+
+  .xdd-value.amount{
+    color:var(--xdd-danger);
+    font-weight:800;
+  }
+
+  .xdd-note{
+    font-size:12px;
+    color:#b91c1c;
+    background:#fff1f2;
+    border:1px solid #fecdd3;
+    border-radius:12px;
+    padding:10px 12px;
+    margin-bottom:16px;
+  }
+
+  .xdd-actions{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .xdd-btn{
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+    padding:9px 14px;
+    min-width:120px;
+  }
+
+  @media(max-width:767.98px){
+    .xdd-wrap{
+      font-size:12px;
+    }
+
+    .xdd-head,
+    .xdd-body{
+      padding:12px;
+    }
+
+    .xdd-title{
+      font-size:18px;
+    }
+
+    .xdd-actions{
+      flex-direction:column;
+    }
+
+    .xdd-actions .btn{
+      width:100%;
+      min-width:unset;
+    }
+  }
+</style>
+
+<div class="xdd-wrap">
+  <div class="xdd-card">
+    <div class="xdd-head">
+      <div class="xdd-icon">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h1 class="xdd-title">Delete Debt Record</h1>
+      <div class="xdd-sub">
+        You are about to remove this debt record permanently.
+      </div>
+    </div>
+
+    <div class="xdd-body">
+      <div class="xdd-note">
+        Be careful. This action cannot be easily undone.
+      </div>
+
+      <div class="xdd-info">
+        <div class="xdd-item">
+          <span class="xdd-label">Name</span>
+          <div class="xdd-value">{{ debt.name }}</div>
+        </div>
+
+        <div class="xdd-item">
+          <span class="xdd-label">Phone</span>
+          <div class="xdd-value">{{ debt.phone|default:"-" }}</div>
+        </div>
+
+        <div class="xdd-item">
+          <span class="xdd-label">Amount Owed</span>
+          <div class="xdd-value amount">TZS {{ debt.amount_owed|floatformat:0|intcomma }}</div>
+        </div>
+
+        <div class="xdd-item">
+          <span class="xdd-label">Description</span>
+          <div class="xdd-value">{{ debt.description|default:"-" }}</div>
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="xdd-actions">
+          <a href="{% url 'sales:my_debt_list' %}" class="btn btn-light border xdd-btn">
+            <i class="fa-solid fa-arrow-left me-1"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-danger xdd-btn">
+            <i class="fa-solid fa-trash me-1"></i> Yes, Delete
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
