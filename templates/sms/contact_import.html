@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Import Contacts{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --sms-bg:#f8fafc;
+    --sms-card:#ffffff;
+    --sms-line:#e2e8f0;
+    --sms-line-soft:#edf2f7;
+    --sms-text:#0f172a;
+    --sms-muted:#64748b;
+    --sms-primary:#2563eb;
+    --sms-primary-soft:rgba(37,99,235,.08);
+    --sms-success:#16a34a;
+    --sms-warning:#f59e0b;
+    --sms-shadow:0 10px 28px rgba(15,23,42,.05);
+    --sms-radius:16px;
+  }
+
+  .sms-wrap{
+    max-width:1020px;
+    margin:0 auto;
+    padding:.7rem;
+  }
+
+  .sms-grid{
+    display:grid;
+    grid-template-columns:1.05fr .95fr;
+    gap:.85rem;
+    align-items:start;
+  }
+
+  .sms-card{
+    background:var(--sms-card);
+    border:1px solid var(--sms-line-soft);
+    border-radius:var(--sms-radius);
+    box-shadow:var(--sms-shadow);
+    overflow:hidden;
+  }
+
+  .sms-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--sms-line-soft);
+    background:linear-gradient(180deg,#ffffff,#fbfdff);
+  }
+
+  .sms-head h3{
+    margin:0;
+    font-size:.96rem;
+    font-weight:800;
+    color:var(--sms-text);
+    line-height:1.25;
+    letter-spacing:-.01em;
+  }
+
+  .sms-sub{
+    margin-top:.22rem;
+    color:var(--sms-muted);
+    font-size:.72rem;
+    line-height:1.45;
+  }
+
+  .sms-body{
+    padding:.95rem;
+  }
+
+  .field-wrap{
+    margin-bottom:.85rem;
+  }
+
+  .field-wrap label{
+    display:block;
+    font-size:.74rem;
+    font-weight:800;
+    color:var(--sms-text);
+    margin-bottom:.38rem;
+    line-height:1.35;
+  }
+
+  .form-control,
+  .form-select,
+  input[type="text"],
+  input[type="file"],
+  textarea,
+  select{
+    width:100%;
+    min-height:39px;
+    border:1px solid #d9e2ec;
+    border-radius:12px;
+    font-size:.74rem;
+    padding:.55rem .75rem;
+    box-shadow:none !important;
+    background:#fff;
+    color:var(--sms-text);
+  }
+
+  textarea{
+    min-height:120px;
+    resize:vertical;
+    line-height:1.5;
+  }
+
+  .form-control:focus,
+  .form-select:focus,
+  input[type="text"]:focus,
+  input[type="file"]:focus,
+  textarea:focus,
+  select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .16rem rgba(37,99,235,.08) !important;
+    outline:none;
+  }
+
+  input[type="file"]{
+    padding:.5rem .65rem;
+  }
+
+  small.text-muted{
+    display:block;
+    margin-top:.28rem;
+    font-size:.64rem;
+    color:var(--sms-muted) !important;
+    line-height:1.45;
+  }
+
+  .errorlist{
+    margin:.32rem 0 0;
+    padding-left:1rem;
+    color:#dc2626;
+    font-size:.66rem;
+    line-height:1.4;
+  }
+
+  .form-actions{
+    display:flex;
+    gap:.55rem;
+    flex-wrap:wrap;
+    padding-top:.2rem;
+  }
+
+  .btn-import{
+    border:none;
+    border-radius:12px;
+    min-height:40px;
+    padding:.58rem .9rem;
+    font-size:.73rem;
+    font-weight:800;
+    color:#fff;
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    box-shadow:0 8px 18px rgba(37,99,235,.18);
+  }
+
+  .btn-import:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .btn-back{
+    border:1px solid #d9e2ec;
+    border-radius:12px;
+    min-height:40px;
+    padding:.58rem .9rem;
+    font-size:.73rem;
+    font-weight:800;
+    background:#f8fafc;
+    color:#334155;
+  }
+
+  .btn-back:hover{
+    background:#fff;
+    color:#0f172a;
+  }
+
+  .help-box{
+    background:#f8fafc;
+    border:1px dashed #d8e1ec;
+    border-radius:14px;
+    padding:.8rem .85rem;
+    font-size:.72rem;
+    color:#334155;
+    margin-bottom:.7rem;
+  }
+
+  .help-box:last-child{
+    margin-bottom:0;
+  }
+
+  .help-box strong{
+    display:block;
+    font-size:.74rem;
+    color:var(--sms-text);
+    margin-bottom:.3rem;
+    line-height:1.3;
+  }
+
+  .help-box p{
+    margin:0 0 .45rem;
+    font-size:.66rem;
+    color:var(--sms-muted);
+    line-height:1.45;
+  }
+
+  pre{
+    margin:0;
+    background:#0f172a;
+    color:#e2e8f0;
+    padding:.8rem .85rem;
+    border-radius:12px;
+    font-size:.68rem;
+    line-height:1.5;
+    overflow:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+
+  .help-box ul{
+    margin:.4rem 0 0;
+    padding-left:1rem;
+  }
+
+  .help-box li{
+    margin-bottom:.28rem;
+    font-size:.68rem;
+    line-height:1.45;
+    color:#334155;
+  }
+
+  .mini-note{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .58rem;
+    border-radius:999px;
+    background:var(--sms-primary-soft);
+    color:var(--sms-primary);
+    font-size:.64rem;
+    font-weight:800;
+    margin-bottom:.7rem;
+  }
+
+  code{
+    background:#eef2ff;
+    color:#1e3a8a;
+    padding:.12rem .32rem;
+    border-radius:6px;
+    font-size:.66rem;
+  }
+
+  @media (max-width: 991.98px){
+    .sms-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 767.98px){
+    .sms-wrap{
+      padding:.5rem;
+    }
+
+    .sms-head{
+      padding:.82rem .85rem;
+    }
+
+    .sms-body{
+      padding:.82rem;
+    }
+
+    .sms-head h3{
+      font-size:.9rem;
+    }
+
+    .sms-sub{
+      font-size:.68rem;
+    }
+
+    .field-wrap label{
+      font-size:.72rem;
+    }
+
+    .form-control,
+    .form-select,
+    input[type="text"],
+    input[type="file"],
+    textarea,
+    select{
+      min-height:37px;
+      font-size:.72rem;
+      padding:.52rem .7rem;
+    }
+
+    .form-actions{
+      flex-direction:column;
+    }
+
+    .btn-import,
+    .btn-back{
+      width:100%;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .sms-head h3{
+      font-size:.86rem;
+    }
+
+    .sms-sub{
+      font-size:.65rem;
+    }
+
+    .field-wrap label{
+      font-size:.69rem;
+      margin-bottom:.32rem;
+    }
+
+    small.text-muted{
+      font-size:.62rem;
+    }
+
+    .help-box{
+      padding:.72rem .75rem;
+    }
+
+    .help-box strong{
+      font-size:.71rem;
+    }
+
+    .help-box p,
+    .help-box li{
+      font-size:.65rem;
+    }
+
+    pre{
+      font-size:.64rem;
+      padding:.72rem .75rem;
+    }
+
+    .btn-import,
+    .btn-back{
+      min-height:38px;
+      font-size:.7rem;
+    }
+  }
+</style>
+
+<div class="sms-wrap">
+  <div class="sms-grid">
+    <div class="sms-card">
+      <div class="sms-head">
+        <h3><i class="fas fa-file-import me-2 text-primary"></i>Import Contacts</h3>
+        <div class="sms-sub">Upload a CSV file or paste contacts manually in a clean simple format.</div>
+      </div>
+
+      <div class="sms-body">
+        <div class="mini-note">
+          <i class="fas fa-upload"></i> Quick and easy import
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {% for field in form %}
+            <div class="field-wrap">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <small class="text-muted">{{ field.help_text }}</small>
+              {% endif %}
+              {{ field.errors }}
+            </div>
+          {% endfor %}
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-import">
+              <i class="fas fa-upload me-1"></i>Import Contacts
+            </button>
+            <a href="{% url 'sms:contact_list' %}" class="btn btn-back">
+              <i class="fas fa-arrow-left me-1"></i>Back to Contacts
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="sms-card">
+      <div class="sms-head">
+        <h3><i class="fas fa-circle-info me-2 text-primary"></i>Format Guide</h3>
+        <div class="sms-sub">Use any of the simple formats below.</div>
+      </div>
+
+      <div class="sms-body">
+        <div class="help-box">
+          <strong>CSV format</strong>
+          <p>Accepted columns:</p>
+          <pre>name,phone
+Rajlee,255712345678
+Miraji Ally,0712345678</pre>
+        </div>
+
+        <div class="help-box">
+          <strong>Pasted format</strong>
+          <p>One contact per line:</p>
+          <pre>Rajlee,255712345678
+Miraji Ally,0712345678
+255754321000</pre>
+        </div>
+
+        <div class="help-box">
+          <strong>Important</strong>
+          <ul class="mb-0">
+            <li>Phone numbers should be in Tanzania format.</li>
+            <li>You can use <code>0712345678</code> or <code>255712345678</code>.</li>
+            <li>Duplicate phone numbers will not be created twice.</li>
+            <li>You can assign imported contacts into one group.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

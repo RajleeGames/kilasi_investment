@@ -726,6 +726,60 @@
             <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
           </a>
 
+          {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
+            <a class="sb-link {% if request.resolver_match.namespace == 'sms' %}active{% endif %}"
+               data-bs-toggle="collapse" href="#sbSmsDesk" role="button"
+               aria-expanded="{% if request.resolver_match.namespace == 'sms' %}true{% else %}false{% endif %}"
+               aria-controls="sbSmsDesk" title="SMS Center">
+              <i class="fa-solid fa-comment-sms"></i> <span class="label">SMS Center</span>
+              <i class="fa-solid fa-chevron-down chev"></i>
+            </a>
+
+            <div class="collapse {% if request.resolver_match.namespace == 'sms' %}show{% endif %}" id="sbSmsDesk">
+              <div class="sb-sub">
+                <a class="sb-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'sms' %}active{% endif %}"
+                   href="{% url 'sms:dashboard' %}">
+                  <i class="fa-solid fa-gauge-high"></i> <span class="label">Dashboard</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'send_sms' %}active{% endif %}"
+                   href="{% url 'sms:send_sms' %}">
+                  <i class="fa-solid fa-paper-plane"></i> <span class="label">Send SMS</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'contact_list' and request.resolver_match.namespace == 'sms' %}active{% endif %}"
+                   href="{% url 'sms:contact_list' %}">
+                  <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'contact_import' %}active{% endif %}"
+                   href="{% url 'sms:contact_import' %}">
+                  <i class="fa-solid fa-file-import"></i> <span class="label">Import Contacts</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'template_list' %}active{% endif %}"
+                   href="{% url 'sms:template_list' %}">
+                  <i class="fa-solid fa-file-lines"></i> <span class="label">Templates</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'campaign_list' %}active{% endif %}"
+                   href="{% url 'sms:campaign_list' %}">
+                  <i class="fa-solid fa-bullhorn"></i> <span class="label">Campaigns</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'sms_logs' %}active{% endif %}"
+                   href="{% url 'sms:sms_logs' %}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> <span class="label">SMS Logs</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'sender_list' %}active{% endif %}"
+                   href="{% url 'sms:sender_list' %}">
+                  <i class="fa-solid fa-signature"></i> <span class="label">Sender IDs</span>
+                </a>
+              </div>
+            </div>
+          {% endif %}
+
           {% if request.user.is_authenticated and request.user.profile %}
             {% with role=request.user.profile.role %}
               {% if role != 'transport' %}
@@ -1071,6 +1125,43 @@
             <a class="sb-link" href="{% url 'sales:stock_transfer_list' %}">
               <i class="fa-solid fa-right-left"></i> Stock Transfers
             </a>
+          {% endif %}
+
+          {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbSmsMob"
+               role="button" aria-expanded="false" aria-controls="sbSmsMob">
+              <i class="fa-solid fa-comment-sms"></i> SMS Center
+              <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            </a>
+
+            <div class="collapse {% if request.resolver_match.namespace == 'sms' %}show{% endif %}" id="sbSmsMob">
+              <div class="sb-sub">
+                <a class="sb-link" href="{% url 'sms:dashboard' %}">
+                  <i class="fa-solid fa-gauge-high"></i> Dashboard
+                </a>
+                <a class="sb-link" href="{% url 'sms:send_sms' %}">
+                  <i class="fa-solid fa-paper-plane"></i> Send SMS
+                </a>
+                <a class="sb-link" href="{% url 'sms:contact_list' %}">
+                  <i class="fa-solid fa-address-book"></i> Contacts
+                </a>
+                <a class="sb-link" href="{% url 'sms:contact_import' %}">
+                  <i class="fa-solid fa-file-import"></i> Import Contacts
+                </a>
+                <a class="sb-link" href="{% url 'sms:template_list' %}">
+                  <i class="fa-solid fa-file-lines"></i> Templates
+                </a>
+                <a class="sb-link" href="{% url 'sms:campaign_list' %}">
+                  <i class="fa-solid fa-bullhorn"></i> Campaigns
+                </a>
+                <a class="sb-link" href="{% url 'sms:sms_logs' %}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> SMS Logs
+                </a>
+                <a class="sb-link" href="{% url 'sms:sender_list' %}">
+                  <i class="fa-solid fa-signature"></i> Sender IDs
+                </a>
+              </div>
+            </div>
           {% endif %}
 
           {% if role != 'transport' %}

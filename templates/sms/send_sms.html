@@ -1,0 +1,805 @@
+{% extends "base.html" %}
+
+{% block title %}Send SMS{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --sms-bg:#f8fafc;
+    --sms-card:#ffffff;
+    --sms-line:#e5e7eb;
+    --sms-line-soft:#eef2f7;
+    --sms-text:#0f172a;
+    --sms-muted:#64748b;
+    --sms-primary:#2563eb;
+    --sms-primary-2:#3b82f6;
+    --sms-success:#16a34a;
+    --sms-warning:#f59e0b;
+    --sms-danger:#dc2626;
+    --sms-dark:#0f172a;
+    --sms-shadow:0 10px 26px rgba(15,23,42,.05);
+  }
+
+  .send-shell{
+    max-width:1280px;
+    margin:0 auto;
+    padding:.65rem 0 1rem;
+    color:var(--sms-text);
+  }
+
+  .send-hero{
+    border:0;
+    border-radius:18px;
+    background:linear-gradient(180deg,#ffffff,#fbfdff);
+    box-shadow:var(--sms-shadow);
+    padding:.9rem 1rem;
+    margin-bottom:.85rem;
+  }
+
+  .send-title{
+    font-size:1rem;
+    font-weight:800;
+    letter-spacing:-.01em;
+    margin:0;
+    line-height:1.2;
+  }
+
+  .send-sub{
+    font-size:.74rem;
+    color:var(--sms-muted);
+    margin-top:.2rem;
+    line-height:1.45;
+  }
+
+  .send-chip-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    margin-top:.65rem;
+  }
+
+  .send-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.34rem .62rem;
+    border-radius:999px;
+    font-size:.66rem;
+    font-weight:700;
+    background:rgba(37,99,235,.08);
+    color:var(--sms-primary);
+    border:1px solid rgba(37,99,235,.10);
+    white-space:nowrap;
+  }
+
+  .section-card{
+    border:0;
+    border-radius:18px;
+    background:var(--sms-card);
+    box-shadow:var(--sms-shadow);
+    height:100%;
+    overflow:hidden;
+  }
+
+  .section-head{
+    padding:.82rem .9rem .75rem;
+    border-bottom:1px solid var(--sms-line-soft);
+    background:linear-gradient(180deg,#ffffff,#fcfdff);
+  }
+
+  .section-head h5{
+    margin:0;
+    font-size:.88rem;
+    font-weight:800;
+    letter-spacing:-.01em;
+    line-height:1.3;
+    word-break:break-word;
+  }
+
+  .section-head p{
+    margin:.24rem 0 0;
+    color:var(--sms-muted);
+    font-size:.72rem;
+    line-height:1.45;
+  }
+
+  .section-body{
+    padding:.9rem;
+  }
+
+  .field-block{
+    margin-bottom:.85rem;
+  }
+
+  .field-label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.55rem;
+    margin-bottom:.36rem;
+  }
+
+  .field-label label{
+    margin:0;
+    font-size:.75rem;
+    font-weight:800;
+    color:var(--sms-text);
+    line-height:1.3;
+  }
+
+  .field-tip{
+    font-size:.64rem;
+    color:var(--sms-muted);
+    line-height:1.3;
+    text-align:right;
+  }
+
+  .field-help{
+    margin-top:.32rem;
+    font-size:.67rem;
+    color:var(--sms-muted);
+    line-height:1.45;
+  }
+
+  .field-errors{
+    margin-top:.25rem;
+    color:var(--sms-danger);
+    font-size:.68rem;
+  }
+
+  .form-control,
+  .form-select{
+    min-height:40px;
+    border-radius:12px;
+    border:1px solid #dbe4f0;
+    box-shadow:none !important;
+    font-size:.76rem;
+    padding:.55rem .75rem;
+  }
+
+  textarea.form-control{
+    min-height:110px;
+    resize:vertical;
+    line-height:1.45;
+  }
+
+  select[multiple],
+  .form-select[multiple]{
+    min-height:180px;
+    padding:.5rem;
+  }
+
+  .form-control:focus,
+  .form-select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .16rem rgba(37,99,235,.08) !important;
+  }
+
+  .soft-box{
+    border:1px dashed #d7e2ef;
+    background:#f8fbff;
+    border-radius:14px;
+    padding:.78rem .85rem;
+  }
+
+  .counter-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.5rem;
+    margin-top:.5rem;
+    flex-wrap:wrap;
+  }
+
+  .count-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.34rem;
+    padding:.28rem .56rem;
+    border-radius:999px;
+    font-size:.65rem;
+    font-weight:700;
+    background:#eef2ff;
+    color:#334155;
+    border:1px solid #dbe4f0;
+    line-height:1.2;
+  }
+
+  .count-pill.warn{
+    background:rgba(245,158,11,.10);
+    color:#b45309;
+    border-color:rgba(245,158,11,.16);
+  }
+
+  .count-pill.ok{
+    background:rgba(22,163,74,.10);
+    color:var(--sms-success);
+    border-color:rgba(22,163,74,.14);
+  }
+
+  .tips-list{
+    margin:0;
+    padding-left:.95rem;
+  }
+
+  .tips-list li{
+    margin-bottom:.38rem;
+    color:#334155;
+    font-size:.71rem;
+    line-height:1.45;
+  }
+
+  .preview-shell{
+    display:flex;
+    flex-direction:column;
+    gap:.85rem;
+    height:100%;
+  }
+
+  .phone-preview{
+    background:
+      radial-gradient(circle at top right, rgba(37,99,235,.08), transparent 32%),
+      #0f172a;
+    color:#e2e8f0;
+    border-radius:18px;
+    padding:.85rem;
+    min-height:210px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+
+  .phone-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.6rem;
+    margin-bottom:.8rem;
+  }
+
+  .phone-user{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+    min-width:0;
+  }
+
+  .phone-avatar{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.10);
+    color:#fff;
+    font-size:.78rem;
+    flex-shrink:0;
+  }
+
+  .phone-user strong{
+    display:block;
+    font-size:.74rem;
+    color:#fff;
+    line-height:1.25;
+    word-break:break-word;
+  }
+
+  .phone-user span{
+    display:block;
+    font-size:.62rem;
+    color:rgba(255,255,255,.65);
+    line-height:1.3;
+  }
+
+  .sms-bubble{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:#fff;
+    padding:.75rem .82rem;
+    border-radius:14px 14px 14px 6px;
+    font-size:.75rem;
+    line-height:1.5;
+    white-space:pre-wrap;
+    word-break:break-word;
+    box-shadow:0 10px 20px rgba(37,99,235,.20);
+    min-height:90px;
+  }
+
+  .meta-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.65rem;
+  }
+
+  .meta-card{
+    border:1px solid var(--sms-line-soft);
+    background:#fff;
+    border-radius:14px;
+    padding:.72rem .75rem;
+    min-width:0;
+  }
+
+  .meta-card .k{
+    font-size:.62rem;
+    color:var(--sms-muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    font-weight:800;
+    margin-bottom:.2rem;
+    line-height:1.35;
+    white-space:normal;
+    word-break:break-word;
+  }
+
+  .meta-card .v{
+    font-size:.78rem;
+    font-weight:800;
+    color:var(--sms-text);
+    line-height:1.3;
+    word-break:break-word;
+  }
+
+  .meta-card .s{
+    margin-top:.14rem;
+    font-size:.65rem;
+    color:var(--sms-muted);
+    line-height:1.4;
+    word-break:break-word;
+  }
+
+  .action-row{
+    display:flex;
+    gap:.55rem;
+    flex-wrap:wrap;
+    margin-top:.35rem;
+  }
+
+  .btn-send{
+    min-width:140px;
+    height:42px;
+    border:none;
+    border-radius:14px;
+    padding:0 .9rem;
+    font-size:.77rem;
+    font-weight:800;
+    color:#fff;
+    background:linear-gradient(135deg,var(--sms-primary),var(--sms-primary-2));
+    box-shadow:0 10px 20px rgba(37,99,235,.20);
+  }
+
+  .btn-send:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .btn-soft{
+    min-width:110px;
+    height:42px;
+    border-radius:14px;
+    padding:0 .9rem;
+    font-size:.75rem;
+    font-weight:800;
+    border:1px solid #dbe4f0;
+    background:#f8fafc;
+    color:#334155;
+  }
+
+  .btn-soft:hover{
+    background:#fff;
+    color:#0f172a;
+  }
+
+  .helper-note{
+    font-size:.67rem;
+    color:var(--sms-muted);
+    line-height:1.5;
+  }
+
+  @media (max-width: 991.98px){
+    .send-shell{
+      padding:.35rem 0 .85rem;
+    }
+
+    .send-hero{
+      padding:.85rem .9rem;
+      border-radius:16px;
+    }
+
+    .section-head,
+    .section-body{
+      padding:.8rem;
+    }
+
+    .meta-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .phone-preview{
+      min-height:auto;
+    }
+  }
+
+  @media (max-width: 767.98px){
+    .row.g-3{
+      --bs-gutter-y:.75rem;
+      --bs-gutter-x:.75rem;
+    }
+
+    .field-label{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:.18rem;
+    }
+
+    .field-tip{
+      text-align:left;
+    }
+
+    .counter-row{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .count-pill{
+      width:100%;
+      justify-content:center;
+    }
+
+    .meta-grid{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .action-row{
+      flex-direction:column;
+    }
+
+    .btn-send,
+    .btn-soft{
+      width:100%;
+      min-width:100%;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .send-title{
+      font-size:.92rem;
+    }
+
+    .send-sub{
+      font-size:.7rem;
+    }
+
+    .send-chip-wrap{
+      gap:.35rem;
+    }
+
+    .send-chip{
+      font-size:.62rem;
+      padding:.3rem .52rem;
+    }
+
+    .section-head h5{
+      font-size:.82rem;
+    }
+
+    .section-head p{
+      font-size:.68rem;
+    }
+
+    .field-label label{
+      font-size:.72rem;
+    }
+
+    .field-tip,
+    .field-help,
+    .field-errors,
+    .helper-note{
+      font-size:.64rem;
+    }
+
+    .form-control,
+    .form-select{
+      font-size:.74rem;
+      min-height:38px;
+      padding:.5rem .68rem;
+    }
+
+    textarea.form-control{
+      min-height:100px;
+    }
+
+    select[multiple],
+    .form-select[multiple]{
+      min-height:150px;
+    }
+
+    .phone-avatar{
+      width:30px;
+      height:30px;
+      font-size:.7rem;
+    }
+
+    .phone-user strong{
+      font-size:.7rem;
+    }
+
+    .phone-user span{
+      font-size:.58rem;
+    }
+
+    .sms-bubble{
+      font-size:.72rem;
+      padding:.7rem .75rem;
+    }
+
+    .meta-grid{
+      grid-template-columns:1fr;
+      gap:.55rem;
+    }
+
+    .meta-card{
+      padding:.68rem .72rem;
+    }
+
+    .meta-card .k{
+      font-size:.6rem;
+    }
+
+    .meta-card .v{
+      font-size:.76rem;
+    }
+
+    .meta-card .s{
+      font-size:.63rem;
+    }
+  }
+</style>
+
+<div class="container-fluid send-shell">
+  <div class="send-hero">
+    <h4 class="send-title">Send SMS</h4>
+    <div class="send-sub">Send a direct message to saved contacts or manual numbers using your active sender ID.</div>
+
+    <div class="send-chip-wrap">
+      <span class="send-chip"><i class="fa-solid fa-paper-plane"></i> Fast Send</span>
+      <span class="send-chip"><i class="fa-solid fa-address-book"></i> Contacts</span>
+      <span class="send-chip"><i class="fa-solid fa-mobile-screen"></i> Live Preview</span>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-7">
+      <div class="section-card">
+        <div class="section-head">
+          <h5><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Compose Message</h5>
+          <p>Fill the details below, review the preview, then send.</p>
+        </div>
+
+        <div class="section-body">
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="field-block">
+              <div class="field-label">
+                <label for="{{ form.sender_id.id_for_label }}">{{ form.sender_id.label }}</label>
+                <span class="field-tip">Optional if default sender exists</span>
+              </div>
+              {{ form.sender_id }}
+              {% if form.sender_id.help_text %}
+                <div class="field-help">{{ form.sender_id.help_text }}</div>
+              {% endif %}
+              <div class="field-errors">{{ form.sender_id.errors }}</div>
+            </div>
+
+            <div class="field-block">
+              <div class="field-label">
+                <label for="{{ form.contacts.id_for_label }}">{{ form.contacts.label }}</label>
+                <span class="field-tip">Choose saved contacts</span>
+              </div>
+              {{ form.contacts }}
+              {% if form.contacts.help_text %}
+                <div class="field-help">{{ form.contacts.help_text }}</div>
+              {% endif %}
+              <div class="field-errors">{{ form.contacts.errors }}</div>
+            </div>
+
+            <div class="field-block">
+              <div class="field-label">
+                <label for="{{ form.manual_numbers.id_for_label }}">{{ form.manual_numbers.label }}</label>
+                <span class="field-tip">One number per line</span>
+              </div>
+              {{ form.manual_numbers }}
+              {% if form.manual_numbers.help_text %}
+                <div class="field-help">{{ form.manual_numbers.help_text }}</div>
+              {% endif %}
+              <div class="field-errors">{{ form.manual_numbers.errors }}</div>
+            </div>
+
+            <div class="field-block mb-0">
+              <div class="field-label">
+                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                <span class="field-tip">Keep it short and clear</span>
+              </div>
+              {{ form.message }}
+
+              <div class="counter-row">
+                <div class="count-pill">
+                  <i class="fa-solid fa-keyboard"></i>
+                  Characters: <strong id="charCount">0</strong>
+                </div>
+                <div class="count-pill warn">
+                  <i class="fa-solid fa-layer-group"></i>
+                  SMS Parts: <strong id="smsParts">1</strong>
+                </div>
+                <div class="count-pill ok">
+                  <i class="fa-solid fa-eye"></i>
+                  Live Preview
+                </div>
+              </div>
+
+              <div class="field-errors">{{ form.message.errors }}</div>
+            </div>
+
+            <div class="action-row">
+              <button type="submit" class="btn btn-send">
+                <i class="fa-solid fa-paper-plane me-2"></i>Send Now
+              </button>
+              <a href="{% url 'sms:dashboard' %}" class="btn btn-soft">
+                <i class="fa-solid fa-arrow-left me-2"></i>Back
+              </a>
+            </div>
+
+            <div class="helper-note mt-3">
+              Make sure the selected contacts or manual numbers are in valid Tanzania format.
+              The system will use your chosen sender ID, or the default sender if none is selected.
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="preview-shell">
+        <div class="section-card">
+          <div class="section-head">
+            <h5><i class="fa-solid fa-mobile-screen-button me-2 text-primary"></i>SMS Preview</h5>
+            <p>See how the message will look before sending.</p>
+          </div>
+
+          <div class="section-body">
+            <div class="phone-preview">
+              <div class="phone-top">
+                <div class="phone-user">
+                  <div class="phone-avatar"><i class="fa-solid fa-comment-sms"></i></div>
+                  <div>
+                    <strong id="previewSenderName">SMS Sender</strong>
+                    <span>Now previewing message</span>
+                  </div>
+                </div>
+                <span style="font-size:.62rem;color:rgba(255,255,255,.65);">Preview</span>
+              </div>
+
+              <div class="sms-bubble" id="smsPreview">Type your message here...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-head">
+            <h5><i class="fa-solid fa-circle-info me-2 text-primary"></i>Send Tips</h5>
+            <p>Simple reminders for better delivery and cleaner sending.</p>
+          </div>
+
+          <div class="section-body">
+            <div class="soft-box mb-3">
+              <ul class="tips-list">
+                <li>Keep SMS short to reduce cost and improve readability.</li>
+                <li>You can use saved contacts, manual numbers, or both together.</li>
+                <li>Manual numbers should be entered one per line.</li>
+                <li>Check the preview before sending to many recipients.</li>
+              </ul>
+            </div>
+
+            <div class="meta-grid">
+              <div class="meta-card">
+                <div class="k">Preview Characters</div>
+                <div class="v" id="metaCharCount">0</div>
+                <div class="s">Updates while typing</div>
+              </div>
+
+              <div class="meta-card">
+                <div class="k">Estimated Parts</div>
+                <div class="v" id="metaSmsParts">1</div>
+                <div class="s">Approximate SMS segments</div>
+              </div>
+
+              <div class="meta-card">
+                <div class="k">Sender</div>
+                <div class="v" id="metaSenderName">Default</div>
+                <div class="s">Selected sender ID</div>
+              </div>
+
+              <div class="meta-card">
+                <div class="k">Manual Numbers</div>
+                <div class="v" id="manualCount">0</div>
+                <div class="s">Detected manual entries</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const msgField = document.getElementById("{{ form.message.id_for_label }}");
+    const senderField = document.getElementById("{{ form.sender_id.id_for_label }}");
+    const manualField = document.getElementById("{{ form.manual_numbers.id_for_label }}");
+
+    const preview = document.getElementById("smsPreview");
+    const charCount = document.getElementById("charCount");
+    const smsParts = document.getElementById("smsParts");
+    const metaCharCount = document.getElementById("metaCharCount");
+    const metaSmsParts = document.getElementById("metaSmsParts");
+    const metaSenderName = document.getElementById("metaSenderName");
+    const previewSenderName = document.getElementById("previewSenderName");
+    const manualCount = document.getElementById("manualCount");
+
+    function getSmsParts(length) {
+      if (length <= 0) return 1;
+      if (length <= 160) return 1;
+      return Math.ceil(length / 153);
+    }
+
+    function updateSender() {
+      let senderText = "Default";
+      if (senderField && senderField.options && senderField.selectedIndex >= 0) {
+        const selected = senderField.options[senderField.selectedIndex];
+        if (selected && selected.value) {
+          senderText = selected.text.trim();
+        }
+      }
+      metaSenderName.textContent = senderText;
+      previewSenderName.textContent = senderText;
+    }
+
+    function updateManualCount() {
+      const value = manualField ? manualField.value : "";
+      const lines = value.split("\n").map(v => v.trim()).filter(v => v);
+      manualCount.textContent = lines.length;
+    }
+
+    function updatePreview() {
+      const value = msgField ? msgField.value : "";
+      const trimmed = value.trim();
+      const length = value.length;
+      const parts = getSmsParts(length);
+
+      preview.textContent = trimmed ? trimmed : "Type your message here...";
+      charCount.textContent = length;
+      smsParts.textContent = parts;
+      metaCharCount.textContent = length;
+      metaSmsParts.textContent = parts;
+    }
+
+    if (msgField) {
+      msgField.addEventListener("input", updatePreview);
+      updatePreview();
+    }
+
+    if (senderField) {
+      senderField.addEventListener("change", updateSender);
+      updateSender();
+    }
+
+    if (manualField) {
+      manualField.addEventListener("input", updateManualCount);
+      updateManualCount();
+    }
+
+    updatePreview();
+    updateSender();
+    updateManualCount();
+  })();
+</script>
+{% endblock %}

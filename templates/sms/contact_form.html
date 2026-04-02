@@ -1,0 +1,667 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --sms-bg:#f8fafc;
+    --sms-card:#ffffff;
+    --sms-line:#e5e7eb;
+    --sms-line-soft:#eef2f7;
+    --sms-text:#0f172a;
+    --sms-muted:#64748b;
+    --sms-primary:#2563eb;
+    --sms-primary-2:#3b82f6;
+    --sms-success:#16a34a;
+    --sms-danger:#dc2626;
+    --sms-warning:#f59e0b;
+    --sms-shadow:0 10px 26px rgba(15,23,42,.05);
+    --sms-radius:18px;
+  }
+
+  .form-shell{
+    max-width:1040px;
+    margin:0 auto;
+    padding:.65rem 0 1rem;
+    color:var(--sms-text);
+  }
+
+  .form-hero{
+    border:1px solid var(--sms-line-soft);
+    border-radius:18px;
+    background:linear-gradient(180deg,#ffffff,#fbfdff);
+    box-shadow:var(--sms-shadow);
+    padding:.85rem .95rem;
+    margin-bottom:.8rem;
+  }
+
+  .form-hero-title{
+    margin:0;
+    font-size:.96rem;
+    font-weight:800;
+    letter-spacing:-.01em;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    flex-wrap:wrap;
+    line-height:1.3;
+  }
+
+  .form-hero-sub{
+    margin-top:.22rem;
+    color:var(--sms-muted);
+    font-size:.7rem;
+    line-height:1.45;
+  }
+
+  .hero-chip-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.42rem;
+    margin-top:.6rem;
+  }
+
+  .hero-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.3rem .58rem;
+    border-radius:999px;
+    font-size:.62rem;
+    font-weight:800;
+    background:rgba(37,99,235,.08);
+    color:var(--sms-primary);
+    border:1px solid rgba(37,99,235,.10);
+    line-height:1.2;
+  }
+
+  .main-card,
+  .helper-card{
+    border:1px solid var(--sms-line-soft);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:var(--sms-shadow);
+    overflow:hidden;
+    height:100%;
+  }
+
+  .main-card-head,
+  .helper-card-head{
+    padding:.82rem .9rem;
+    border-bottom:1px solid var(--sms-line-soft);
+    background:linear-gradient(180deg,#ffffff,#fcfdff);
+  }
+
+  .main-card-head h5,
+  .helper-card-head h6{
+    margin:0;
+    font-size:.84rem;
+    font-weight:800;
+    line-height:1.3;
+  }
+
+  .main-card-head p{
+    margin:.2rem 0 0;
+    color:var(--sms-muted);
+    font-size:.68rem;
+    line-height:1.45;
+  }
+
+  .main-card-body,
+  .helper-card-body{
+    padding:.9rem;
+  }
+
+  .field-wrap{
+    margin-bottom:.82rem;
+  }
+
+  .field-label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.5rem;
+    margin-bottom:.32rem;
+  }
+
+  .field-label label{
+    margin:0;
+    font-size:.72rem;
+    font-weight:800;
+    color:var(--sms-text);
+    line-height:1.3;
+  }
+
+  .field-note{
+    font-size:.62rem;
+    color:var(--sms-muted);
+    line-height:1.2;
+  }
+
+  .helptext{
+    display:block;
+    color:var(--sms-muted);
+    font-size:.64rem;
+    margin-top:.28rem;
+    line-height:1.45;
+  }
+
+  .errorlist{
+    margin:.3rem 0 0;
+    padding-left:.95rem;
+    color:var(--sms-danger);
+    font-size:.64rem;
+    line-height:1.4;
+  }
+
+  .form-control,
+  .form-select,
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  textarea,
+  select{
+    min-height:39px;
+    border-radius:12px;
+    border:1px solid #dbe4f0;
+    box-shadow:none !important;
+    font-size:.73rem;
+    padding:.52rem .72rem;
+    width:100%;
+  }
+
+  textarea.form-control,
+  textarea{
+    min-height:100px;
+    resize:vertical;
+    line-height:1.45;
+  }
+
+  select[multiple],
+  .form-select[multiple]{
+    min-height:160px;
+    padding:.5rem;
+  }
+
+  .form-control:focus,
+  .form-select:focus,
+  input:focus,
+  textarea:focus,
+  select:focus{
+    border-color:rgba(37,99,235,.32);
+    box-shadow:0 0 0 .14rem rgba(37,99,235,.08) !important;
+    outline:none;
+  }
+
+  .checkbox-wrap{
+    border:1px solid var(--sms-line-soft);
+    border-radius:14px;
+    padding:.75rem .8rem;
+    background:#fbfdff;
+  }
+
+  .checkbox-wrap ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.45rem .7rem;
+  }
+
+  .checkbox-wrap li{
+    display:flex;
+    align-items:flex-start;
+    gap:.48rem;
+    font-size:.7rem;
+    color:#334155;
+    line-height:1.35;
+  }
+
+  .checkbox-wrap input[type="checkbox"]{
+    margin-top:.12rem;
+    transform:scale(.96);
+  }
+
+  .action-row{
+    display:flex;
+    gap:.55rem;
+    flex-wrap:wrap;
+    margin-top:.2rem;
+  }
+
+  .btn-save{
+    min-width:130px;
+    height:40px;
+    border:none;
+    border-radius:12px;
+    padding:0 .9rem;
+    font-size:.72rem;
+    font-weight:800;
+    color:#fff;
+    background:linear-gradient(135deg,var(--sms-primary),var(--sms-primary-2));
+    box-shadow:0 8px 18px rgba(37,99,235,.18);
+  }
+
+  .btn-save:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .btn-soft{
+    min-width:110px;
+    height:40px;
+    border-radius:12px;
+    padding:0 .9rem;
+    font-size:.71rem;
+    font-weight:800;
+    border:1px solid #dbe4f0;
+    background:#fff;
+    color:#334155;
+  }
+
+  .btn-soft:hover{
+    background:#f8fafc;
+    color:#0f172a;
+  }
+
+  .delete-box{
+    background:linear-gradient(180deg,#fff8f8,#fffefe);
+    border:1px solid #fecaca;
+    border-radius:16px;
+    padding:.85rem;
+    color:#991b1b;
+    box-shadow:0 8px 20px rgba(220,38,38,.05);
+  }
+
+  .delete-box strong{
+    font-size:.76rem;
+    display:block;
+    line-height:1.35;
+  }
+
+  .delete-box .small{
+    font-size:.64rem;
+  }
+
+  .delete-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.65rem;
+    margin-top:.65rem;
+  }
+
+  .delete-item{
+    background:#fff;
+    border:1px solid #fee2e2;
+    border-radius:13px;
+    padding:.7rem .78rem;
+  }
+
+  .delete-item .k{
+    font-size:.6rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:#b91c1c;
+    font-weight:800;
+    margin-bottom:.15rem;
+    line-height:1.3;
+  }
+
+  .delete-item .v{
+    font-size:.74rem;
+    font-weight:700;
+    color:#7f1d1d;
+    word-break:break-word;
+    line-height:1.35;
+  }
+
+  .helper-box{
+    border:1px dashed #d7e2ef;
+    background:#f8fbff;
+    border-radius:14px;
+    padding:.75rem .8rem;
+    margin-bottom:.65rem;
+  }
+
+  .helper-box:last-child{
+    margin-bottom:0;
+  }
+
+  .helper-box strong{
+    display:block;
+    font-size:.71rem;
+    margin-bottom:.18rem;
+    line-height:1.3;
+    color:var(--sms-text);
+  }
+
+  .helper-box span{
+    display:block;
+    color:var(--sms-muted);
+    font-size:.65rem;
+    line-height:1.45;
+  }
+
+  @media (max-width: 991.98px){
+    .form-shell{
+      padding:.4rem 0 .9rem;
+    }
+
+    .checkbox-wrap ul{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 767.98px){
+    .main-card-body,
+    .main-card-head,
+    .helper-card-head,
+    .helper-card-body{
+      padding:.8rem;
+    }
+
+    .form-hero{
+      padding:.8rem .82rem;
+    }
+
+    .field-label{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:.15rem;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .form-hero-title{
+      font-size:.88rem;
+    }
+
+    .form-hero-sub{
+      font-size:.66rem;
+    }
+
+    .hero-chip{
+      font-size:.58rem;
+      padding:.27rem .5rem;
+    }
+
+    .main-card-head h5,
+    .helper-card-head h6{
+      font-size:.79rem;
+    }
+
+    .main-card-head p,
+    .helptext,
+    .helper-box span,
+    .errorlist,
+    .field-note{
+      font-size:.62rem;
+    }
+
+    .field-label label{
+      font-size:.69rem;
+    }
+
+    .form-control,
+    .form-select,
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    textarea,
+    select{
+      min-height:37px;
+      font-size:.7rem;
+      padding:.5rem .68rem;
+    }
+
+    textarea.form-control,
+    textarea{
+      min-height:92px;
+    }
+
+    .delete-grid{
+      grid-template-columns:1fr;
+    }
+
+    .action-row{
+      flex-direction:column;
+    }
+
+    .btn-save,
+    .btn-soft{
+      width:100%;
+      min-width:100%;
+      height:38px;
+      font-size:.69rem;
+    }
+  }
+</style>
+
+<div class="container-fluid form-shell">
+
+  <div class="form-hero">
+    <h4 class="form-hero-title">
+      {% if delete_mode %}
+        <i class="fas fa-trash text-danger"></i>
+      {% elif is_campaign_form %}
+        <i class="fas fa-bullhorn text-primary"></i>
+      {% elif is_template_form %}
+        <i class="fas fa-file-lines text-primary"></i>
+      {% elif is_sender_form %}
+        <i class="fas fa-signature text-primary"></i>
+      {% else %}
+        <i class="fas fa-pen-to-square text-primary"></i>
+      {% endif %}
+      {{ page_title }}
+    </h4>
+
+    <div class="form-hero-sub">
+      {% if delete_mode %}
+        Please review before removing this record.
+      {% elif is_campaign_form %}
+        Create or update a campaign with sender, message, contacts, and groups.
+      {% elif is_template_form %}
+        Save a reusable SMS template for quick sending.
+      {% elif is_sender_form %}
+        Manage SMS sender IDs and choose the default one.
+      {% else %}
+        Fill the form below and save changes.
+      {% endif %}
+    </div>
+
+    <div class="hero-chip-wrap">
+      {% if delete_mode %}
+        <span class="hero-chip"><i class="fa-solid fa-triangle-exclamation"></i> Permanent action</span>
+      {% elif is_campaign_form %}
+        <span class="hero-chip"><i class="fa-solid fa-bullhorn"></i> Campaign</span>
+      {% elif is_template_form %}
+        <span class="hero-chip"><i class="fa-solid fa-file-lines"></i> Template</span>
+      {% elif is_sender_form %}
+        <span class="hero-chip"><i class="fa-solid fa-signature"></i> Sender</span>
+      {% else %}
+        <span class="hero-chip"><i class="fa-solid fa-address-book"></i> Clean form</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <div class="main-card">
+        <div class="main-card-head">
+          <h5>
+            {% if delete_mode %}
+              Confirm Delete
+            {% else %}
+              Form Details
+            {% endif %}
+          </h5>
+          <p>
+            {% if delete_mode %}
+              This action cannot be undone.
+            {% else %}
+              Review all values before saving.
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="main-card-body">
+          {% if delete_mode %}
+            <div class="delete-box">
+              <strong>Are you sure you want to delete this contact?</strong>
+              <div class="small mt-1">This will permanently remove the record.</div>
+
+              <div class="delete-grid">
+                <div class="delete-item">
+                  <div class="k">Name</div>
+                  <div class="v">{{ contact.name|default:"—" }}</div>
+                </div>
+                <div class="delete-item">
+                  <div class="k">Phone</div>
+                  <div class="v">{{ contact.phone }}</div>
+                </div>
+              </div>
+            </div>
+
+            <form method="post" class="mt-3">
+              {% csrf_token %}
+              <div class="action-row">
+                <button type="submit" class="btn btn-danger btn-save" style="background:linear-gradient(135deg,#dc2626,#ef4444);box-shadow:0 8px 18px rgba(220,38,38,.18);">
+                  <i class="fas fa-trash me-2"></i>Yes, Delete
+                </button>
+                <a href="{% url 'sms:contact_list' %}" class="btn btn-soft">
+                  <i class="fas fa-arrow-left me-2"></i>Cancel
+                </a>
+              </div>
+            </form>
+          {% else %}
+            <form method="post">
+              {% csrf_token %}
+
+              {% for field in form %}
+                <div class="field-wrap">
+                  <div class="field-label">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <span class="field-note">
+                      {% if field.field.required %}Required{% else %}Optional{% endif %}
+                    </span>
+                  </div>
+
+                  {% if field.name == "groups" %}
+                    <div class="checkbox-wrap">
+                      {{ field }}
+                    </div>
+                  {% else %}
+                    {{ field }}
+                  {% endif %}
+
+                  {% if field.help_text %}
+                    <small class="helptext">{{ field.help_text }}</small>
+                  {% endif %}
+
+                  {{ field.errors }}
+                </div>
+              {% endfor %}
+
+              <div class="action-row">
+                <button type="submit" class="btn btn-save">
+                  <i class="fas fa-save me-2"></i>Save
+                </button>
+
+                {% if is_campaign_form %}
+                  <a href="{% url 'sms:campaign_list' %}" class="btn btn-soft">
+                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                  </a>
+                {% elif is_template_form %}
+                  <a href="{% url 'sms:template_list' %}" class="btn btn-soft">
+                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                  </a>
+                {% elif is_sender_form %}
+                  <a href="{% url 'sms:sender_list' %}" class="btn btn-soft">
+                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                  </a>
+                {% else %}
+                  <a href="{% url 'sms:contact_list' %}" class="btn btn-soft">
+                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                  </a>
+                {% endif %}
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="helper-card">
+        <div class="helper-card-head">
+          <h6>
+            {% if delete_mode %}
+              Safety Note
+            {% elif is_campaign_form %}
+              Campaign Tips
+            {% elif is_template_form %}
+              Template Tips
+            {% elif is_sender_form %}
+              Sender Tips
+            {% else %}
+              Contact Tips
+            {% endif %}
+          </h6>
+        </div>
+
+        <div class="helper-card-body">
+          {% if delete_mode %}
+            <div class="helper-box">
+              <strong>Be careful</strong>
+              <span>Deleting a contact removes that saved record from your SMS module.</span>
+            </div>
+          {% elif is_campaign_form %}
+            <div class="helper-box">
+              <strong>Message source</strong>
+              <span>Use either a template or a direct campaign message.</span>
+            </div>
+            <div class="helper-box">
+              <strong>Recipients</strong>
+              <span>Select contacts, groups, or both for sending.</span>
+            </div>
+          {% elif is_template_form %}
+            <div class="helper-box">
+              <strong>Reusable content</strong>
+              <span>Use templates for promotions, reminders, or follow-up messages.</span>
+            </div>
+            <div class="helper-box">
+              <strong>Keep it short</strong>
+              <span>Short and clear templates are easier to reuse.</span>
+            </div>
+          {% elif is_sender_form %}
+            <div class="helper-box">
+              <strong>Default sender</strong>
+              <span>Keep only one active sender as default for easier quick sending.</span>
+            </div>
+            <div class="helper-box">
+              <strong>Sender format</strong>
+              <span>Use approved sender names exactly as allowed by your provider.</span>
+            </div>
+          {% else %}
+            <div class="helper-box">
+              <strong>Phone format</strong>
+              <span>Use valid Tanzania numbers like 255712345678.</span>
+            </div>
+            <div class="helper-box">
+              <strong>Groups</strong>
+              <span>Add contacts into groups for easier campaign targeting later.</span>
+            </div>
+            <div class="helper-box">
+              <strong>Clean data</strong>
+              <span>Correct names and numbers improve sending and tracking.</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

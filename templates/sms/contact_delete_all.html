@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Delete All Contacts{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --danger:#dc2626;
+    --danger-soft:rgba(220,38,38,.08);
+    --line:#e5e7eb;
+    --text:#0f172a;
+    --muted:#64748b;
+    --card:#ffffff;
+    --shadow:0 10px 30px rgba(15,23,42,.05);
+  }
+
+  .del-wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:1rem;
+  }
+
+  .del-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+
+  .del-head{
+    padding:1rem 1.1rem;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#fff,#fffafa);
+  }
+
+  .del-head h3{
+    margin:0;
+    font-size:1rem;
+    font-weight:800;
+    color:var(--text);
+  }
+
+  .del-sub{
+    margin-top:.3rem;
+    font-size:.75rem;
+    color:var(--muted);
+  }
+
+  .del-body{
+    padding:1rem 1.1rem;
+  }
+
+  .warn-box{
+    border:1px solid rgba(220,38,38,.15);
+    background:var(--danger-soft);
+    border-radius:14px;
+    padding:.95rem;
+    margin-bottom:1rem;
+  }
+
+  .warn-title{
+    font-size:.85rem;
+    font-weight:800;
+    color:#991b1b;
+    margin-bottom:.35rem;
+  }
+
+  .warn-text{
+    font-size:.74rem;
+    color:#7f1d1d;
+    line-height:1.5;
+    margin:0;
+  }
+
+  .count-box{
+    border:1px dashed #fecaca;
+    border-radius:14px;
+    padding:.9rem;
+    text-align:center;
+    margin-bottom:1rem;
+  }
+
+  .count-box strong{
+    display:block;
+    font-size:1.2rem;
+    color:var(--danger);
+    font-weight:800;
+  }
+
+  .count-box span{
+    display:block;
+    margin-top:.2rem;
+    font-size:.72rem;
+    color:var(--muted);
+  }
+
+  .action-row{
+    display:flex;
+    gap:.6rem;
+    flex-wrap:wrap;
+  }
+
+  .action-row .btn{
+    border-radius:12px;
+    min-height:40px;
+    font-size:.74rem;
+    font-weight:800;
+    padding:.55rem .95rem;
+  }
+
+  @media (max-width: 575.98px){
+    .action-row{
+      flex-direction:column;
+    }
+    .action-row .btn{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="del-wrap">
+  <div class="del-card">
+    <div class="del-head">
+      <h3><i class="fas fa-triangle-exclamation me-2 text-danger"></i>Delete All Contacts</h3>
+      <div class="del-sub">This action will remove every saved SMS contact.</div>
+    </div>
+
+    <div class="del-body">
+      <div class="warn-box">
+        <div class="warn-title">Warning</div>
+        <p class="warn-text">
+          This action cannot be undone. All contacts in your SMS module will be permanently deleted.
+        </p>
+      </div>
+
+      <div class="count-box">
+        <strong>{{ total_contacts|default:0 }}</strong>
+        <span>Total contacts ready to be deleted</span>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="action-row">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-2"></i>Yes, Delete All
+          </button>
+          <a href="{% url 'sms:contact_list' %}" class="btn btn-light border">
+            <i class="fas fa-arrow-left me-2"></i>Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}SMS Campaigns{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --sms-bg:#f8fafc;
+    --sms-card:#ffffff;
+    --sms-line:#e2e8f0;
+    --sms-line-soft:#edf2f7;
+    --sms-text:#0f172a;
+    --sms-muted:#64748b;
+    --sms-primary:#2563eb;
+    --sms-primary-soft:rgba(37,99,235,.08);
+    --sms-success:#16a34a;
+    --sms-success-soft:rgba(22,163,74,.10);
+    --sms-danger:#dc2626;
+    --sms-danger-soft:rgba(220,38,38,.10);
+    --sms-warning:#f59e0b;
+    --sms-warning-soft:rgba(245,158,11,.10);
+    --sms-slate-soft:#eef2f7;
+    --sms-shadow:0 10px 28px rgba(15,23,42,.05);
+    --sms-radius:16px;
+  }
+
+  .sms-wrap{
+    max-width:1380px;
+    margin:0 auto;
+    padding:.7rem;
+  }
+
+  .sms-card{
+    background:var(--sms-card);
+    border:1px solid var(--sms-line-soft);
+    border-radius:var(--sms-radius);
+    box-shadow:var(--sms-shadow);
+    overflow:hidden;
+  }
+
+  .sms-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--sms-line-soft);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.8rem;
+    flex-wrap:wrap;
+    background:linear-gradient(180deg,#ffffff,#fbfdff);
+  }
+
+  .sms-head h3{
+    margin:0;
+    font-size:.98rem;
+    font-weight:800;
+    color:var(--sms-text);
+    line-height:1.25;
+    letter-spacing:-.01em;
+  }
+
+  .sms-sub{
+    margin-top:.2rem;
+    font-size:.72rem;
+    color:var(--sms-muted);
+    line-height:1.45;
+  }
+
+  .top-btn{
+    border-radius:12px;
+    min-height:38px;
+    padding:.5rem .82rem;
+    font-size:.72rem;
+    font-weight:800;
+    box-shadow:0 8px 18px rgba(37,99,235,.14);
+  }
+
+  .sms-body{
+    padding:.9rem;
+  }
+
+  .filters{
+    display:grid;
+    grid-template-columns:1.45fr .95fr auto;
+    gap:.65rem;
+    margin-bottom:.85rem;
+  }
+
+  .form-control,
+  .form-select{
+    min-height:38px;
+    border-radius:12px;
+    border:1px solid #d9e2ec;
+    font-size:.73rem;
+    padding:.5rem .72rem;
+    box-shadow:none !important;
+  }
+
+  .form-control:focus,
+  .form-select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .15rem rgba(37,99,235,.08) !important;
+  }
+
+  .filter-btn{
+    min-height:38px;
+    border-radius:12px;
+    font-size:.72rem;
+    font-weight:800;
+    padding:.5rem .88rem;
+  }
+
+  .table-wrap{
+    overflow:auto;
+    border:1px solid var(--sms-line-soft);
+    border-radius:14px;
+    background:#fff;
+  }
+
+  .sms-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:980px;
+  }
+
+  .sms-table th,
+  .sms-table td{
+    padding:.72rem .76rem;
+    border-bottom:1px solid var(--sms-line-soft);
+    font-size:.74rem;
+    vertical-align:middle;
+    color:var(--sms-text);
+    line-height:1.4;
+  }
+
+  .sms-table th{
+    font-size:.64rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--sms-muted);
+    font-weight:800;
+    background:#f8fafc;
+    white-space:nowrap;
+    position:sticky;
+    top:0;
+    z-index:1;
+  }
+
+  .sms-table tbody tr{
+    transition:background-color .18s ease;
+  }
+
+  .sms-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .sms-table tbody tr:last-child td{
+    border-bottom:none;
+  }
+
+  .campaign-title{
+    font-weight:700;
+    min-width:170px;
+  }
+
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.28rem .58rem;
+    border-radius:999px;
+    font-size:.63rem;
+    font-weight:800;
+    line-height:1.2;
+    white-space:nowrap;
+    border:1px solid transparent;
+  }
+
+  .pill-green{
+    background:var(--sms-success-soft);
+    color:var(--sms-success);
+    border-color:rgba(22,163,74,.08);
+  }
+
+  .pill-red{
+    background:var(--sms-danger-soft);
+    color:var(--sms-danger);
+    border-color:rgba(220,38,38,.08);
+  }
+
+  .pill-amber{
+    background:var(--sms-warning-soft);
+    color:#b45309;
+    border-color:rgba(245,158,11,.08);
+  }
+
+  .pill-slate{
+    background:var(--sms-slate-soft);
+    color:#475569;
+    border-color:rgba(100,116,139,.08);
+  }
+
+  .sender-cell,
+  .created-cell{
+    white-space:nowrap;
+  }
+
+  .count-cell{
+    font-weight:700;
+  }
+
+  .mini-actions{
+    display:flex;
+    gap:.35rem;
+    flex-wrap:wrap;
+  }
+
+  .mini-actions .btn{
+    border-radius:10px;
+    font-size:.66rem;
+    font-weight:800;
+    padding:.38rem .66rem;
+    line-height:1.2;
+  }
+
+  .empty-row{
+    text-align:center;
+    color:var(--sms-muted) !important;
+    padding:1.25rem .75rem !important;
+    font-size:.73rem;
+  }
+
+  .pagination-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.75rem;
+    margin-top:.8rem;
+    flex-wrap:wrap;
+  }
+
+  .pagination-note{
+    color:var(--sms-muted);
+    font-size:.67rem;
+    line-height:1.4;
+  }
+
+  .pagination-actions{
+    display:flex;
+    gap:.45rem;
+    flex-wrap:wrap;
+  }
+
+  .pagination-actions .btn{
+    border-radius:10px;
+    font-size:.66rem;
+    font-weight:800;
+    padding:.4rem .72rem;
+    line-height:1.2;
+  }
+
+  @media (max-width: 991.98px){
+    .filters{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 767.98px){
+    .sms-wrap{
+      padding:.5rem;
+    }
+
+    .sms-head{
+      padding:.82rem .85rem;
+    }
+
+    .sms-body{
+      padding:.82rem;
+    }
+
+    .sms-head h3{
+      font-size:.9rem;
+    }
+
+    .sms-sub{
+      font-size:.68rem;
+    }
+
+    .top-btn{
+      width:100%;
+      min-height:36px;
+      font-size:.7rem;
+    }
+
+    .form-control,
+    .form-select,
+    .filter-btn{
+      min-height:36px;
+      font-size:.71rem;
+    }
+
+    .sms-table{
+      min-width:860px;
+    }
+
+    .sms-table th,
+    .sms-table td{
+      padding:.65rem .65rem;
+      font-size:.71rem;
+    }
+
+    .pagination-bar{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .pagination-actions{
+      width:100%;
+    }
+
+    .pagination-actions .btn{
+      flex:1 1 auto;
+      text-align:center;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .sms-head h3{
+      font-size:.86rem;
+    }
+
+    .sms-sub{
+      font-size:.65rem;
+    }
+
+    .sms-table th{
+      font-size:.61rem;
+    }
+
+    .sms-table td{
+      font-size:.68rem;
+    }
+
+    .status-pill{
+      font-size:.59rem;
+      padding:.24rem .5rem;
+    }
+
+    .mini-actions .btn{
+      font-size:.62rem;
+      padding:.34rem .56rem;
+    }
+
+    .pagination-note{
+      font-size:.64rem;
+    }
+  }
+</style>
+
+<div class="sms-wrap">
+  <div class="sms-card">
+    <div class="sms-head">
+      <div>
+        <h3><i class="fas fa-bullhorn me-2 text-primary"></i>SMS Campaigns</h3>
+        <div class="sms-sub">Create, manage, send, and track your SMS campaigns.</div>
+      </div>
+
+      <a href="{% url 'sms:campaign_create' %}" class="btn btn-primary top-btn">
+        <i class="fas fa-plus me-1"></i>Create Campaign
+      </a>
+    </div>
+
+    <div class="sms-body">
+      <form method="get">
+        <div class="filters">
+          <input
+            type="text"
+            name="q"
+            value="{{ q }}"
+            class="form-control"
+            placeholder="Search campaign title or message"
+          >
+
+          <select name="status" class="form-select">
+            <option value="">All Status</option>
+            {% for value,label in status_choices %}
+              <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+
+          <button class="btn btn-dark filter-btn">
+            <i class="fas fa-filter me-1"></i>Filter
+          </button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table class="sms-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Sender</th>
+              <th>Recipients</th>
+              <th>Sent</th>
+              <th>Delivered</th>
+              <th>Failed</th>
+              <th>Created</th>
+              <th style="width:220px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for obj in page_obj %}
+            <tr>
+              <td class="campaign-title">{{ obj.title }}</td>
+              <td>
+                {% if obj.status == "SENT" %}
+                  <span class="status-pill pill-green">{{ obj.status }}</span>
+                {% elif obj.status == "FAILED" %}
+                  <span class="status-pill pill-red">{{ obj.status }}</span>
+                {% elif obj.status == "PARTIAL" %}
+                  <span class="status-pill pill-amber">{{ obj.status }}</span>
+                {% else %}
+                  <span class="status-pill pill-slate">{{ obj.status }}</span>
+                {% endif %}
+              </td>
+              <td class="sender-cell">{{ obj.sender_id.name|default:"—" }}</td>
+              <td class="count-cell">{{ obj.total_recipients|intcomma }}</td>
+              <td class="count-cell">{{ obj.sent_count|intcomma }}</td>
+              <td class="count-cell">{{ obj.delivered_count|intcomma }}</td>
+              <td class="count-cell">{{ obj.failed_count|intcomma }}</td>
+              <td class="created-cell">{{ obj.created_at|date:"d M Y, H:i" }}</td>
+              <td>
+                <div class="mini-actions">
+                  <a href="{% url 'sms:campaign_update' obj.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                  <a href="{% url 'sms:campaign_send' obj.id %}" class="btn btn-sm btn-success">Send</a>
+                  <a href="{% url 'sms:campaign_sync_delivery' obj.id %}" class="btn btn-sm btn-outline-dark">Sync</a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="empty-row">No campaigns found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="pagination-bar">
+        <div class="pagination-note">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </div>
+
+        <div class="pagination-actions">
+          {% if page_obj.has_previous %}
+            <a class="btn btn-sm btn-outline-secondary" href="?q={{ q }}&status={{ status }}&page={{ page_obj.previous_page_number }}">
+              Previous
+            </a>
+          {% endif %}
+
+          {% if page_obj.has_next %}
+            <a class="btn btn-sm btn-outline-secondary" href="?q={{ q }}&status={{ status }}&page={{ page_obj.next_page_number }}">
+              Next
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

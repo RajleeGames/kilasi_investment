@@ -5,7 +5,7 @@ VPS + Nginx ready for: kilasiinvestment.store
 
 import os
 from pathlib import Path
-
+from decouple import config
 # ─── Paths ──────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'contacts',
     'sales',
     'users',
-
+    'sms',
     'rangefilter',
 ]
 
@@ -114,6 +114,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+
+BEEM_API_KEY = config('BEEM_API_KEY')
+BEEM_SECRET_KEY = config('BEEM_SECRET_KEY')
+BEEM_SENDER_ID = config('BEEM_SENDER_ID', default='KILASI LTD')
+
+BEEM_API_URL_SEND = "https://apisms.beem.africa/v1/send"
+BEEM_BALANCE_URL  = "https://apisms.beem.africa/public/v1/vendors/balance"
+BEEM_DLR_URL      = "https://dlrapi.beem.africa/public/v1/delivery-reports"
 
 # ─── Internationalization ───────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
