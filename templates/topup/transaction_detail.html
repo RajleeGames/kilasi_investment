@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Top-up #{{ tx.pk }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --td-bg:#f8fafc;
+    --td-card:#ffffff;
+    --td-line:#e2e8f0;
+    --td-line-soft:#eef2f7;
+    --td-text:#0f172a;
+    --td-muted:#64748b;
+    --td-primary:#2563eb;
+    --td-primary-2:#3b82f6;
+    --td-success:#16a34a;
+    --td-warning:#f59e0b;
+    --td-info:#0891b2;
+    --td-purple:#7c3aed;
+    --td-shadow:0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .topup-detail-wrap{
+    color:var(--td-text);
+  }
+
+  .td-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--td-line);
+    border-radius:22px;
+    box-shadow:var(--td-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .td-hero-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .td-hero-sub{
+    margin:.24rem 0 0;
+    color:var(--td-muted);
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .td-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:var(--td-primary);
+    font-size:.70rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .td-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.28rem .56rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:700;
+    border:1px solid transparent;
+  }
+
+  .td-pill.ok{
+    background:rgba(22,163,74,.10);
+    color:var(--td-success);
+    border-color:rgba(22,163,74,.12);
+  }
+
+  .td-pill.warn{
+    background:rgba(245,158,11,.12);
+    color:#b45309;
+    border-color:rgba(245,158,11,.12);
+  }
+
+  .td-pill.neutral{
+    background:rgba(37,99,235,.08);
+    color:var(--td-primary);
+    border-color:rgba(37,99,235,.12);
+  }
+
+  .td-top-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    align-items:center;
+  }
+
+  .td-btn,
+  .td-btn-light,
+  .td-btn-success{
+    height:38px;
+    border:none;
+    border-radius:12px;
+    padding:0 1rem;
+    font-size:.75rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.18s ease;
+  }
+
+  .td-btn{
+    background:linear-gradient(135deg,var(--td-primary),var(--td-primary-2));
+    color:#fff;
+  }
+
+  .td-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .td-btn-success{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:#fff;
+  }
+
+  .td-btn-success:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .td-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--td-line);
+  }
+
+  .td-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .td-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1rem;
+    margin-bottom:1rem;
+  }
+
+  .td-card{
+    background:var(--td-card);
+    border:1px solid var(--td-line);
+    border-radius:20px;
+    box-shadow:var(--td-shadow);
+    height:100%;
+  }
+
+  .td-card-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--td-line-soft);
+  }
+
+  .td-card-title{
+    margin:0;
+    font-size:.86rem;
+    font-weight:700;
+    color:var(--td-text);
+  }
+
+  .td-card-sub{
+    margin:.12rem 0 0;
+    font-size:.70rem;
+    color:var(--td-muted);
+  }
+
+  .td-card-body{
+    padding:1rem;
+  }
+
+  .td-info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:.85rem;
+  }
+
+  .td-item{
+    border:1px solid var(--td-line-soft);
+    border-radius:16px;
+    padding:.8rem;
+    background:#fff;
+  }
+
+  .td-label{
+    font-size:.68rem;
+    color:#64748b;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:.22rem;
+  }
+
+  .td-value{
+    font-size:.78rem;
+    color:var(--td-text);
+    font-weight:600;
+    line-height:1.45;
+  }
+
+  .td-money-card{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:.85rem;
+  }
+
+  .td-money-box{
+    border:1px solid var(--td-line-soft);
+    border-radius:18px;
+    padding:.9rem;
+    background:#fff;
+  }
+
+  .td-money-box .td-label{
+    margin-bottom:.25rem;
+  }
+
+  .td-money{
+    font-size:.95rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+  }
+
+  .td-money.note{
+    font-size:.82rem;
+  }
+
+  .td-note-box{
+    border:1px solid var(--td-line-soft);
+    border-radius:18px;
+    background:#fff;
+    padding:.95rem;
+    line-height:1.6;
+    font-size:.75rem;
+    color:var(--td-text);
+    white-space:pre-line;
+  }
+
+  .td-used-link{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+    border:1px solid var(--td-line);
+    border-radius:18px;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.03)),
+      #fff;
+    padding:.9rem;
+    text-decoration:none;
+    color:var(--td-text);
+    transition:.18s ease;
+  }
+
+  .td-used-link:hover{
+    color:var(--td-text);
+    transform:translateY(-1px);
+  }
+
+  .td-used-link h6{
+    margin:0 0 .15rem;
+    font-size:.80rem;
+    font-weight:700;
+  }
+
+  .td-used-link p{
+    margin:0;
+    font-size:.70rem;
+    color:var(--td-muted);
+  }
+
+  .td-used-link i{
+    font-size:1rem;
+    color:var(--td-primary);
+  }
+
+  @media (max-width: 992px){
+    .td-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 768px){
+    .td-info-grid,
+    .td-money-card{
+      grid-template-columns:1fr;
+    }
+
+    .td-top-actions{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .td-btn,
+    .td-btn-light,
+    .td-btn-success{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="topup-detail-wrap">
+
+  <div class="td-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="td-hero-title">
+          <i class="fa-solid fa-file-lines text-primary"></i>
+          Top-up Transaction #{{ tx.pk }}
+        </h2>
+        <p class="td-hero-sub">
+          <span class="td-badge">
+            <i class="fa-solid fa-calendar-days"></i>
+            {{ tx.created_at|date:"Y-m-d H:i" }}
+          </span>
+          <span class="td-badge">
+            <i class="fa-solid fa-shop"></i>
+            {{ tx.branch.name }}
+          </span>
+          <span class="td-pill {% if tx.status == 'completed' %}ok{% elif tx.status == 'draft' %}warn{% else %}neutral{% endif %}">
+            {{ tx.get_status_display }}
+          </span>
+        </p>
+      </div>
+
+      <div class="td-top-actions">
+        <a href="{% url 'topup:history' %}" class="td-btn-light">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back to History
+        </a>
+
+        {% if tx.used_stock %}
+        <a href="{% url 'topup:used_stock_detail' tx.used_stock.pk %}" class="td-btn-success">
+          <i class="fa-solid fa-box-open"></i>
+          Open Used Stock
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="td-grid">
+
+    <div class="td-card">
+      <div class="td-card-head">
+        <h5 class="td-card-title">Customer & Branch Information</h5>
+        <p class="td-card-sub">Basic details for this top-up transaction</p>
+      </div>
+      <div class="td-card-body">
+        <div class="td-info-grid">
+          <div class="td-item">
+            <div class="td-label">Customer</div>
+            <div class="td-value">{{ tx.customer.name|default:"—" }}</div>
+          </div>
+
+          <div class="td-item">
+            <div class="td-label">Branch</div>
+            <div class="td-value">{{ tx.branch.name }}</div>
+          </div>
+
+          <div class="td-item">
+            <div class="td-label">Created By</div>
+            <div class="td-value">
+              {% if tx.created_by %}
+                {{ tx.created_by.get_full_name|default:tx.created_by.username }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="td-item">
+            <div class="td-label">Created At</div>
+            <div class="td-value">{{ tx.created_at|date:"Y-m-d H:i" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="td-card">
+      <div class="td-card-head">
+        <h5 class="td-card-title">Used Item Received</h5>
+        <p class="td-card-sub">The used item customer brought in</p>
+      </div>
+      <div class="td-card-body">
+        <div class="td-info-grid">
+          <div class="td-item">
+            <div class="td-label">Used Item Name</div>
+            <div class="td-value">{{ tx.used_item_name }}</div>
+          </div>
+
+          <div class="td-item">
+            <div class="td-label">Category</div>
+            <div class="td-value">{{ tx.used_item_category|default:"—" }}</div>
+          </div>
+
+          <div class="td-item" style="grid-column:1 / -1;">
+            <div class="td-label">Condition</div>
+            <div class="td-value">{{ tx.used_item_condition|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="td-card">
+      <div class="td-card-head">
+        <h5 class="td-card-title">New Product Given Out</h5>
+        <p class="td-card-sub">The normal stock item that left the store</p>
+      </div>
+      <div class="td-card-body">
+        <div class="td-info-grid">
+          <div class="td-item">
+            <div class="td-label">Product</div>
+            <div class="td-value">{{ tx.new_product.name }}</div>
+          </div>
+
+          <div class="td-item">
+            <div class="td-label">Quantity</div>
+            <div class="td-value">{{ tx.new_product_qty }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="td-card">
+      <div class="td-card-head">
+        <h5 class="td-card-title">Money Summary</h5>
+        <p class="td-card-sub">Top-up money stays separate from normal sales</p>
+      </div>
+      <div class="td-card-body">
+        <div class="td-money-card">
+          <div class="td-money-box">
+            <div class="td-label">Used Item Buying Price</div>
+            <div class="td-money">Tsh {{ tx.used_item_buying_price|floatformat:0|intcomma }}</div>
+          </div>
+
+          <div class="td-money-box">
+            <div class="td-label">Addon Received</div>
+            <div class="td-money">Tsh {{ tx.addon_amount|floatformat:0|intcomma }}</div>
+          </div>
+
+          <div class="td-money-box">
+            <div class="td-label">Status</div>
+            <div class="td-money note">{{ tx.get_status_display }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="td-grid">
+
+    <div class="td-card">
+      <div class="td-card-head">
+        <h5 class="td-card-title">Transaction Note</h5>
+        <p class="td-card-sub">Extra explanation written during creation</p>
+      </div>
+      <div class="td-card-body">
+        <div class="td-note-box">{{ tx.note|default:"—" }}</div>
+      </div>
+    </div>
+
+    {% if tx.used_stock %}
+    <div class="td-card">
+      <div class="td-card-head">
+        <h5 class="td-card-title">Linked Used Stock Record</h5>
+        <p class="td-card-sub">This used item is now stored in Top-up used stock</p>
+      </div>
+      <div class="td-card-body">
+        <a href="{% url 'topup:used_stock_detail' tx.used_stock.pk %}" class="td-used-link">
+          <div>
+            <h6>{{ tx.used_stock.item_name }}</h6>
+            <p>
+              Status: {{ tx.used_stock.get_status_display }}{% if tx.used_stock.condition %} • {{ tx.used_stock.condition }}{% endif %}
+            </p>
+          </div>
+          <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Dashboard — Kilasi Investment{% endblock %}
+{% block title %}{{ dashboard_title|default:"Dashboard" }} — Kilasi Investment{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -479,9 +479,10 @@
   <div class="hero-card animate__animated animate__fadeInDown">
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
       <div>
-        <h4 class="hero-title">Dashboard</h4>
+        <h4 class="hero-title">{{ dashboard_title|default:"Dashboard" }}</h4>
         <div class="hero-sub">
           Sales • Debts • Payments • Expenses
+          {% if business_type %} • <strong>{{ business_type|title }}</strong>{% endif %}
           {% if selected_branch_obj %} • <strong>{{ selected_branch_obj.name }}</strong>{% endif %}
         </div>
 
@@ -490,19 +491,26 @@
             <i class="fa-solid fa-calendar-day"></i>
             {{ range_label }}
           </span>
+
+          {% if business_type %}
+          <span class="hero-chip">
+            <i class="fa-solid fa-layer-group"></i>
+            {{ business_type|title }}
+          </span>
+          {% endif %}
+
           {% if selected_branch_obj %}
           <span class="hero-chip">
             <i class="fa-solid fa-building"></i>
             {{ selected_branch_obj.name }}
           </span>
           {% endif %}
+
           <span class="hero-chip">
             <i class="fa-solid fa-circle-check"></i>
             Active invoices only
           </span>
         </div>
-
-        
 
         {% if not profit_enabled %}
           <div class="small text-danger mt-2">
@@ -551,16 +559,16 @@
         </button>
 
         <a class="quick-filter {% if is_today_range %}active{% endif %}"
-           href="{% url 'sales:admin_dashboard' %}?date_from={{ today_str }}&date_to={{ today_str }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+           href="{% url dashboard_url_name %}?date_from={{ today_str }}&date_to={{ today_str }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
           Today
         </a>
 
         <a class="quick-filter"
-           href="{% url 'sales:admin_dashboard' %}?date_from={{ last7_from }}&date_to={{ today_str }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
+           href="{% url dashboard_url_name %}?date_from={{ last7_from }}&date_to={{ today_str }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}">
           Last 7 Days
         </a>
 
-        <a class="quick-reset" href="{% url 'sales:admin_dashboard' %}">
+        <a class="quick-reset" href="{% url dashboard_url_name %}">
           Reset
         </a>
       </div>
@@ -768,8 +776,6 @@
     </div>
   </div>
 
-  
-
   <div class="section-head">
     <h5 class="section-title">Charts & Trends</h5>
   </div>
@@ -880,6 +886,7 @@
                 </p>
                 <div class="product-meta">
                   {% if prod.category %}{{ prod.category.name }}{% else %}—{% endif %}
+                  {% if prod.business_type %} • {{ prod.business_type|title }}{% endif %}
                 </div>
               </div>
             </div>

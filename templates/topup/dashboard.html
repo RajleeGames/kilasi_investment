@@ -1,0 +1,730 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Top-up Dashboard{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --tu-bg:#f8fafc;
+    --tu-card:#ffffff;
+    --tu-line:#e2e8f0;
+    --tu-line-soft:#eef2f7;
+    --tu-text:#0f172a;
+    --tu-muted:#64748b;
+    --tu-primary:#2563eb;
+    --tu-primary-2:#3b82f6;
+    --tu-success:#16a34a;
+    --tu-danger:#dc2626;
+    --tu-warning:#f59e0b;
+    --tu-info:#0891b2;
+    --tu-purple:#7c3aed;
+    --tu-shadow:0 10px 28px rgba(15,23,42,.06);
+    --tu-radius:18px;
+  }
+
+  .topup-wrap{
+    color:var(--tu-text);
+  }
+
+  .topup-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--tu-line);
+    border-radius:22px;
+    box-shadow:var(--tu-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .topup-hero-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .topup-hero-sub{
+    margin:.25rem 0 0;
+    color:var(--tu-muted);
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .tu-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:var(--tu-primary);
+    font-size:.70rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .topup-filter-card{
+    background:var(--tu-card);
+    border:1px solid var(--tu-line);
+    border-radius:18px;
+    box-shadow:var(--tu-shadow);
+    padding:.85rem;
+    margin-bottom:1rem;
+  }
+
+  .topup-filter-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr auto auto;
+    gap:.65rem;
+    align-items:end;
+  }
+
+  .tu-label{
+    display:block;
+    font-size:.69rem;
+    color:#64748b;
+    margin-bottom:.32rem;
+    font-weight:700;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+  }
+
+  .tu-control{
+    height:38px;
+    border-radius:12px;
+    border:1px solid var(--tu-line);
+    font-size:.76rem;
+    color:var(--tu-text);
+    box-shadow:none !important;
+  }
+
+  .tu-control:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+  }
+
+  .tu-btn,
+  .tu-btn-light{
+    height:38px;
+    border:none;
+    border-radius:12px;
+    padding:0 .9rem;
+    font-size:.75rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.18s ease;
+  }
+
+  .tu-btn{
+    color:#fff;
+    background:linear-gradient(135deg,var(--tu-primary),var(--tu-primary-2));
+  }
+
+  .tu-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .tu-btn-light{
+    color:#475569;
+    background:#fff;
+    border:1px solid var(--tu-line);
+  }
+
+  .tu-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .topup-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:.8rem;
+    margin-bottom:1rem;
+  }
+
+  .tu-card{
+    background:var(--tu-card);
+    border:1px solid var(--tu-line);
+    border-radius:18px;
+    box-shadow:var(--tu-shadow);
+    height:100%;
+  }
+
+  .tu-card-body{
+    padding:.95rem;
+  }
+
+  .tu-stat{
+    display:flex;
+    align-items:center;
+    gap:.78rem;
+  }
+
+  .tu-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  .tu-soft-primary{ background:rgba(37,99,235,.10); color:var(--tu-primary); }
+  .tu-soft-success{ background:rgba(22,163,74,.10); color:var(--tu-success); }
+  .tu-soft-warning{ background:rgba(245,158,11,.14); color:#b45309; }
+  .tu-soft-info{ background:rgba(8,145,178,.12); color:var(--tu-info); }
+  .tu-soft-purple{ background:rgba(124,58,237,.12); color:var(--tu-purple); }
+  .tu-soft-danger{ background:rgba(220,38,38,.10); color:var(--tu-danger); }
+
+  .tu-kicker{
+    font-size:.69rem;
+    font-weight:700;
+    color:var(--tu-muted);
+    margin-bottom:.16rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+
+  .tu-value{
+    font-size:1rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    line-height:1.15;
+  }
+
+  .tu-note{
+    margin-top:.15rem;
+    color:var(--tu-muted);
+    font-size:.70rem;
+  }
+
+  .topup-actions{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:.8rem;
+    margin-bottom:1rem;
+  }
+
+  .tu-action{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      #fff;
+    border:1px solid var(--tu-line);
+    border-radius:18px;
+    box-shadow:var(--tu-shadow);
+    padding:.9rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+    text-decoration:none;
+    color:var(--tu-text);
+    transition:.18s ease;
+  }
+
+  .tu-action:hover{
+    color:var(--tu-text);
+    transform:translateY(-2px);
+  }
+
+  .tu-action h6{
+    margin:0 0 .12rem;
+    font-size:.80rem;
+    font-weight:700;
+  }
+
+  .tu-action p{
+    margin:0;
+    font-size:.70rem;
+    color:var(--tu-muted);
+  }
+
+  .tu-action i{
+    font-size:1rem;
+    color:var(--tu-primary);
+  }
+
+  .tu-table-card{
+    background:var(--tu-card);
+    border:1px solid var(--tu-line);
+    border-radius:20px;
+    box-shadow:var(--tu-shadow);
+    overflow:hidden;
+  }
+
+  .tu-table-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--tu-line-soft);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+  }
+
+  .tu-table-title{
+    margin:0;
+    font-size:.88rem;
+    font-weight:700;
+  }
+
+  .tu-table-sub{
+    margin:.12rem 0 0;
+    font-size:.70rem;
+    color:var(--tu-muted);
+  }
+
+  .tu-table{
+    margin:0;
+  }
+
+  .tu-table thead th{
+    background:linear-gradient(180deg, #f8fbff, #f1f6ff);
+    color:#475569;
+    font-size:.68rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    border-bottom:1px solid var(--tu-line);
+    padding:.78rem .85rem;
+    white-space:nowrap;
+  }
+
+  .tu-table tbody td{
+    padding:.82rem .85rem;
+    vertical-align:middle;
+    border-top:1px solid var(--tu-line-soft);
+    font-size:.76rem;
+    color:var(--tu-text);
+  }
+
+  .tu-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .tu-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.28rem .56rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:700;
+    border:1px solid transparent;
+  }
+
+  .tu-pill.ok{
+    background:rgba(22,163,74,.10);
+    color:var(--tu-success);
+    border-color:rgba(22,163,74,.12);
+  }
+
+  .tu-pill.warn{
+    background:rgba(245,158,11,.12);
+    color:#b45309;
+    border-color:rgba(245,158,11,.12);
+  }
+
+  .tu-pill.neutral{
+    background:rgba(37,99,235,.08);
+    color:var(--tu-primary);
+    border-color:rgba(37,99,235,.12);
+  }
+
+  .tu-open-btn{
+    height:32px;
+    padding:0 .75rem;
+    border-radius:10px;
+    border:1px solid var(--tu-line);
+    background:#fff;
+    color:#334155;
+    font-size:.72rem;
+    font-weight:700;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.35rem;
+  }
+
+  .tu-open-btn:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .tu-empty{
+    text-align:center;
+    padding:2rem 1rem;
+    color:var(--tu-muted);
+    font-size:.76rem;
+  }
+
+  .tu-empty i{
+    display:block;
+    font-size:1.25rem;
+    margin-bottom:.5rem;
+    color:#94a3b8;
+  }
+
+  @media (max-width: 1200px){
+    .topup-grid,
+    .topup-actions{
+      grid-template-columns:repeat(2,1fr);
+    }
+
+    .topup-filter-grid{
+      grid-template-columns:1fr 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 768px){
+    .topup-grid,
+    .topup-actions,
+    .topup-filter-grid{
+      grid-template-columns:1fr;
+    }
+
+    .tu-btn,
+    .tu-btn-light{
+      width:100%;
+    }
+
+    .tu-table thead{
+      display:none;
+    }
+
+    .tu-table,
+    .tu-table tbody,
+    .tu-table tr,
+    .tu-table td{
+      display:block;
+      width:100%;
+    }
+
+    .tu-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .tu-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+
+    .tu-table tbody td::before{
+      content:attr(data-label);
+      font-size:.66rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:105px;
+    }
+  }
+</style>
+
+<div class="topup-wrap">
+
+  <div class="topup-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="topup-hero-title">
+          <i class="fa-solid fa-right-left text-primary"></i>
+          Top-up Dashboard
+        </h2>
+        <p class="topup-hero-sub">
+          <span class="tu-badge">
+            <i class="fa-solid fa-layer-group"></i>
+            Used items handled separately from normal sales
+          </span>
+
+          {% if is_seller and user_branch %}
+            <span class="tu-badge">
+              <i class="fa-solid fa-shop"></i>
+              {{ user_branch.name }}
+            </span>
+          {% elif selected_branch %}
+            {% for b in branches %}
+              {% if selected_branch == b.id|stringformat:"s" %}
+                <span class="tu-badge">
+                  <i class="fa-solid fa-shop"></i>
+                  {{ b.name }}
+                </span>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </p>
+      </div>
+
+      <div>
+        <a href="{% url 'topup:create' %}" class="tu-btn">
+          <i class="fa-solid fa-plus"></i>
+          New Top-up
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="topup-filter-card">
+    <form method="get">
+      <div class="topup-filter-grid">
+        {% if not is_seller %}
+        <div>
+          <label class="tu-label">Branch</label>
+          <select name="branch" class="form-select tu-control">
+            <option value="">All branches</option>
+            {% for b in branches %}
+              <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>
+                {{ b.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div>
+          <label class="tu-label">From</label>
+          <input type="date" name="date_from" value="{{ date_from }}" class="form-control tu-control">
+        </div>
+
+        <div>
+          <label class="tu-label">To</label>
+          <input type="date" name="date_to" value="{{ date_to }}" class="form-control tu-control">
+        </div>
+
+        <div class="d-flex align-items-end">
+          <button class="tu-btn w-100">
+            <i class="fa-solid fa-filter"></i>
+            Apply
+          </button>
+        </div>
+
+        <div class="d-flex align-items-end">
+          <a href="{% url 'topup:dashboard' %}" class="tu-btn-light w-100">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="topup-grid">
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-primary"><i class="fa-solid fa-repeat"></i></div>
+          <div>
+            <div class="tu-kicker">Total Top-ups</div>
+            <div class="tu-value">{{ total_topups|default:0 }}</div>
+            <div class="tu-note">Completed exchange transactions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-success"><i class="fa-solid fa-money-bill-wave"></i></div>
+          <div>
+            <div class="tu-kicker">Addon Received</div>
+            <div class="tu-value">Tsh {{ addon_received|floatformat:0|intcomma }}</div>
+            <div class="tu-note">Cash added by customers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-warning"><i class="fa-solid fa-box-open"></i></div>
+          <div>
+            <div class="tu-kicker">Used Value Received</div>
+            <div class="tu-value">Tsh {{ used_value_received|floatformat:0|intcomma }}</div>
+            <div class="tu-note">Accepted cost of used items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-info"><i class="fa-solid fa-chart-line"></i></div>
+          <div>
+            <div class="tu-kicker">Used Sales Profit</div>
+            <div class="tu-value">Tsh {{ used_sales_profit|floatformat:0|intcomma }}</div>
+            <div class="tu-note">Profit from sold used items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-purple"><i class="fa-solid fa-boxes-stacked"></i></div>
+          <div>
+            <div class="tu-kicker">Available Used Items</div>
+            <div class="tu-value">{{ available_used_items|default:0 }}</div>
+            <div class="tu-note">Still in used top-up stock</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-danger"><i class="fa-solid fa-cash-register"></i></div>
+          <div>
+            <div class="tu-kicker">Sold Used Items</div>
+            <div class="tu-value">{{ sold_used_items|default:0 }}</div>
+            <div class="tu-note">Already sold from used stock</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-success"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div>
+            <div class="tu-kicker">Used Sales Total</div>
+            <div class="tu-value">Tsh {{ used_sales_total|floatformat:0|intcomma }}</div>
+            <div class="tu-note">Money received from used item sales</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tu-card">
+      <div class="tu-card-body">
+        <div class="tu-stat">
+          <div class="tu-icon tu-soft-primary"><i class="fa-solid fa-circle-info"></i></div>
+          <div>
+            <div class="tu-kicker">Module Rule</div>
+            <div class="tu-value" style="font-size:.84rem;">Separate Flow</div>
+            <div class="tu-note">Does not mix with normal sales dashboard</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="topup-actions">
+    <a href="{% url 'topup:create' %}" class="tu-action">
+      <div>
+        <h6>New Top-up</h6>
+        <p>Create exchange and receive used item</p>
+      </div>
+      <i class="fa-solid fa-plus"></i>
+    </a>
+
+    <a href="{% url 'topup:history' %}" class="tu-action">
+      <div>
+        <h6>Top-up History</h6>
+        <p>View all top-up transactions</p>
+      </div>
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </a>
+
+    <a href="{% url 'topup:used_stock_list' %}" class="tu-action">
+      <div>
+        <h6>Used Top-up Stock</h6>
+        <p>Open stock of received used items</p>
+      </div>
+      <i class="fa-solid fa-box-open"></i>
+    </a>
+
+    <a href="{% url 'topup:used_stock_list' %}?status=available" class="tu-action">
+      <div>
+        <h6>Sell Used Item</h6>
+        <p>Go to available used stock items</p>
+      </div>
+      <i class="fa-solid fa-cash-register"></i>
+    </a>
+  </div>
+
+  <div class="tu-table-card">
+    <div class="tu-table-head">
+      <div>
+        <h5 class="tu-table-title">Recent Top-up Transactions</h5>
+        <p class="tu-table-sub">Latest completed top-up exchange records</p>
+      </div>
+      <a href="{% url 'topup:history' %}" class="tu-open-btn">
+        <i class="fa-solid fa-list"></i>
+        View All
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table tu-table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Used Item In</th>
+            <th>New Product Out</th>
+            <th>Addon</th>
+            <th>Branch</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in topups %}
+          <tr>
+            <td data-label="ID">#{{ tx.id }}</td>
+            <td data-label="Date">{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+            <td data-label="Used Item">{{ tx.used_item_name }}</td>
+            <td data-label="New Product">{{ tx.new_product.name }} × {{ tx.new_product_qty }}</td>
+            <td data-label="Addon">Tsh {{ tx.addon_amount|floatformat:0|intcomma }}</td>
+            <td data-label="Branch">{{ tx.branch.name }}</td>
+            <td data-label="Status">
+              <span class="tu-pill {% if tx.status == 'completed' %}ok{% elif tx.status == 'draft' %}warn{% else %}neutral{% endif %}">
+                {{ tx.get_status_display }}
+              </span>
+            </td>
+            <td data-label="Open">
+              <a href="{% url 'topup:transaction_detail' tx.pk %}" class="tu-open-btn">
+                Open
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="tu-empty">
+                <i class="fa-solid fa-box-open"></i>
+                No top-up transactions found.
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

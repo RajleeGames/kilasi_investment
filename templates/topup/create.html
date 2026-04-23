@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}New Top-up{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --tc-bg:#f8fafc;
+    --tc-card:#ffffff;
+    --tc-line:#e2e8f0;
+    --tc-line-soft:#eef2f7;
+    --tc-text:#0f172a;
+    --tc-muted:#64748b;
+    --tc-primary:#2563eb;
+    --tc-primary-2:#3b82f6;
+    --tc-success:#16a34a;
+    --tc-warning:#f59e0b;
+    --tc-info:#0891b2;
+    --tc-shadow:0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .topup-create-wrap{
+    color:var(--tc-text);
+  }
+
+  .tc-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--tc-line);
+    border-radius:22px;
+    box-shadow:var(--tc-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .tc-hero-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .tc-hero-sub{
+    margin:.24rem 0 0;
+    color:var(--tc-muted);
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .tc-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:var(--tc-primary);
+    font-size:.70rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .tc-grid{
+    display:grid;
+    grid-template-columns: 1.25fr .8fr;
+    gap:1rem;
+  }
+
+  .tc-card{
+    background:var(--tc-card);
+    border:1px solid var(--tc-line);
+    border-radius:20px;
+    box-shadow:var(--tc-shadow);
+  }
+
+  .tc-card-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--tc-line-soft);
+  }
+
+  .tc-card-title{
+    margin:0;
+    font-size:.86rem;
+    font-weight:700;
+    color:var(--tc-text);
+  }
+
+  .tc-card-sub{
+    margin:.12rem 0 0;
+    font-size:.70rem;
+    color:var(--tc-muted);
+  }
+
+  .tc-card-body{
+    padding:1rem;
+  }
+
+  .tc-form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:.9rem;
+  }
+
+  .tc-field-full{
+    grid-column:1 / -1;
+  }
+
+  .tc-label{
+    display:block;
+    margin-bottom:.34rem;
+    font-size:.70rem;
+    font-weight:700;
+    color:#475569;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+  }
+
+  .tc-help{
+    margin-top:.28rem;
+    font-size:.68rem;
+    color:var(--tc-muted);
+  }
+
+  .tc-card input,
+  .tc-card select,
+  .tc-card textarea{
+    width:100%;
+    border:1px solid var(--tc-line);
+    border-radius:12px;
+    font-size:.76rem;
+    color:var(--tc-text);
+    background:#fff;
+    padding:.62rem .82rem;
+    box-shadow:none !important;
+    transition:.18s ease;
+  }
+
+  .tc-card textarea{
+    min-height:92px;
+    resize:vertical;
+  }
+
+  .tc-card input:focus,
+  .tc-card select:focus,
+  .tc-card textarea:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .tc-side-list{
+    display:grid;
+    gap:.75rem;
+  }
+
+  .tc-tip{
+    border:1px solid var(--tc-line);
+    border-radius:16px;
+    padding:.85rem;
+    background:#fff;
+  }
+
+  .tc-tip h6{
+    margin:0 0 .3rem;
+    font-size:.77rem;
+    font-weight:700;
+    color:var(--tc-text);
+  }
+
+  .tc-tip p{
+    margin:0;
+    font-size:.71rem;
+    color:var(--tc-muted);
+    line-height:1.5;
+  }
+
+  .tc-tip i{
+    margin-right:.45rem;
+    color:var(--tc-primary);
+  }
+
+  .tc-flow{
+    display:grid;
+    gap:.7rem;
+  }
+
+  .tc-flow-step{
+    display:flex;
+    align-items:flex-start;
+    gap:.72rem;
+    padding:.82rem;
+    border:1px solid var(--tc-line);
+    border-radius:16px;
+    background:#fff;
+  }
+
+  .tc-flow-no{
+    width:28px;
+    height:28px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    background:rgba(37,99,235,.10);
+    color:var(--tc-primary);
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .tc-flow-step h6{
+    margin:0 0 .12rem;
+    font-size:.76rem;
+    font-weight:700;
+  }
+
+  .tc-flow-step p{
+    margin:0;
+    font-size:.70rem;
+    color:var(--tc-muted);
+    line-height:1.45;
+  }
+
+  .tc-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.7rem;
+    margin-top:1rem;
+  }
+
+  .tc-btn,
+  .tc-btn-light{
+    min-width:140px;
+    height:40px;
+    border:none;
+    border-radius:12px;
+    padding:0 1rem;
+    font-size:.75rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    text-decoration:none;
+    transition:.18s ease;
+  }
+
+  .tc-btn{
+    background:linear-gradient(135deg,var(--tc-primary),var(--tc-primary-2));
+    color:#fff;
+  }
+
+  .tc-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .tc-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--tc-line);
+  }
+
+  .tc-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .tc-alert{
+    margin-bottom:1rem;
+    padding:.85rem .95rem;
+    border-radius:16px;
+    border:1px solid #fde68a;
+    background:#fffbeb;
+    color:#92400e;
+    font-size:.72rem;
+    line-height:1.5;
+    font-weight:600;
+  }
+
+  .tc-alert i{
+    margin-right:.45rem;
+  }
+
+  @media (max-width: 992px){
+    .tc-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 768px){
+    .tc-form-grid{
+      grid-template-columns:1fr;
+    }
+
+    .tc-actions{
+      flex-direction:column;
+    }
+
+    .tc-btn,
+    .tc-btn-light{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="topup-create-wrap">
+
+  <div class="tc-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="tc-hero-title">
+          <i class="fa-solid fa-right-left text-primary"></i>
+          Create Top-up Transaction
+        </h2>
+        <p class="tc-hero-sub">
+          <span class="tc-badge">
+            <i class="fa-solid fa-box-open"></i>
+            Used item comes in
+          </span>
+          <span class="tc-badge">
+            <i class="fa-solid fa-box"></i>
+            New stock goes out
+          </span>
+          <span class="tc-badge">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            Addon cash stays in Top-up dashboard
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tc-alert">
+    <i class="fa-solid fa-circle-info"></i>
+    This transaction is separate from normal sales. It reduces normal stock, creates a used stock record, and records the addon money inside the Top-up module only.
+  </div>
+
+  <div class="tc-grid">
+
+    <div class="tc-card">
+      <div class="tc-card-head">
+        <h5 class="tc-card-title">Top-up Entry Form</h5>
+        <p class="tc-card-sub">Fill the customer, new product given out, used item received, and addon amount.</p>
+      </div>
+
+      <div class="tc-card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="tc-form-grid">
+
+            <div>
+              <label class="tc-label">Existing Customer</label>
+              {{ form.customer }}
+              <div class="tc-help">Choose existing customer if already saved.</div>
+            </div>
+
+            <div>
+              <label class="tc-label">Branch</label>
+              {{ form.branch }}
+              <div class="tc-help">The branch where this top-up happens.</div>
+            </div>
+
+            <div>
+              <label class="tc-label">Customer Name</label>
+              {{ form.customer_name }}
+            </div>
+
+            <div>
+              <label class="tc-label">Customer Phone</label>
+              {{ form.customer_phone }}
+            </div>
+
+            <div>
+              <label class="tc-label">New Product</label>
+              {{ form.new_product }}
+              <div class="tc-help">This product will leave normal stock.</div>
+            </div>
+
+            <div>
+              <label class="tc-label">Quantity</label>
+              {{ form.new_product_qty }}
+            </div>
+
+            <div>
+              <label class="tc-label">Used Item Name</label>
+              {{ form.used_item_name }}
+              <div class="tc-help">Example: Used TV 24 inch.</div>
+            </div>
+
+            <div>
+              <label class="tc-label">Used Item Category</label>
+              {{ form.used_item_category }}
+            </div>
+
+            <div class="tc-field-full">
+              <label class="tc-label">Used Item Condition</label>
+              {{ form.used_item_condition }}
+              <div class="tc-help">Example: Good screen, minor scratch, remote included.</div>
+            </div>
+
+            <div>
+              <label class="tc-label">Used Item Buying Price</label>
+              {{ form.used_item_buying_price }}
+              <div class="tc-help">This is the accepted value/cost of the used item.</div>
+            </div>
+
+            <div>
+              <label class="tc-label">Addon Amount</label>
+              {{ form.addon_amount }}
+              <div class="tc-help">Money customer adds during top-up.</div>
+            </div>
+
+            <div class="tc-field-full">
+              <label class="tc-label">Note</label>
+              {{ form.note }}
+            </div>
+          </div>
+
+          <div class="tc-actions">
+            <button class="tc-btn" type="submit">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Top-up
+            </button>
+            <a href="{% url 'topup:dashboard' %}" class="tc-btn-light">
+              <i class="fa-solid fa-arrow-left"></i>
+              Back to Dashboard
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="tc-side-list">
+
+      <div class="tc-card">
+        <div class="tc-card-head">
+          <h5 class="tc-card-title">What happens after save</h5>
+          <p class="tc-card-sub">System behavior for this transaction.</p>
+        </div>
+        <div class="tc-card-body">
+          <div class="tc-flow">
+            <div class="tc-flow-step">
+              <div class="tc-flow-no">1</div>
+              <div>
+                <h6>Normal stock reduces</h6>
+                <p>The selected new product quantity is deducted from normal branch stock.</p>
+              </div>
+            </div>
+
+            <div class="tc-flow-step">
+              <div class="tc-flow-no">2</div>
+              <div>
+                <h6>Used stock is created</h6>
+                <p>The used item received enters used Top-up stock, not normal stock.</p>
+              </div>
+            </div>
+
+            <div class="tc-flow-step">
+              <div class="tc-flow-no">3</div>
+              <div>
+                <h6>Addon money is recorded</h6>
+                <p>The addon amount goes only to the Top-up dashboard and stays separate from normal sales.</p>
+              </div>
+            </div>
+
+            <div class="tc-flow-step">
+              <div class="tc-flow-no">4</div>
+              <div>
+                <h6>Used item can be sold later</h6>
+                <p>Later, staff can sell the used item at any amount and it still remains inside Top-up reports.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tc-card">
+        <div class="tc-card-head">
+          <h5 class="tc-card-title">Top-up Tips</h5>
+          <p class="tc-card-sub">Keep entries clean for better reports.</p>
+        </div>
+        <div class="tc-card-body">
+          <div class="tc-tip">
+            <h6><i class="fa-solid fa-pen-to-square"></i>Use clear used item names</h6>
+            <p>Example: “Used TV 24 inch LG” is better than just “TV”.</p>
+          </div>
+
+          <div class="tc-tip">
+            <h6><i class="fa-solid fa-money-check-dollar"></i>Accepted value matters</h6>
+            <p>The buying price here becomes the cost base when later calculating used-item profit or loss.</p>
+          </div>
+
+          <div class="tc-tip">
+            <h6><i class="fa-solid fa-note-sticky"></i>Write useful notes</h6>
+            <p>Add details like remote, cracks, scratches, or screen condition so resale staff can know the item well.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

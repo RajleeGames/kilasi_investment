@@ -58,14 +58,32 @@ class Supplier(models.Model):
 
 
 class Product(models.Model):
+    BUSINESS_TYPE_ELECTRONICS = "electronics"
+    BUSINESS_TYPE_FURNITURE = "furniture"
+    BUSINESS_TYPE_MAGODORO = "magodoro"
+    BUSINESS_TYPE_UNASSIGNED = "unassigned"
+
+    BUSINESS_TYPE_CHOICES = [
+        (BUSINESS_TYPE_ELECTRONICS, "Electronics"),
+        (BUSINESS_TYPE_FURNITURE, "Furniture"),
+        (BUSINESS_TYPE_MAGODORO, "Magodoro"),
+        (BUSINESS_TYPE_UNASSIGNED, "Unassigned"),
+    ]
+
     name = models.CharField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True)
 
+    business_type = models.CharField(
+        max_length=20,
+        choices=BUSINESS_TYPE_CHOICES,
+        default=BUSINESS_TYPE_UNASSIGNED,
+        db_index=True,
+    )
+
     buying_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     selling_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
 
-    # Cached total stock across branches
     stock = models.IntegerField(
         default=0,
         help_text="(Auto) Total stock across branches — do not edit manually."

@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Top-up History{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --th-bg:#f8fafc;
+    --th-card:#ffffff;
+    --th-line:#e2e8f0;
+    --th-line-soft:#eef2f7;
+    --th-text:#0f172a;
+    --th-muted:#64748b;
+    --th-primary:#2563eb;
+    --th-primary-2:#3b82f6;
+    --th-success:#16a34a;
+    --th-warning:#f59e0b;
+    --th-danger:#dc2626;
+    --th-shadow:0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .topup-history-wrap{
+    color:var(--th-text);
+  }
+
+  .th-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--th-line);
+    border-radius:22px;
+    box-shadow:var(--th-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .th-hero-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .th-hero-sub{
+    margin:.24rem 0 0;
+    color:var(--th-muted);
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .th-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:var(--th-primary);
+    font-size:.70rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .th-top-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:1rem;
+  }
+
+  .th-search-card{
+    background:var(--th-card);
+    border:1px solid var(--th-line);
+    border-radius:18px;
+    box-shadow:var(--th-shadow);
+    padding:.85rem;
+    margin-bottom:1rem;
+  }
+
+  .th-search-row{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:.65rem;
+    align-items:end;
+  }
+
+  .th-label{
+    display:block;
+    margin-bottom:.34rem;
+    font-size:.70rem;
+    font-weight:700;
+    color:#475569;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+  }
+
+  .th-input{
+    width:100%;
+    height:38px;
+    border:1px solid var(--th-line);
+    border-radius:12px;
+    font-size:.76rem;
+    color:var(--th-text);
+    background:#fff;
+    padding:.55rem .82rem;
+    box-shadow:none !important;
+    transition:.18s ease;
+  }
+
+  .th-input:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .th-btn,
+  .th-btn-light{
+    height:38px;
+    border:none;
+    border-radius:12px;
+    padding:0 1rem;
+    font-size:.75rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.18s ease;
+  }
+
+  .th-btn{
+    background:linear-gradient(135deg,var(--th-primary),var(--th-primary-2));
+    color:#fff;
+  }
+
+  .th-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .th-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--th-line);
+  }
+
+  .th-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .th-table-card{
+    background:var(--th-card);
+    border:1px solid var(--th-line);
+    border-radius:20px;
+    box-shadow:var(--th-shadow);
+    overflow:hidden;
+  }
+
+  .th-table-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--th-line-soft);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+  }
+
+  .th-table-title{
+    margin:0;
+    font-size:.88rem;
+    font-weight:700;
+  }
+
+  .th-table-sub{
+    margin:.12rem 0 0;
+    font-size:.70rem;
+    color:var(--th-muted);
+  }
+
+  .th-table{
+    margin:0;
+  }
+
+  .th-table thead th{
+    background:linear-gradient(180deg,#f8fbff,#f1f6ff);
+    color:#475569;
+    font-size:.68rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    border-bottom:1px solid var(--th-line);
+    padding:.78rem .85rem;
+    white-space:nowrap;
+  }
+
+  .th-table tbody td{
+    padding:.82rem .85rem;
+    vertical-align:middle;
+    border-top:1px solid var(--th-line-soft);
+    font-size:.76rem;
+    color:var(--th-text);
+  }
+
+  .th-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .th-name{
+    font-weight:700;
+    color:var(--th-text);
+    font-size:.76rem;
+  }
+
+  .th-meta{
+    color:var(--th-muted);
+    font-size:.69rem;
+    margin-top:.12rem;
+  }
+
+  .th-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.28rem .56rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:700;
+    border:1px solid transparent;
+  }
+
+  .th-pill.ok{
+    background:rgba(22,163,74,.10);
+    color:var(--th-success);
+    border-color:rgba(22,163,74,.12);
+  }
+
+  .th-pill.warn{
+    background:rgba(245,158,11,.12);
+    color:#b45309;
+    border-color:rgba(245,158,11,.12);
+  }
+
+  .th-pill.stop{
+    background:rgba(220,38,38,.10);
+    color:var(--th-danger);
+    border-color:rgba(220,38,38,.12);
+  }
+
+  .th-open-btn{
+    height:32px;
+    padding:0 .75rem;
+    border-radius:10px;
+    border:1px solid var(--th-line);
+    background:#fff;
+    color:#334155;
+    font-size:.72rem;
+    font-weight:700;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.35rem;
+  }
+
+  .th-open-btn:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .th-empty{
+    text-align:center;
+    padding:2rem 1rem;
+    color:var(--th-muted);
+    font-size:.76rem;
+  }
+
+  .th-empty i{
+    display:block;
+    font-size:1.25rem;
+    margin-bottom:.5rem;
+    color:#94a3b8;
+  }
+
+  @media (max-width: 768px){
+    .th-search-row{
+      grid-template-columns:1fr;
+    }
+
+    .th-btn,
+    .th-btn-light{
+      width:100%;
+    }
+
+    .th-table thead{
+      display:none;
+    }
+
+    .th-table,
+    .th-table tbody,
+    .th-table tr,
+    .th-table td{
+      display:block;
+      width:100%;
+    }
+
+    .th-table tbody tr{
+      padding:.2rem 0;
+    }
+
+    .th-table tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+
+    .th-table tbody td::before{
+      content:attr(data-label);
+      font-size:.66rem;
+      font-weight:700;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      min-width:105px;
+    }
+  }
+</style>
+
+<div class="topup-history-wrap">
+
+  <div class="th-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="th-hero-title">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+          Top-up History
+        </h2>
+        <p class="th-hero-sub">
+          <span class="th-badge">
+            <i class="fa-solid fa-right-left"></i>
+            All recorded top-up exchange transactions
+          </span>
+          <span class="th-badge">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            Separate from normal sales reports
+          </span>
+        </p>
+      </div>
+
+      <div>
+        <a href="{% url 'topup:create' %}" class="th-btn">
+          <i class="fa-solid fa-plus"></i>
+          New Top-up
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="th-search-card">
+    <form method="get">
+      <div class="th-search-row">
+        <div>
+          <label class="th-label">Search</label>
+          <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            class="th-input"
+            placeholder="Search used item, new product, or customer"
+          >
+        </div>
+
+        <div class="d-flex align-items-end">
+          <button class="th-btn w-100">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Search
+          </button>
+        </div>
+
+        <div class="d-flex align-items-end">
+          <a href="{% url 'topup:history' %}" class="th-btn-light w-100">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="th-table-card">
+    <div class="th-table-head">
+      <div>
+        <h5 class="th-table-title">Top-up Transactions</h5>
+        <p class="th-table-sub">Search and review previous exchange records</p>
+      </div>
+      <a href="{% url 'topup:dashboard' %}" class="th-open-btn">
+        <i class="fa-solid fa-chart-line"></i>
+        Dashboard
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table th-table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Used Item In</th>
+            <th>New Product Out</th>
+            <th>Addon</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td data-label="ID">#{{ tx.pk }}</td>
+
+            <td data-label="Date">
+              {{ tx.created_at|date:"Y-m-d H:i" }}
+            </td>
+
+            <td data-label="Customer">
+              <div class="th-name">{{ tx.customer.name|default:"—" }}</div>
+            </td>
+
+            <td data-label="Used Item">
+              <div class="th-name">{{ tx.used_item_name }}</div>
+              <div class="th-meta">
+                {% if tx.used_item_condition %}{{ tx.used_item_condition }}{% else %}No condition noted{% endif %}
+              </div>
+            </td>
+
+            <td data-label="New Product">
+              <div class="th-name">{{ tx.new_product.name }}</div>
+              <div class="th-meta">Qty: {{ tx.new_product_qty }}</div>
+            </td>
+
+            <td data-label="Addon">
+              Tsh {{ tx.addon_amount|floatformat:0|intcomma }}
+            </td>
+
+            <td data-label="Status">
+              <span class="th-pill {% if tx.status == 'completed' %}ok{% elif tx.status == 'draft' %}warn{% else %}stop{% endif %}">
+                {{ tx.get_status_display }}
+              </span>
+            </td>
+
+            <td data-label="Open">
+              <a href="{% url 'topup:transaction_detail' tx.pk %}" class="th-open-btn">
+                Open
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="th-empty">
+                <i class="fa-solid fa-box-open"></i>
+                No top-up records found.
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

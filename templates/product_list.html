@@ -285,6 +285,19 @@
     border:1px solid var(--tp-line);
   }
 
+  .biz-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.34rem .58rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:700;
+    border:1px solid rgba(37,99,235,.14);
+  }
+
   .top-empty{
     background:#fff;
     border:1px dashed var(--tp-line);
@@ -407,6 +420,13 @@
             </span>
           {% endif %}
 
+          {% if selected_business_type %}
+            <span class="top-badge">
+              <i class="fa-solid fa-tags"></i>
+              {{ selected_business_type|title }}
+            </span>
+          {% endif %}
+
           <span class="top-count-badge">
             <i class="fa-solid fa-cubes"></i>
             {{ page_obj.paginator.count|default:products|length }} products
@@ -431,6 +451,15 @@
         <input type="hidden" name="branch" value="{{ branch.id }}">
       {% endif %}
 
+      <select name="business_type" id="businessTypeFilter" class="form-select top-select">
+        <option value="">All types</option>
+        {% for value, label in business_type_choices %}
+          <option value="{{ value }}" {% if selected_business_type == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+
       <div class="top-search-wrap">
         <i class="fa-solid fa-magnifying-glass top-search-icon"></i>
         <input
@@ -439,7 +468,7 @@
           name="q"
           value="{{ query }}"
           class="form-control top-search"
-          placeholder="Search product name or category..."
+          placeholder="Search product name, category, or business type..."
           autocomplete="off"
         >
       </div>
@@ -449,13 +478,13 @@
         Apply
       </button>
 
-      <a href="{% url 'sales:export_products_excel' %}?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}"
+      <a href="{% url 'sales:export_products_excel' %}?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&business_type={{ selected_business_type|urlencode }}"
          class="top-btn-export">
         <i class="fa-solid fa-file-excel"></i>
         Export Excel
       </a>
 
-      {% if query or selected_branch_id %}
+      {% if query or selected_branch_id or selected_business_type %}
       <a href="{% url 'sales:product_list' %}" class="top-btn-light">
         <i class="fa-solid fa-rotate-left"></i>
         Reset
@@ -472,6 +501,7 @@
             <tr>
               <th>Product</th>
               <th style="width:210px;">Category</th>
+              <th style="width:180px;">Business Type</th>
               <th class="text-end" style="width:170px;">
                 {% if use_branch_stock %}
                   Branch Stock
@@ -499,6 +529,10 @@
                 <span class="cat-pill">{{ product.category.name|default:"—" }}</span>
               </td>
 
+              <td data-label="Business Type">
+                <span class="biz-pill">{{ product.business_type|default:"unassigned"|title }}</span>
+              </td>
+
               <td data-label="Stock" class="text-end">
                 <span class="stock-pill {% if stock|add:0 > reorder|add:0 %}good{% else %}low{% endif %}">
                   <span class="stock-dot"></span>
@@ -520,7 +554,7 @@
         {% if page_obj.has_previous %}
           <li class="page-item">
             <a class="page-link"
-               href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&page={{ page_obj.previous_page_number }}">
+               href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&business_type={{ selected_business_type|urlencode }}&page={{ page_obj.previous_page_number }}">
               ‹
             </a>
           </li>
@@ -533,7 +567,7 @@
             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
           {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
             <li class="page-item">
-              <a class="page-link" href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&page={{ num }}">
+              <a class="page-link" href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&business_type={{ selected_business_type|urlencode }}&page={{ num }}">
                 {{ num }}
               </a>
             </li>
@@ -543,7 +577,7 @@
         {% if page_obj.has_next %}
           <li class="page-item">
             <a class="page-link"
-               href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&page={{ page_obj.next_page_number }}">
+               href="?q={{ query|urlencode }}&branch={{ selected_branch_id|urlencode }}&business_type={{ selected_business_type|urlencode }}&page={{ page_obj.next_page_number }}">
               ›
             </a>
           </li>
@@ -557,7 +591,7 @@
     <div class="top-empty">
       <i class="fa-solid fa-box-open"></i>
       <h6>No products found</h6>
-      <p>Try changing the branch filter or search keyword.</p>
+      <p>Try changing the branch filter, business type filter, or search keyword.</p>
     </div>
   {% endif %}
 </div>
@@ -568,6 +602,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const searchInput = document.getElementById('searchInput');
   const branchFilter = document.getElementById('branchFilter');
+  const businessTypeFilter = document.getElementById('businessTypeFilter');
 
   document.querySelectorAll('#productsTable tbody tr.clickable').forEach(function (row) {
     const href = row.dataset.href;
@@ -588,7 +623,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (searchInput) {
     searchInput.addEventListener('input', function(){
       const hasBranch = "{{ selected_branch_id|default:'' }}".trim();
-      if (!this.value.trim() && !hasBranch) {
+      const hasBusinessType = "{{ selected_business_type|default:'' }}".trim();
+      if (!this.value.trim() && !hasBranch && !hasBusinessType) {
         window.location.href = window.location.pathname;
       }
     });
@@ -596,6 +632,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (branchFilter) {
     branchFilter.addEventListener('change', function(){
+      this.form.submit();
+    });
+  }
+
+  if (businessTypeFilter) {
+    businessTypeFilter.addEventListener('change', function(){
       this.form.submit();
     });
   }

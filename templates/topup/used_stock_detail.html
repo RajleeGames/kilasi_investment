@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Used Item Detail{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ud-bg:#f8fafc;
+    --ud-card:#ffffff;
+    --ud-line:#e2e8f0;
+    --ud-line-soft:#eef2f7;
+    --ud-text:#0f172a;
+    --ud-muted:#64748b;
+    --ud-primary:#2563eb;
+    --ud-primary-2:#3b82f6;
+    --ud-success:#16a34a;
+    --ud-warning:#f59e0b;
+    --ud-danger:#dc2626;
+    --ud-info:#0891b2;
+    --ud-shadow:0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .used-detail-wrap{
+    color:var(--ud-text);
+  }
+
+  .ud-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--ud-line);
+    border-radius:22px;
+    box-shadow:var(--ud-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .ud-hero-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .ud-hero-sub{
+    margin:.24rem 0 0;
+    color:var(--ud-muted);
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .ud-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:var(--ud-primary);
+    font-size:.70rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .ud-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:.28rem .56rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:700;
+    border:1px solid transparent;
+  }
+
+  .ud-pill.ok{
+    background:rgba(22,163,74,.10);
+    color:var(--ud-success);
+    border-color:rgba(22,163,74,.12);
+  }
+
+  .ud-pill.warn{
+    background:rgba(245,158,11,.12);
+    color:#b45309;
+    border-color:rgba(245,158,11,.12);
+  }
+
+  .ud-top-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    align-items:center;
+  }
+
+  .ud-btn,
+  .ud-btn-light,
+  .ud-btn-success{
+    height:38px;
+    border:none;
+    border-radius:12px;
+    padding:0 1rem;
+    font-size:.75rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.18s ease;
+  }
+
+  .ud-btn{
+    background:linear-gradient(135deg,var(--ud-primary),var(--ud-primary-2));
+    color:#fff;
+  }
+
+  .ud-btn:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .ud-btn-success{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:#fff;
+  }
+
+  .ud-btn-success:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .ud-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--ud-line);
+  }
+
+  .ud-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .ud-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1rem;
+    margin-bottom:1rem;
+  }
+
+  .ud-card{
+    background:var(--ud-card);
+    border:1px solid var(--ud-line);
+    border-radius:20px;
+    box-shadow:var(--ud-shadow);
+    height:100%;
+  }
+
+  .ud-card-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--ud-line-soft);
+  }
+
+  .ud-card-title{
+    margin:0;
+    font-size:.86rem;
+    font-weight:700;
+    color:var(--ud-text);
+  }
+
+  .ud-card-sub{
+    margin:.12rem 0 0;
+    font-size:.70rem;
+    color:var(--ud-muted);
+  }
+
+  .ud-card-body{
+    padding:1rem;
+  }
+
+  .ud-info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:.85rem;
+  }
+
+  .ud-item{
+    border:1px solid var(--ud-line-soft);
+    border-radius:16px;
+    padding:.8rem;
+    background:#fff;
+  }
+
+  .ud-label{
+    font-size:.68rem;
+    color:#64748b;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:.22rem;
+  }
+
+  .ud-value{
+    font-size:.78rem;
+    color:var(--ud-text);
+    font-weight:600;
+    line-height:1.45;
+  }
+
+  .ud-money-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:.85rem;
+  }
+
+  .ud-money-box{
+    border:1px solid var(--ud-line-soft);
+    border-radius:18px;
+    padding:.9rem;
+    background:#fff;
+  }
+
+  .ud-money{
+    font-size:.95rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+  }
+
+  .ud-note-box{
+    border:1px solid var(--ud-line-soft);
+    border-radius:18px;
+    background:#fff;
+    padding:.95rem;
+    line-height:1.6;
+    font-size:.75rem;
+    color:var(--ud-text);
+    white-space:pre-line;
+  }
+
+  .ud-form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:.85rem;
+  }
+
+  .ud-field-full{
+    grid-column:1 / -1;
+  }
+
+  .ud-card input,
+  .ud-card textarea,
+  .ud-card select{
+    width:100%;
+    border:1px solid var(--ud-line);
+    border-radius:12px;
+    font-size:.76rem;
+    color:var(--ud-text);
+    background:#fff;
+    padding:.62rem .82rem;
+    box-shadow:none !important;
+    transition:.18s ease;
+  }
+
+  .ud-card textarea{
+    min-height:92px;
+    resize:vertical;
+  }
+
+  .ud-card input:focus,
+  .ud-card textarea:focus,
+  .ud-card select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .ud-form-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    margin-top:1rem;
+  }
+
+  .ud-sold-alert{
+    border:1px solid rgba(22,163,74,.14);
+    background:rgba(22,163,74,.08);
+    color:#166534;
+    border-radius:16px;
+    padding:.95rem;
+    font-size:.75rem;
+    line-height:1.6;
+    font-weight:600;
+  }
+
+  .ud-sold-alert i{
+    margin-right:.45rem;
+  }
+
+  @media (max-width: 992px){
+    .ud-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 768px){
+    .ud-info-grid,
+    .ud-money-grid,
+    .ud-form-grid{
+      grid-template-columns:1fr;
+    }
+
+    .ud-top-actions,
+    .ud-form-actions{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .ud-btn,
+    .ud-btn-light,
+    .ud-btn-success{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="used-detail-wrap">
+
+  <div class="ud-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="ud-hero-title">
+          <i class="fa-solid fa-box-open text-primary"></i>
+          {{ item.item_name }}
+        </h2>
+        <p class="ud-hero-sub">
+          <span class="ud-badge">
+            <i class="fa-solid fa-shop"></i>
+            {{ item.branch.name }}
+          </span>
+          <span class="ud-pill {% if item.status == 'available' %}ok{% else %}warn{% endif %}">
+            {{ item.get_status_display }}
+          </span>
+        </p>
+      </div>
+
+      <div class="ud-top-actions">
+        <a href="{% url 'topup:used_stock_list' %}" class="ud-btn-light">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
+        </a>
+        {% if item.status == 'available' %}
+        <a href="{% url 'topup:used_stock_sell' item.pk %}" class="ud-btn-success">
+          <i class="fa-solid fa-cash-register"></i>
+          Sell This Used Item
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="ud-grid">
+
+    <div class="ud-card">
+      <div class="ud-card-head">
+        <h5 class="ud-card-title">Used Item Information</h5>
+        <p class="ud-card-sub">Basic details of the received used item</p>
+      </div>
+      <div class="ud-card-body">
+        <div class="ud-info-grid">
+          <div class="ud-item">
+            <div class="ud-label">Branch</div>
+            <div class="ud-value">{{ item.branch.name }}</div>
+          </div>
+
+          <div class="ud-item">
+            <div class="ud-label">Status</div>
+            <div class="ud-value">{{ item.get_status_display }}</div>
+          </div>
+
+          <div class="ud-item">
+            <div class="ud-label">Condition</div>
+            <div class="ud-value">{{ item.condition|default:"—" }}</div>
+          </div>
+
+          <div class="ud-item">
+            <div class="ud-label">Category</div>
+            <div class="ud-value">{{ item.item_category|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ud-card">
+      <div class="ud-card-head">
+        <h5 class="ud-card-title">Money Summary</h5>
+        <p class="ud-card-sub">Buying, asking and sold values</p>
+      </div>
+      <div class="ud-card-body">
+        <div class="ud-money-grid">
+          <div class="ud-money-box">
+            <div class="ud-label">Buying Price</div>
+            <div class="ud-money">Tsh {{ item.buying_price|floatformat:0|intcomma }}</div>
+          </div>
+
+          <div class="ud-money-box">
+            <div class="ud-label">Asking Price</div>
+            <div class="ud-money">
+              {% if item.asking_price %}
+                Tsh {{ item.asking_price|floatformat:0|intcomma }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="ud-money-box">
+            <div class="ud-label">Sold Price</div>
+            <div class="ud-money">
+              {% if item.sold_price %}
+                Tsh {{ item.sold_price|floatformat:0|intcomma }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="ud-card">
+    <div class="ud-card-head">
+      <h5 class="ud-card-title">Update / Sale Status</h5>
+      <p class="ud-card-sub">Manage asking price or sell the item</p>
+    </div>
+    <div class="ud-card-body">
+
+      {% if item.status == 'available' %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="ud-form-grid">
+          <div>
+            <div class="ud-label">Asking Price</div>
+            {{ form.asking_price }}
+          </div>
+
+          <div class="ud-field-full">
+            <div class="ud-label">Note</div>
+            {{ form.note }}
+          </div>
+        </div>
+
+        <div class="ud-form-actions">
+          <button class="ud-btn" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Update Used Item
+          </button>
+          <a href="{% url 'topup:used_stock_sell' item.pk %}" class="ud-btn-success">
+            <i class="fa-solid fa-cash-register"></i>
+            Sell This Used Item
+          </a>
+        </div>
+      </form>
+      {% else %}
+      <div class="ud-sold-alert">
+        <i class="fa-solid fa-circle-check"></i>
+        Sold at <strong>Tsh {{ item.sold_price|floatformat:0|intcomma }}</strong>
+        on <strong>{{ item.sold_at|date:"Y-m-d H:i" }}</strong>.
+        Profit: <strong>Tsh {{ item.profit|floatformat:0|intcomma }}</strong>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

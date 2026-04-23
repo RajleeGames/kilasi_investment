@@ -38,6 +38,8 @@ urlpatterns = [
     # ✅ Transport app (namespaced)
     path("transport/", include(("transport.urls", "transport"), namespace="transport")),
     path("sms/", include("sms.urls")),
+    
+    path("topup/", include("topup.urls")),
 ]
 
 # Branding

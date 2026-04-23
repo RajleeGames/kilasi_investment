@@ -1,6 +1,4 @@
 from django.contrib import admin
-from django.utils.html import format_html
-
 from .models import Branch, Category, Supplier, Product, ProductStock, StockEntry
 
 
@@ -24,13 +22,10 @@ class SupplierAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    """
-    ✅ Uses selling_price + buying_price (NOT price)
-    ✅ stock is auto (read-only)
-    """
     list_display = (
         "id",
         "name",
+        "business_type",
         "category",
         "supplier",
         "buying_price",
@@ -40,13 +35,13 @@ class ProductAdmin(admin.ModelAdmin):
         "reorder_level",
         "barcode",
     )
-    list_filter = ("category", "supplier")
+    list_filter = ("business_type", "category", "supplier")
     search_fields = ("name", "barcode")
     readonly_fields = ("stock", "barcode")
 
     fieldsets = (
         ("Basic Info", {
-            "fields": ("name", "category", "supplier", "barcode")
+            "fields": ("name", "business_type", "category", "supplier", "barcode")
         }),
         ("Pricing", {
             "fields": ("buying_price", "selling_price", "reorder_level")
@@ -74,18 +69,13 @@ class ProductStockAdmin(admin.ModelAdmin):
 
 @admin.register(StockEntry)
 class StockEntryAdmin(admin.ModelAdmin):
-    """
-    History log for stock movements.
-    """
     list_display = ("timestamp", "product", "branch", "change", "note")
     list_filter = ("branch", "timestamp")
     search_fields = ("product__name", "note", "branch__name")
     autocomplete_fields = ("product", "branch")
     readonly_fields = ("timestamp",)
 
-    # Prevent edits that can break stock (extra safety)
     def has_change_permission(self, request, obj=None):
-        # allow editing only note if you want, but safest is disable edits completely:
         if obj is not None:
             return False
         return True

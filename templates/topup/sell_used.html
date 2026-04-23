@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Sell Used Item{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --su-bg:#f8fafc;
+    --su-card:#ffffff;
+    --su-line:#e2e8f0;
+    --su-line-soft:#eef2f7;
+    --su-text:#0f172a;
+    --su-muted:#64748b;
+    --su-primary:#2563eb;
+    --su-primary-2:#3b82f6;
+    --su-success:#16a34a;
+    --su-warning:#f59e0b;
+    --su-info:#0891b2;
+    --su-shadow:0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .sell-used-wrap{
+    color:var(--su-text);
+  }
+
+  .su-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.04)),
+      linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--su-line);
+    border-radius:22px;
+    box-shadow:var(--su-shadow);
+    padding:1rem 1rem .95rem;
+    margin-bottom:1rem;
+  }
+
+  .su-hero-title{
+    margin:0;
+    font-size:1.02rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .su-hero-sub{
+    margin:.24rem 0 0;
+    color:var(--su-muted);
+    font-size:.74rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    align-items:center;
+  }
+
+  .su-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.38rem;
+    padding:.32rem .62rem;
+    border-radius:999px;
+    background:rgba(37,99,235,.08);
+    color:var(--su-primary);
+    font-size:.70rem;
+    font-weight:600;
+    border:1px solid rgba(37,99,235,.12);
+  }
+
+  .su-grid{
+    display:grid;
+    grid-template-columns: 1fr .9fr;
+    gap:1rem;
+  }
+
+  .su-card{
+    background:var(--su-card);
+    border:1px solid var(--su-line);
+    border-radius:20px;
+    box-shadow:var(--su-shadow);
+    height:100%;
+  }
+
+  .su-card-head{
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--su-line-soft);
+  }
+
+  .su-card-title{
+    margin:0;
+    font-size:.86rem;
+    font-weight:700;
+    color:var(--su-text);
+  }
+
+  .su-card-sub{
+    margin:.12rem 0 0;
+    font-size:.70rem;
+    color:var(--su-muted);
+  }
+
+  .su-card-body{
+    padding:1rem;
+  }
+
+  .su-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:.85rem;
+  }
+
+  .su-item{
+    border:1px solid var(--su-line-soft);
+    border-radius:16px;
+    padding:.8rem;
+    background:#fff;
+  }
+
+  .su-label{
+    font-size:.68rem;
+    color:#64748b;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:.22rem;
+  }
+
+  .su-value{
+    font-size:.78rem;
+    color:var(--su-text);
+    font-weight:600;
+    line-height:1.45;
+  }
+
+  .su-money{
+    font-size:.95rem;
+    font-weight:700;
+    letter-spacing:-.02em;
+  }
+
+  .su-form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:.85rem;
+  }
+
+  .su-field-full{
+    grid-column:1 / -1;
+  }
+
+  .su-card input,
+  .su-card textarea,
+  .su-card select{
+    width:100%;
+    border:1px solid var(--su-line);
+    border-radius:12px;
+    font-size:.76rem;
+    color:var(--su-text);
+    background:#fff;
+    padding:.62rem .82rem;
+    box-shadow:none !important;
+    transition:.18s ease;
+  }
+
+  .su-card textarea{
+    min-height:92px;
+    resize:vertical;
+  }
+
+  .su-card input:focus,
+  .su-card textarea:focus,
+  .su-card select:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .18rem rgba(37,99,235,.10) !important;
+    outline:none;
+  }
+
+  .su-help{
+    margin-top:.28rem;
+    font-size:.68rem;
+    color:var(--su-muted);
+  }
+
+  .su-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    margin-top:1rem;
+  }
+
+  .su-btn,
+  .su-btn-light,
+  .su-btn-success{
+    height:40px;
+    border:none;
+    border-radius:12px;
+    padding:0 1rem;
+    font-size:.75rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.18s ease;
+  }
+
+  .su-btn-success{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:#fff;
+  }
+
+  .su-btn-success:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .su-btn-light{
+    background:#fff;
+    color:#475569;
+    border:1px solid var(--su-line);
+  }
+
+  .su-btn-light:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .su-tip-list{
+    display:grid;
+    gap:.75rem;
+  }
+
+  .su-tip{
+    border:1px solid var(--su-line);
+    border-radius:16px;
+    padding:.85rem;
+    background:#fff;
+  }
+
+  .su-tip h6{
+    margin:0 0 .3rem;
+    font-size:.77rem;
+    font-weight:700;
+    color:var(--su-text);
+  }
+
+  .su-tip p{
+    margin:0;
+    font-size:.71rem;
+    color:var(--su-muted);
+    line-height:1.5;
+  }
+
+  .su-tip i{
+    margin-right:.45rem;
+    color:var(--su-primary);
+  }
+
+  @media (max-width: 992px){
+    .su-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 768px){
+    .su-summary-grid,
+    .su-form-grid{
+      grid-template-columns:1fr;
+    }
+
+    .su-actions{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .su-btn-success,
+    .su-btn-light{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="sell-used-wrap">
+
+  <div class="su-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h2 class="su-hero-title">
+          <i class="fa-solid fa-cash-register text-primary"></i>
+          Sell Used Item — {{ item.item_name }}
+        </h2>
+        <p class="su-hero-sub">
+          <span class="su-badge">
+            <i class="fa-solid fa-shop"></i>
+            {{ item.branch.name }}
+          </span>
+          <span class="su-badge">
+            <i class="fa-solid fa-box-open"></i>
+            Top-up Used Stock
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="su-grid">
+
+    <div class="su-card">
+      <div class="su-card-head">
+        <h5 class="su-card-title">Used Item Sale Form</h5>
+        <p class="su-card-sub">Enter customer details and actual sold amount.</p>
+      </div>
+
+      <div class="su-card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="su-form-grid">
+            <div>
+              <div class="su-label">Existing Customer</div>
+              {{ form.customer }}
+              <div class="su-help">Choose existing customer if already saved.</div>
+            </div>
+
+            <div>
+              <div class="su-label">Sold Price</div>
+              {{ form.sold_price }}
+              <div class="su-help">Enter the actual amount sold now.</div>
+            </div>
+
+            <div>
+              <div class="su-label">Customer Name</div>
+              {{ form.customer_name }}
+            </div>
+
+            <div>
+              <div class="su-label">Customer Phone</div>
+              {{ form.customer_phone }}
+            </div>
+
+            <div class="su-field-full">
+              <div class="su-label">Note</div>
+              {{ form.note }}
+            </div>
+          </div>
+
+          <div class="su-actions">
+            <button class="su-btn-success" type="submit">
+              <i class="fa-solid fa-circle-check"></i>
+              Confirm Sale
+            </button>
+            <a href="{% url 'topup:used_stock_detail' item.pk %}" class="su-btn-light">
+              <i class="fa-solid fa-arrow-left"></i>
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="su-tip-list">
+
+      <div class="su-card">
+        <div class="su-card-head">
+          <h5 class="su-card-title">Used Item Summary</h5>
+          <p class="su-card-sub">Quick view before confirming sale</p>
+        </div>
+        <div class="su-card-body">
+          <div class="su-summary-grid">
+            <div class="su-item">
+              <div class="su-label">Item Name</div>
+              <div class="su-value">{{ item.item_name }}</div>
+            </div>
+
+            <div class="su-item">
+              <div class="su-label">Condition</div>
+              <div class="su-value">{{ item.condition|default:"—" }}</div>
+            </div>
+
+            <div class="su-item">
+              <div class="su-label">Buying Price</div>
+              <div class="su-money">Tsh {{ item.buying_price|floatformat:0|intcomma }}</div>
+            </div>
+
+            <div class="su-item">
+              <div class="su-label">Asking Price</div>
+              <div class="su-money">
+                {% if item.asking_price %}
+                  Tsh {{ item.asking_price|floatformat:0|intcomma }}
+                {% else %}
+                  —
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="su-card">
+        <div class="su-card-head">
+          <h5 class="su-card-title">Sale Tips</h5>
+          <p class="su-card-sub">Keep this sale recorded properly</p>
+        </div>
+        <div class="su-card-body">
+          <div class="su-tip">
+            <h6><i class="fa-solid fa-money-check-dollar"></i>Actual price matters</h6>
+            <p>The amount you enter here becomes the real used-item sale amount and will affect Top-up profit directly.</p>
+          </div>
+
+          <div class="su-tip">
+            <h6><i class="fa-solid fa-file-lines"></i>Write a useful note</h6>
+            <p>Add helpful details like accessories included, negotiation, faults found, or final sale condition.</p>
+          </div>
+
+          <div class="su-tip">
+            <h6><i class="fa-solid fa-chart-line"></i>Stayed inside Top-up</h6>
+            <p>This sale remains inside the Top-up module and does not mix with your normal electronics sales dashboard.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

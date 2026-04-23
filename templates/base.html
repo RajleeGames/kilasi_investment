@@ -57,7 +57,6 @@
       align-items:stretch;
     }
 
-    /* ========== DESKTOP SIDEBAR ========== */
     .sidebar{
       width:var(--sb-w);
       flex:0 0 var(--sb-w);
@@ -325,7 +324,6 @@
       .sb-footer{ display:none !important; }
     }
 
-    /* ========== MAIN SHELL ========== */
     .main{
       flex:1;
       min-width:0;
@@ -441,7 +439,6 @@
       line-height:1;
     }
 
-    /* ========== MOBILE SIDEBAR ========== */
     .offcanvas.sidebar-offcanvas{
       background:linear-gradient(180deg,var(--sb-bg1) 0%,var(--sb-bg2) 60%,var(--sb-bg1) 100%);
       color:var(--sb-text);
@@ -473,7 +470,6 @@
       font-size:.78rem;
     }
 
-    /* ========== SAFE GLOBAL FONT ONLY ========== */
     h1,h2,h3,h4,h5,h6,
     .btn,
     .form-control,
@@ -548,9 +544,24 @@
           <div class="sb-section-title">Main</div>
 
           {% if role == 'admin' or role == 'cashier' %}
-            <a class="sb-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
-               href="{% url 'sales:admin_dashboard' %}" title="Dashboard">
-              <i class="fa-solid fa-gauge-high"></i> <span class="label">Dashboard</span>
+            <a class="sb-link {% if request.resolver_match.url_name == 'admin_dashboard' and request.resolver_match.namespace == 'sales' %}active{% endif %}"
+               href="{% url 'sales:admin_dashboard' %}" title="All Dashboard">
+              <i class="fa-solid fa-gauge-high"></i> <span class="label">All Dashboard</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'electronics_dashboard' %}active{% endif %}"
+               href="{% url 'sales:electronics_dashboard' %}" title="Electronics Dashboard">
+              <i class="fa-solid fa-tv"></i> <span class="label">Electronics</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'furniture_dashboard' %}active{% endif %}"
+               href="{% url 'sales:furniture_dashboard' %}" title="Furniture Dashboard">
+              <i class="fa-solid fa-couch"></i> <span class="label">Furniture</span>
+            </a>
+
+            <a class="sb-link {% if request.resolver_match.url_name == 'magodoro_dashboard' %}active{% endif %}"
+               href="{% url 'sales:magodoro_dashboard' %}" title="Magodoro Dashboard">
+              <i class="fa-solid fa-warehouse"></i> <span class="label">Magodoro</span>
             </a>
           {% endif %}
 
@@ -571,6 +582,48 @@
                href="{% url 'sales:top_selling_products' %}" title="Top Selling">
               <i class="fa-solid fa-ranking-star"></i> <span class="label">Top Selling</span>
             </a>
+
+            <a class="sb-link {% if request.resolver_match.namespace == 'topup' %}active{% endif %}"
+               data-bs-toggle="collapse" href="#sbTopupDesk" role="button"
+               aria-expanded="{% if request.resolver_match.namespace == 'topup' %}true{% else %}false{% endif %}"
+               aria-controls="sbTopupDesk" title="Top-up">
+              <i class="fa-solid fa-right-left"></i> <span class="label">Top-up</span>
+              <i class="fa-solid fa-chevron-down chev"></i>
+            </a>
+
+            <div class="collapse {% if request.resolver_match.namespace == 'topup' %}show{% endif %}" id="sbTopupDesk">
+              <div class="sb-sub">
+                <a class="sb-link {% if request.resolver_match.namespace == 'topup' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                   href="{% url 'topup:dashboard' %}">
+                  <i class="fa-solid fa-chart-line"></i> <span class="label">Top-up Dashboard</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.namespace == 'topup' and request.resolver_match.url_name == 'create' %}active{% endif %}"
+                   href="{% url 'topup:create' %}">
+                  <i class="fa-solid fa-plus"></i> <span class="label">New Top-up</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.namespace == 'topup' and request.resolver_match.url_name in 'history transaction_detail' %}active{% endif %}"
+                   href="{% url 'topup:history' %}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> <span class="label">Top-up History</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.namespace == 'topup' and request.resolver_match.url_name == 'used_stock_list' %}active{% endif %}"
+                   href="{% url 'topup:used_stock_list' %}">
+                  <i class="fa-solid fa-box-open"></i> <span class="label">Used Top-up Stock</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.namespace == 'topup' and request.resolver_match.url_name == 'used_stock_sell' %}active{% endif %}"
+                   href="{% url 'topup:used_stock_list' %}?status=available">
+                  <i class="fa-solid fa-cash-register"></i> <span class="label">Sell Used Item</span>
+                </a>
+
+                <a class="sb-link {% if request.resolver_match.url_name == 'stock_management' and request.resolver_match.namespace == 'sales' %}active{% endif %}"
+                   href="{% url 'sales:stock_management' %}">
+                  <i class="fa-solid fa-boxes-packing"></i> <span class="label">Products Stock</span>
+                </a>
+              </div>
+            </div>
 
             <a class="sb-link {% if request.resolver_match.url_name in 'genji_dashboard genji_create genji_update genji_delete' %}active{% endif %}"
                data-bs-toggle="collapse" href="#sbGenjiDesk" role="button"
@@ -721,10 +774,12 @@
             </a>
           {% endif %}
 
-          <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
-             href="{% url 'sales:stock_transfer_list' %}">
-            <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
-          </a>
+          {% if role == 'seller' %}
+            <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
+               href="{% url 'sales:stock_transfer_list' %}">
+              <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
+            </a>
+          {% endif %}
 
           {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
             <a class="sb-link {% if request.resolver_match.namespace == 'sms' %}active{% endif %}"
@@ -977,7 +1032,19 @@
 
           {% if role == 'admin' or role == 'cashier' %}
             <a class="sb-link" href="{% url 'sales:admin_dashboard' %}">
-              <i class="fa-solid fa-gauge-high"></i> Dashboard
+              <i class="fa-solid fa-gauge-high"></i> All Dashboard
+            </a>
+
+            <a class="sb-link" href="{% url 'sales:electronics_dashboard' %}">
+              <i class="fa-solid fa-tv"></i> Electronics
+            </a>
+
+            <a class="sb-link" href="{% url 'sales:furniture_dashboard' %}">
+              <i class="fa-solid fa-couch"></i> Furniture
+            </a>
+
+            <a class="sb-link" href="{% url 'sales:magodoro_dashboard' %}">
+              <i class="fa-solid fa-warehouse"></i> Magodoro
             </a>
           {% endif %}
 
@@ -995,6 +1062,35 @@
             <a class="sb-link" href="{% url 'sales:top_selling_products' %}">
               <i class="fa-solid fa-ranking-star"></i> Top Selling
             </a>
+
+            <a class="sb-link" data-bs-toggle="collapse" href="#sbTopupMob"
+               role="button" aria-expanded="{% if request.resolver_match.namespace == 'topup' %}true{% else %}false{% endif %}" aria-controls="sbTopupMob">
+              <i class="fa-solid fa-right-left"></i> Top-up
+              <i class="fa-solid fa-chevron-down fa-xs ms-auto"></i>
+            </a>
+
+            <div class="collapse {% if request.resolver_match.namespace == 'topup' %}show{% endif %}" id="sbTopupMob">
+              <div class="sb-sub">
+                <a class="sb-link" href="{% url 'topup:dashboard' %}">
+                  <i class="fa-solid fa-chart-line"></i> Top-up Dashboard
+                </a>
+                <a class="sb-link" href="{% url 'topup:create' %}">
+                  <i class="fa-solid fa-plus"></i> New Top-up
+                </a>
+                <a class="sb-link" href="{% url 'topup:history' %}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Top-up History
+                </a>
+                <a class="sb-link" href="{% url 'topup:used_stock_list' %}">
+                  <i class="fa-solid fa-box-open"></i> Used Top-up Stock
+                </a>
+                <a class="sb-link" href="{% url 'topup:used_stock_list' %}?status=available">
+                  <i class="fa-solid fa-cash-register"></i> Sell Used Item
+                </a>
+                <a class="sb-link" href="{% url 'sales:stock_management' %}">
+                  <i class="fa-solid fa-boxes-packing"></i> Products Stock
+                </a>
+              </div>
+            </div>
 
             <a class="sb-link" data-bs-toggle="collapse" href="#sbGenjiMob"
                role="button" aria-expanded="false" aria-controls="sbGenjiMob">

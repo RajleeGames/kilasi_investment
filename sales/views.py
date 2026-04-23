@@ -1489,27 +1489,50 @@ def compute_debt_stats(inv_qs, selected_branch=None, month=None, year=None):
 
     return num_debts, total_outstanding, total_credit
 
-
 from decimal import Decimal
 from datetime import date, datetime, timedelta
 import json
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+from django.db.models import Sum
 from django.shortcuts import render
 from django.utils.timezone import localdate
-from django.db.models.functions import TruncDate
 
 from users.utils import role_required
 from inventory.models import Product
 from .models import Invoice, InvoiceItem, Payment, Expense
 
 
-@login_required
-@role_required(["admin", "cashier"])
-def admin_dashboard(request):
+def _normalize_business_type(raw_value):
+    value = (raw_value or "").strip().lower()
+    allowed = {"electronics", "furniture", "magodoro"}
+    return value if value in allowed else None
+
+
+def _business_dashboard_title(business_type):
+    return {
+        "electronics": "Electronics Dashboard",
+        "furniture": "Furniture Dashboard",
+        "magodoro": "Magodoro Dashboard",
+    }.get(business_type, "Admin Dashboard")
+
+
+def _business_dashboard_context(request, business_type=None):
     today = localdate()
+    business_type = _normalize_business_type(business_type)
+
+    # -------------------------------------------------
+    # URL NAME FOR TEMPLATE QUICK FILTERS / RESET
+    # -------------------------------------------------
+    if business_type == "electronics":
+        dashboard_url_name = "sales:electronics_dashboard"
+    elif business_type == "furniture":
+        dashboard_url_name = "sales:furniture_dashboard"
+    elif business_type == "magodoro":
+        dashboard_url_name = "sales:magodoro_dashboard"
+    else:
+        dashboard_url_name = "sales:admin_dashboard"
 
     # -------------------------------------------------
     # Branch filter
@@ -1573,24 +1596,78 @@ def admin_dashboard(request):
     period_exp_qs = exp_qs.filter(date__range=[date_from, date_to])
 
     # -------------------------------------------------
+    # BUSINESS TYPE FILTER
+    # IMPORTANT:
+    # invoices can contain mixed products,
+    # so money must be grouped by InvoiceItem.product.business_type
+    # -------------------------------------------------
+    if business_type:
+        period_items_qs = InvoiceItem.objects.filter(
+            invoice__in=period_inv_qs,
+            product__business_type=business_type,
+            invoice__invoice_state="active",
+        ).select_related("product", "invoice")
+
+        today_items_qs = InvoiceItem.objects.filter(
+            invoice__in=inv_qs.filter(created_at__date=today),
+            product__business_type=business_type,
+            invoice__invoice_state="active",
+        ).select_related("product", "invoice")
+
+        all_items_qs = InvoiceItem.objects.filter(
+            invoice__in=inv_qs,
+            product__business_type=business_type,
+            invoice__invoice_state="active",
+        ).select_related("product", "invoice")
+    else:
+        period_items_qs = InvoiceItem.objects.filter(
+            invoice__in=period_inv_qs,
+            invoice__invoice_state="active",
+        ).select_related("product", "invoice")
+
+        today_items_qs = InvoiceItem.objects.filter(
+            invoice__in=inv_qs.filter(created_at__date=today),
+            invoice__invoice_state="active",
+        ).select_related("product", "invoice")
+
+        all_items_qs = InvoiceItem.objects.filter(
+            invoice__in=inv_qs,
+            invoice__invoice_state="active",
+        ).select_related("product", "invoice")
+
+    def _sum_line_total(qs, payment_status=None, paid_only=False):
+        if payment_status:
+            qs = qs.filter(invoice__status=payment_status)
+        if paid_only:
+            qs = qs.filter(invoice__paid=True)
+
+        total = Decimal("0.00")
+        for item in qs:
+            try:
+                total += Decimal(str(item.line_total or 0))
+            except Exception:
+                pass
+        return total
+
+    # -------------------------------------------------
     # CASHFLOW (selected period)
     # -------------------------------------------------
-    total_cash_period = (
-        period_inv_qs.filter(status="cash", paid=True)
-        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    )
-    total_bank_period = (
-        period_inv_qs.filter(status="bank", paid=True)
-        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    )
-    total_ebt_period = (
-        period_inv_qs.filter(status="ebt", paid=True)
-        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    )
+    total_cash_period = _sum_line_total(period_items_qs, payment_status="cash", paid_only=True)
+    total_bank_period = _sum_line_total(period_items_qs, payment_status="bank", paid_only=True)
+    total_ebt_period = _sum_line_total(period_items_qs, payment_status="ebt", paid_only=True)
 
-    total_debt_payments = (
-        period_pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-    )
+    if business_type:
+        business_invoice_ids = list(
+            period_items_qs.values_list("invoice_id", flat=True).distinct()
+        )
+        total_debt_payments = (
+            period_pay_qs.filter(invoice_id__in=business_invoice_ids).aggregate(t=Sum("amount"))["t"]
+            or Decimal("0.00")
+        )
+    else:
+        total_debt_payments = (
+            period_pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+        )
 
     expenses_period = (
         period_exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
@@ -1604,18 +1681,9 @@ def admin_dashboard(request):
     # -------------------------------------------------
     # TODAY SNAPSHOT
     # -------------------------------------------------
-    total_cash_today = (
-        inv_qs.filter(created_at__date=today, status="cash", paid=True)
-        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    )
-    total_bank_today = (
-        inv_qs.filter(created_at__date=today, status="bank", paid=True)
-        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    )
-    total_ebt_today = (
-        inv_qs.filter(created_at__date=today, status="ebt", paid=True)
-        .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-    )
+    total_cash_today = _sum_line_total(today_items_qs, payment_status="cash", paid_only=True)
+    total_bank_today = _sum_line_total(today_items_qs, payment_status="bank", paid_only=True)
+    total_ebt_today = _sum_line_total(today_items_qs, payment_status="ebt", paid_only=True)
     total_today = total_cash_today + total_bank_today + total_ebt_today
 
     expenses_today = (
@@ -1624,21 +1692,23 @@ def admin_dashboard(request):
     net_today_cashflow = total_today - expenses_today
 
     # -------------------------------------------------
-    # OVERALL CASHFLOW (branch-aware)
+    # OVERALL CASHFLOW
     # -------------------------------------------------
-    overall_cash = (
-        inv_qs.filter(status="cash", paid=True).aggregate(t=Sum("total_amount"))["t"]
-        or Decimal("0.00")
-    )
-    overall_bank = (
-        inv_qs.filter(status="bank", paid=True).aggregate(t=Sum("total_amount"))["t"]
-        or Decimal("0.00")
-    )
-    overall_ebt = (
-        inv_qs.filter(status="ebt", paid=True).aggregate(t=Sum("total_amount"))["t"]
-        or Decimal("0.00")
-    )
-    overall_debt_payments = pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    overall_cash = _sum_line_total(all_items_qs, payment_status="cash", paid_only=True)
+    overall_bank = _sum_line_total(all_items_qs, payment_status="bank", paid_only=True)
+    overall_ebt = _sum_line_total(all_items_qs, payment_status="ebt", paid_only=True)
+
+    if business_type:
+        all_business_invoice_ids = list(
+            all_items_qs.values_list("invoice_id", flat=True).distinct()
+        )
+        overall_debt_payments = (
+            pay_qs.filter(invoice_id__in=all_business_invoice_ids).aggregate(t=Sum("amount"))["t"]
+            or Decimal("0.00")
+        )
+    else:
+        overall_debt_payments = pay_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+
     expenses_total = exp_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
     overall_sales_cashflow = overall_cash + overall_bank + overall_ebt + overall_debt_payments
@@ -1647,86 +1717,107 @@ def admin_dashboard(request):
     # -------------------------------------------------
     # PROFIT
     # -------------------------------------------------
-    revenue_field = "subtotal" if hasattr(Invoice, "subtotal") else "total_amount"
-
-    revenue_period = (
-        period_inv_qs.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
-    )
-
-    cost_expr, cost_field_used = _product_cost_expr()
-    profit_enabled = cost_expr is not None
-
     cogs_period = Decimal("0.00")
     cogs_today = Decimal("0.00")
+    revenue_period = Decimal("0.00")
+    revenue_today = Decimal("0.00")
 
-    inv_today_all = inv_qs.filter(created_at__date=today)
+    for item in period_items_qs:
+        try:
+            revenue_period += Decimal(str(item.line_total or 0))
+            qty = int(getattr(item, "quantity", 0) or 0)
+            buying_cost = Decimal(str(getattr(item, "buying_cost", 0) or 0))
+            cogs_period += (buying_cost * qty)
+        except Exception:
+            pass
 
-    if profit_enabled:
-        out = DecimalField(max_digits=18, decimal_places=2)
-        cogs_line = ExpressionWrapper(F("quantity") * cost_expr, output_field=out)
+    for item in today_items_qs:
+        try:
+            revenue_today += Decimal(str(item.line_total or 0))
+            qty = int(getattr(item, "quantity", 0) or 0)
+            buying_cost = Decimal(str(getattr(item, "buying_cost", 0) or 0))
+            cogs_today += (buying_cost * qty)
+        except Exception:
+            pass
 
-        items_period = InvoiceItem.objects.filter(invoice__in=period_inv_qs)
-        cogs_period = items_period.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
+    profit_enabled = True
+    cost_field_used = "buying_cost / product.buying_price snapshot"
 
-        items_today = InvoiceItem.objects.filter(invoice__in=inv_today_all)
-        cogs_today = items_today.aggregate(t=Sum(cogs_line))["t"] or Decimal("0.00")
-
-    revenue_today = inv_today_all.aggregate(t=Sum(revenue_field))["t"] or Decimal("0.00")
-
-    # Main profit math
     gross_profit_period = revenue_period - cogs_period
     net_profit_period = gross_profit_period - expenses_period
 
     gross_profit_today = revenue_today - cogs_today
     net_profit_today = gross_profit_today - expenses_today
 
-    # New card math:
-    # Revenue - Expenses = Remaining (before COGS)
     remaining_after_expenses_period = revenue_period - expenses_period
     remaining_after_expenses_today = revenue_today - expenses_today
 
     # -------------------------------------------------
     # DEBTS
     # -------------------------------------------------
+    if business_type:
+        debt_invoice_ids = list(
+            period_items_qs.filter(invoice__status="debt")
+            .values_list("invoice_id", flat=True)
+            .distinct()
+        )
+        debt_inv_qs = period_inv_qs.filter(id__in=debt_invoice_ids)
+    else:
+        debt_inv_qs = period_inv_qs
+
     num_debts, total_outstanding_debt, total_customer_credit = compute_debt_stats(
-        period_inv_qs,
+        debt_inv_qs,
         selected_branch=selected_branch,
     )
 
     # -------------------------------------------------
     # COUNTS (selected period)
     # -------------------------------------------------
-    num_cash_sales = period_inv_qs.filter(status="cash", paid=True).count()
-    num_bank_sales = period_inv_qs.filter(status="bank", paid=True).count()
-    num_ebt_sales = period_inv_qs.filter(status="ebt", paid=True).count()
-    total_transactions = period_inv_qs.count()
+    num_cash_sales = period_items_qs.filter(
+        invoice__status="cash",
+        invoice__paid=True
+    ).values("invoice_id").distinct().count()
+
+    num_bank_sales = period_items_qs.filter(
+        invoice__status="bank",
+        invoice__paid=True
+    ).values("invoice_id").distinct().count()
+
+    num_ebt_sales = period_items_qs.filter(
+        invoice__status="ebt",
+        invoice__paid=True
+    ).values("invoice_id").distinct().count()
+
+    total_transactions = period_items_qs.values("invoice_id").distinct().count()
 
     # -------------------------------------------------
     # RECENT PRODUCTS
     # -------------------------------------------------
     all_products = Product.objects.order_by("-id")
+    if business_type:
+        all_products = all_products.filter(business_type=business_type)
+
     paginator = Paginator(all_products, 6)
     recent_products = paginator.get_page(request.GET.get("recent_page", 1))
 
     # -------------------------------------------------
-    # CHART 1: Daily trend inside selected period
-    # SQLite-safe for Expense.date
+    # CHART 1: Daily sales trend
     # -------------------------------------------------
-    sales_daily_raw = (
-        period_inv_qs.filter(status__in=["cash", "bank", "ebt"], paid=True)
-        .annotate(day=TruncDate("created_at"))
-        .values("day")
-        .annotate(total=Sum("total_amount"))
-        .order_by("day")
-    )
+    sales_daily_map = {}
+
+    for item in period_items_qs:
+        day = item.invoice.created_at.date()
+        sales_daily_map.setdefault(day, 0.0)
+        try:
+            sales_daily_map[day] += float(item.line_total or 0)
+        except Exception:
+            pass
 
     expenses_daily_raw = (
         period_exp_qs.values("date")
         .annotate(total=Sum("amount"))
         .order_by("date")
     )
-
-    sales_daily_map = {r["day"]: float(r["total"] or 0) for r in sales_daily_raw}
     exp_daily_map = {r["date"]: float(r["total"] or 0) for r in expenses_daily_raw}
 
     chart_labels = []
@@ -1741,7 +1832,7 @@ def admin_dashboard(request):
         cursor += timedelta(days=1)
 
     # -------------------------------------------------
-    # CHART 2: Payment mix (selected period)
+    # CHART 2: Payment mix
     # -------------------------------------------------
     payment_mix_labels = ["Cash", "Bank", "EBT", "Debt Payments"]
     payment_mix_values = [
@@ -1782,25 +1873,29 @@ def admin_dashboard(request):
 
         month_labels.append(mstart.strftime("%b %Y"))
 
-        m_cash = (
-            inv_qs.filter(created_at__date__range=[mstart, mend], status="cash", paid=True)
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
+        month_inv_qs = inv_qs.filter(created_at__date__range=[mstart, mend])
+        month_items_qs = InvoiceItem.objects.filter(
+            invoice__in=month_inv_qs,
+            invoice__invoice_state="active"
         )
+        if business_type:
+            month_items_qs = month_items_qs.filter(product__business_type=business_type)
 
-        m_bank = (
-            inv_qs.filter(created_at__date__range=[mstart, mend], status="bank", paid=True)
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        )
+        m_cash = _sum_line_total(month_items_qs, payment_status="cash", paid_only=True)
+        m_bank = _sum_line_total(month_items_qs, payment_status="bank", paid_only=True)
+        m_ebt = _sum_line_total(month_items_qs, payment_status="ebt", paid_only=True)
 
-        m_ebt = (
-            inv_qs.filter(created_at__date__range=[mstart, mend], status="ebt", paid=True)
-            .aggregate(t=Sum("total_amount"))["t"] or Decimal("0.00")
-        )
-
-        m_debt_pay = (
-            pay_qs.filter(timestamp__date__range=[mstart, mend])
-            .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
-        )
+        if business_type:
+            month_invoice_ids = list(month_items_qs.values_list("invoice_id", flat=True).distinct())
+            m_debt_pay = (
+                pay_qs.filter(timestamp__date__range=[mstart, mend], invoice_id__in=month_invoice_ids)
+                .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+            )
+        else:
+            m_debt_pay = (
+                pay_qs.filter(timestamp__date__range=[mstart, mend])
+                .aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+            )
 
         m_exp = (
             exp_qs.filter(date__range=[mstart, mend])
@@ -1810,7 +1905,7 @@ def admin_dashboard(request):
         month_received_values.append(float(m_cash + m_bank + m_ebt + m_debt_pay))
         month_expense_values.append(float(m_exp))
 
-    return render(request, "sales/admin_dashboard.html", {
+    context = {
         "is_admin": _is_admin(request),
         "is_cashier": _is_cashier(request),
 
@@ -1818,7 +1913,10 @@ def admin_dashboard(request):
         "selected_branch": str(selected_branch.id) if selected_branch else "",
         "selected_branch_obj": selected_branch,
 
-        # filters
+        "business_type": business_type or "",
+        "dashboard_title": _business_dashboard_title(business_type),
+        "dashboard_url_name": dashboard_url_name,
+
         "date_from": date_from.isoformat(),
         "date_to": date_to.isoformat(),
         "today_str": today.isoformat(),
@@ -1827,7 +1925,6 @@ def admin_dashboard(request):
         "range_label": range_label,
         "is_today_range": is_today_range,
 
-        # selected period
         "total_cash_period": total_cash_period,
         "total_bank_period": total_bank_period,
         "total_ebt_period": total_ebt_period,
@@ -1836,7 +1933,6 @@ def admin_dashboard(request):
         "expenses_period": expenses_period,
         "net_period_cashflow": net_period_cashflow,
 
-        # today snapshot
         "total_cash_today": total_cash_today,
         "total_bank_today": total_bank_today,
         "total_ebt_today": total_ebt_today,
@@ -1845,7 +1941,6 @@ def admin_dashboard(request):
         "net_today_cashflow": net_today_cashflow,
         "net_overall_cashflow": net_overall_cashflow,
 
-        # profit
         "profit_enabled": profit_enabled,
         "profit_cost_field": cost_field_used or "",
         "revenue_today": revenue_today,
@@ -1857,25 +1952,20 @@ def admin_dashboard(request):
         "gross_profit_period": gross_profit_period,
         "net_profit_period": net_profit_period,
 
-        # new remaining card
         "remaining_after_expenses_period": remaining_after_expenses_period,
         "remaining_after_expenses_today": remaining_after_expenses_today,
 
-        # debts
         "num_debts": num_debts,
         "total_outstanding_debt": total_outstanding_debt,
         "total_customer_credit": total_customer_credit,
 
-        # counts
         "num_cash_sales": num_cash_sales,
         "num_bank_sales": num_bank_sales,
         "num_ebt_sales": num_ebt_sales,
         "total_transactions": total_transactions,
 
-        # products
         "recent_products": recent_products,
 
-        # charts
         "chart_labels_json": json.dumps(chart_labels),
         "chart_sales_json": json.dumps(chart_sales),
         "chart_expenses_json": json.dumps(chart_expenses),
@@ -1886,8 +1976,36 @@ def admin_dashboard(request):
         "month_labels_json": json.dumps(month_labels),
         "month_received_values_json": json.dumps(month_received_values),
         "month_expense_values_json": json.dumps(month_expense_values),
-    })
+    }
+    return context
 
+
+@login_required
+@role_required(["admin", "cashier"])
+def admin_dashboard(request):
+    context = _business_dashboard_context(request, business_type=None)
+    return render(request, "sales/admin_dashboard.html", context)
+
+
+@login_required
+@role_required(["admin", "cashier"])
+def electronics_dashboard(request):
+    context = _business_dashboard_context(request, business_type="electronics")
+    return render(request, "sales/admin_dashboard.html", context)
+
+
+@login_required
+@role_required(["admin", "cashier"])
+def furniture_dashboard(request):
+    context = _business_dashboard_context(request, business_type="furniture")
+    return render(request, "sales/admin_dashboard.html", context)
+
+
+@login_required
+@role_required(["admin", "cashier"])
+def magodoro_dashboard(request):
+    context = _business_dashboard_context(request, business_type="magodoro")
+    return render(request, "sales/admin_dashboard.html", context)
 
 # ───────────────────────────────────────────────────────────────
 # REPORTS (admin/cashier filter branch, seller locked to branch)
@@ -2442,11 +2560,13 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.page import PageMargins
 
+
 @login_required
 @role_required(["admin", "cashier", "seller"])
 def product_list(request):
     q = (request.GET.get("q") or "").strip()
     selected_branch_id = (request.GET.get("branch") or "").strip()
+    selected_business_type = (request.GET.get("business_type") or "").strip()
 
     user_branch = _get_user_branch(request) if _is_seller(request) else None
     is_seller = bool(user_branch)
@@ -2459,8 +2579,8 @@ def product_list(request):
     selected_branch = None
     use_branch_stock = False
 
+    # Seller locked to own branch
     if is_seller:
-        # Seller is locked to own branch only
         selected_branch = user_branch
         use_branch_stock = True
 
@@ -2491,10 +2611,19 @@ def product_list(request):
         else:
             use_branch_stock = False
 
+    # Business type filter
+    valid_business_types = {"electronics", "furniture", "magodoro", "unassigned"}
+    if selected_business_type in valid_business_types:
+        qs = qs.filter(business_type=selected_business_type)
+    else:
+        selected_business_type = ""
+
+    # Search filter
     if q:
         qs = qs.filter(
             Q(name__icontains=q) |
-            Q(category__name__icontains=q)
+            Q(category__name__icontains=q) |
+            Q(business_type__icontains=q)
         )
 
     paginator = Paginator(qs.order_by("-id"), 20)
@@ -2510,6 +2639,13 @@ def product_list(request):
         "branch": selected_branch,
         "branches": branches,
         "selected_branch_id": str(selected_branch.id) if selected_branch else "",
+        "selected_business_type": selected_business_type,
+        "business_type_choices": [
+            ("electronics", "Electronics"),
+            ("furniture", "Furniture"),
+            ("magodoro", "Magodoro"),
+            ("unassigned", "Unassigned"),
+        ],
         "is_seller": is_seller,
     })
 
