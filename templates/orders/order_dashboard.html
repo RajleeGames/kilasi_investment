@@ -1,0 +1,554 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Orders Dashboard — Kilasi Investment{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ord-bg:#f8fafc;
+    --ord-card:#ffffff;
+    --ord-text:#0f172a;
+    --ord-muted:#64748b;
+    --ord-line:#e5e7eb;
+    --ord-soft:#f1f5f9;
+    --ord-primary:#2563eb;
+    --ord-primary-2:#3b82f6;
+    --ord-success:#16a34a;
+    --ord-danger:#dc2626;
+    --ord-warning:#d97706;
+    --ord-info:#0891b2;
+    --ord-purple:#7c3aed;
+    --ord-shadow:0 10px 26px rgba(15,23,42,.06);
+    --ord-shadow-lg:0 16px 38px rgba(15,23,42,.09);
+  }
+
+  .orders-shell{
+    font-size:.82rem;
+    color:var(--ord-text);
+  }
+
+  .orders-hero{
+    border:0;
+    border-radius:22px;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.09), rgba(8,145,178,.04)),
+      linear-gradient(180deg,#ffffff,#fbfdff);
+    box-shadow:var(--ord-shadow);
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+
+  .orders-title{
+    font-size:1.05rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    margin:0;
+  }
+
+  .orders-sub{
+    font-size:.74rem;
+    color:var(--ord-muted);
+    margin-top:.16rem;
+  }
+
+  .orders-btn{
+    border:0;
+    border-radius:14px;
+    min-height:38px;
+    padding:.5rem .85rem;
+    font-size:.78rem;
+    font-weight:800;
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    text-decoration:none;
+    transition:.18s ease;
+  }
+
+  .orders-btn-primary{
+    background:linear-gradient(135deg,var(--ord-primary),var(--ord-primary-2));
+    color:#fff;
+    box-shadow:0 10px 22px rgba(37,99,235,.22);
+  }
+
+  .orders-btn-primary:hover{
+    color:#fff;
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(37,99,235,.26);
+  }
+
+  .orders-btn-light{
+    background:#fff;
+    color:#334155;
+    border:1px solid var(--ord-line);
+  }
+
+  .orders-btn-light:hover{
+    background:#f8fafc;
+    color:#0f172a;
+  }
+
+  .orders-stat{
+    border:0;
+    border-radius:20px;
+    background:#fff;
+    box-shadow:var(--ord-shadow);
+    height:100%;
+    transition:.18s ease;
+    overflow:hidden;
+  }
+
+  .orders-stat:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--ord-shadow-lg);
+  }
+
+  .orders-stat .card-body{
+    padding:.9rem;
+  }
+
+  .orders-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  .bg-soft-primary{ background:rgba(37,99,235,.12); color:var(--ord-primary); }
+  .bg-soft-success{ background:rgba(22,163,74,.12); color:var(--ord-success); }
+  .bg-soft-danger{ background:rgba(220,38,38,.12); color:var(--ord-danger); }
+  .bg-soft-warning{ background:rgba(245,158,11,.14); color:var(--ord-warning); }
+  .bg-soft-info{ background:rgba(8,145,178,.13); color:var(--ord-info); }
+  .bg-soft-purple{ background:rgba(124,58,237,.12); color:var(--ord-purple); }
+
+  .orders-stat-label{
+    font-size:.70rem;
+    color:var(--ord-muted);
+    font-weight:800;
+    margin-bottom:.16rem;
+  }
+
+  .orders-stat-value{
+    font-size:1.15rem;
+    font-weight:800;
+    line-height:1.1;
+    letter-spacing:-.02em;
+  }
+
+  .orders-stat-note{
+    font-size:.68rem;
+    color:var(--ord-muted);
+    margin-top:.18rem;
+  }
+
+  .orders-money-card{
+    border:0;
+    border-radius:20px;
+    background:
+      linear-gradient(180deg,#ffffff,#fbfdff);
+    box-shadow:var(--ord-shadow);
+    height:100%;
+  }
+
+  .orders-money-card .card-body{
+    padding:.95rem;
+  }
+
+  .orders-money-label{
+    font-size:.70rem;
+    color:var(--ord-muted);
+    font-weight:800;
+    margin-bottom:.2rem;
+  }
+
+  .orders-money-value{
+    font-size:1.05rem;
+    font-weight:800;
+    line-height:1.2;
+  }
+
+  .orders-panel{
+    border:0;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:var(--ord-shadow);
+    overflow:hidden;
+  }
+
+  .orders-panel-header{
+    padding:.85rem 1rem;
+    border-bottom:1px solid #eef2f7;
+    background:linear-gradient(180deg,#fff,#fbfdff);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+  }
+
+  .orders-panel-title{
+    font-size:.86rem;
+    font-weight:800;
+    margin:0;
+  }
+
+  .orders-panel-sub{
+    font-size:.68rem;
+    color:var(--ord-muted);
+    margin-top:.1rem;
+  }
+
+  .orders-table{
+    margin:0;
+    font-size:.76rem;
+  }
+
+  .orders-table thead th{
+    background:#f8fafc;
+    color:#475569;
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:800;
+    border-bottom:1px solid #e5e7eb;
+    padding:.7rem .75rem;
+    white-space:nowrap;
+  }
+
+  .orders-table tbody td{
+    padding:.72rem .75rem;
+    vertical-align:middle;
+    border-bottom:1px solid #eef2f7;
+  }
+
+  .orders-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .orders-customer{
+    font-weight:800;
+    color:#0f172a;
+    font-size:.78rem;
+  }
+
+  .orders-muted{
+    color:var(--ord-muted);
+    font-size:.68rem;
+  }
+
+  .orders-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    border-radius:999px;
+    padding:.28rem .55rem;
+    font-size:.66rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .badge-pending{ background:#fff7ed; color:#c2410c; }
+  .badge-progress{ background:#eff6ff; color:#1d4ed8; }
+  .badge-completed{ background:#ecfdf5; color:#047857; }
+  .badge-cancelled{ background:#fef2f2; color:#b91c1c; }
+  .badge-unpaid{ background:#fef2f2; color:#b91c1c; }
+  .badge-partial{ background:#fffbeb; color:#b45309; }
+  .badge-paid{ background:#ecfdf5; color:#047857; }
+
+  .empty-state{
+    padding:2.2rem 1rem;
+    text-align:center;
+    color:var(--ord-muted);
+  }
+
+  .empty-state i{
+    width:54px;
+    height:54px;
+    border-radius:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(37,99,235,.08);
+    color:var(--ord-primary);
+    font-size:1.25rem;
+    margin-bottom:.65rem;
+  }
+
+  @media(max-width:768px){
+    .orders-hero{
+      border-radius:18px;
+    }
+
+    .orders-title{
+      font-size:.98rem;
+    }
+
+    .orders-btn{
+      width:100%;
+      justify-content:center;
+    }
+
+    .orders-table{
+      min-width:850px;
+    }
+  }
+</style>
+
+<div class="container-fluid py-3 orders-shell">
+
+  <div class="orders-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h4 class="orders-title">Orders Dashboard</h4>
+        <div class="orders-sub">
+          Track custom customer orders, pending work, partial payments, completed orders, and balances.
+        </div>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row gap-2">
+        <a href="{% url 'orders:order_list' %}" class="orders-btn orders-btn-light">
+          <i class="fa-solid fa-list"></i>
+          All Orders
+        </a>
+        <a href="{% url 'orders:order_create' %}" class="orders-btn orders-btn-primary">
+          <i class="fa-solid fa-plus"></i>
+          New Order
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-primary">
+            <i class="fa-solid fa-clipboard-list"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">Total Orders</div>
+            <div class="orders-stat-value">{{ total_orders|intcomma }}</div>
+            <div class="orders-stat-note">All custom orders</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-warning">
+            <i class="fa-solid fa-hourglass-half"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">Pending</div>
+            <div class="orders-stat-value">{{ pending_orders|intcomma }}</div>
+            <div class="orders-stat-note">Not started yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-info">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">In Progress</div>
+            <div class="orders-stat-value">{{ in_progress_orders|intcomma }}</div>
+            <div class="orders-stat-note">Workers handling</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-success">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">Completed</div>
+            <div class="orders-stat-value">{{ completed_orders|intcomma }}</div>
+            <div class="orders-stat-note">Finished orders</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="card orders-money-card">
+        <div class="card-body">
+          <div class="orders-money-label">Total Order Value</div>
+          <div class="orders-money-value">TZS {{ total_order_value|floatformat:0|intcomma }}</div>
+          <div class="orders-stat-note">All created orders value</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card orders-money-card">
+        <div class="card-body">
+          <div class="orders-money-label">Total Paid</div>
+          <div class="orders-money-value text-success">TZS {{ paid_total|floatformat:0|intcomma }}</div>
+          <div class="orders-stat-note">Cash, bank, and EBT received</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card orders-money-card">
+        <div class="card-body">
+          <div class="orders-money-label">Outstanding Balance</div>
+          <div class="orders-money-value text-danger">TZS {{ balance_total|floatformat:0|intcomma }}</div>
+          <div class="orders-stat-note">Unpaid remaining order money</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-danger">
+            <i class="fa-solid fa-ban"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">Unpaid Orders</div>
+            <div class="orders-stat-value">{{ unpaid_orders|intcomma }}</div>
+            <div class="orders-stat-note">No payment yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-warning">
+            <i class="fa-solid fa-scale-balanced"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">Partial Payments</div>
+            <div class="orders-stat-value">{{ partial_orders|intcomma }}</div>
+            <div class="orders-stat-note">Some money received</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card orders-stat">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="orders-icon bg-soft-success">
+            <i class="fa-solid fa-money-check-dollar"></i>
+          </div>
+          <div>
+            <div class="orders-stat-label">Paid Orders</div>
+            <div class="orders-stat-value">{{ paid_orders|intcomma }}</div>
+            <div class="orders-stat-note">Fully paid orders</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="orders-panel">
+    <div class="orders-panel-header">
+      <div>
+        <h5 class="orders-panel-title">Recent Orders</h5>
+        <div class="orders-panel-sub">Latest customer custom orders</div>
+      </div>
+
+      <a href="{% url 'orders:order_list' %}" class="orders-btn orders-btn-light">
+        <i class="fa-solid fa-arrow-right"></i>
+        View All
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table orders-table align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Order</th>
+            <th>Payment</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td class="fw-bold">#{{ order.id }}</td>
+            <td>
+              <div class="orders-customer">{{ order.customer_name }}</div>
+              <div class="orders-muted">{{ order.customer_phone|default:"No phone" }}</div>
+            </td>
+            <td>
+              <div class="fw-bold">{{ order.product_name }}</div>
+              <div class="orders-muted">Qty: {{ order.quantity }}</div>
+            </td>
+            <td class="fw-bold">TZS {{ order.total_amount|floatformat:0|intcomma }}</td>
+            <td class="text-success fw-bold">TZS {{ order.paid_amount|floatformat:0|intcomma }}</td>
+            <td class="{% if order.balance > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+              TZS {{ order.balance|floatformat:0|intcomma }}
+            </td>
+            <td>
+              {% if order.order_status == "pending" %}
+                <span class="orders-badge badge-pending">Pending</span>
+              {% elif order.order_status == "in_progress" %}
+                <span class="orders-badge badge-progress">In Progress</span>
+              {% elif order.order_status == "completed" %}
+                <span class="orders-badge badge-completed">Completed</span>
+              {% else %}
+                <span class="orders-badge badge-cancelled">{{ order.get_order_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if order.payment_status == "unpaid" %}
+                <span class="orders-badge badge-unpaid">Unpaid</span>
+              {% elif order.payment_status == "partial" %}
+                <span class="orders-badge badge-partial">Partial</span>
+              {% else %}
+                <span class="orders-badge badge-paid">Paid</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'orders:order_detail' order.id %}" class="orders-btn orders-btn-light">
+                Open
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <div class="fw-bold">No orders yet</div>
+                <div class="orders-muted">Create the first customer order to start tracking.</div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

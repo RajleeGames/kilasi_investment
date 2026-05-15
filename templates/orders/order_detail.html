@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Order #{{ order.id }} — Kilasi Investment{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ord-text:#0f172a;
+    --ord-muted:#64748b;
+    --ord-line:#e5e7eb;
+    --ord-primary:#2563eb;
+    --ord-primary-2:#3b82f6;
+    --ord-success:#16a34a;
+    --ord-danger:#dc2626;
+    --ord-warning:#d97706;
+    --ord-info:#0891b2;
+    --ord-shadow:0 10px 26px rgba(15,23,42,.06);
+  }
+
+  .orders-shell{
+    font-size:.82rem;
+    color:var(--ord-text);
+  }
+
+  .orders-hero,
+  .orders-card{
+    border:0;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:var(--ord-shadow);
+  }
+
+  .orders-hero{
+    padding:1rem;
+    margin-bottom:1rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(8,145,178,.03)),
+      linear-gradient(180deg,#ffffff,#fbfdff);
+  }
+
+  .orders-title{
+    font-size:1.05rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    margin:0;
+  }
+
+  .orders-sub{
+    font-size:.74rem;
+    color:var(--ord-muted);
+    margin-top:.16rem;
+  }
+
+  .orders-btn{
+    border-radius:14px;
+    min-height:38px;
+    padding:.5rem .85rem;
+    font-size:.76rem;
+    font-weight:800;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    transition:.18s ease;
+    border:1px solid transparent;
+  }
+
+  .orders-btn-primary{
+    background:linear-gradient(135deg,var(--ord-primary),var(--ord-primary-2));
+    color:#fff;
+    border:0;
+    box-shadow:0 10px 22px rgba(37,99,235,.22);
+  }
+
+  .orders-btn-primary:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .orders-btn-success{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:#fff;
+    border:0;
+    box-shadow:0 10px 22px rgba(22,163,74,.20);
+  }
+
+  .orders-btn-success:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .orders-btn-dark{
+    background:linear-gradient(135deg,#111827,#334155);
+    color:#fff;
+    border:0;
+  }
+
+  .orders-btn-dark:hover{
+    color:#fff;
+  }
+
+  .orders-btn-light{
+    background:#fff;
+    color:#334155;
+    border-color:var(--ord-line);
+  }
+
+  .orders-btn-light:hover{
+    background:#f8fafc;
+    color:#0f172a;
+  }
+
+  .orders-card{
+    overflow:hidden;
+  }
+
+  .orders-card-header{
+    padding:.85rem 1rem;
+    border-bottom:1px solid #eef2f7;
+    background:linear-gradient(180deg,#fff,#fbfdff);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+  }
+
+  .orders-card-title{
+    font-size:.88rem;
+    font-weight:800;
+    margin:0;
+  }
+
+  .orders-card-sub{
+    font-size:.68rem;
+    color:var(--ord-muted);
+    margin-top:.08rem;
+  }
+
+  .orders-card .card-body{
+    padding:1rem;
+  }
+
+  .orders-label{
+    font-size:.68rem;
+    color:var(--ord-muted);
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:.2rem;
+  }
+
+  .orders-value{
+    font-size:.82rem;
+    font-weight:800;
+    color:var(--ord-text);
+  }
+
+  .orders-muted{
+    color:var(--ord-muted);
+    font-size:.70rem;
+  }
+
+  .orders-money{
+    border-radius:18px;
+    background:#f8fafc;
+    border:1px solid #eef2f7;
+    padding:.85rem;
+    height:100%;
+  }
+
+  .orders-money-label{
+    font-size:.68rem;
+    font-weight:800;
+    color:var(--ord-muted);
+    margin-bottom:.18rem;
+  }
+
+  .orders-money-value{
+    font-size:1rem;
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .orders-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    border-radius:999px;
+    padding:.3rem .6rem;
+    font-size:.66rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .badge-pending{ background:#fff7ed; color:#c2410c; }
+  .badge-progress{ background:#eff6ff; color:#1d4ed8; }
+  .badge-completed{ background:#ecfdf5; color:#047857; }
+  .badge-cancelled{ background:#fef2f2; color:#b91c1c; }
+  .badge-unpaid{ background:#fef2f2; color:#b91c1c; }
+  .badge-partial{ background:#fffbeb; color:#b45309; }
+  .badge-paid{ background:#ecfdf5; color:#047857; }
+
+  .orders-form input,
+  .orders-form select,
+  .orders-form textarea{
+    border-radius:14px !important;
+    border:1px solid var(--ord-line) !important;
+    font-size:.78rem !important;
+    box-shadow:none !important;
+  }
+
+  .orders-form input,
+  .orders-form select{
+    min-height:40px;
+  }
+
+  .orders-form textarea{
+    min-height:90px;
+    resize:vertical;
+  }
+
+  .orders-form input:focus,
+  .orders-form select:focus,
+  .orders-form textarea:focus{
+    border-color:rgba(37,99,235,.35) !important;
+    box-shadow:0 0 0 .2rem rgba(37,99,235,.10) !important;
+  }
+
+  .orders-form-label{
+    font-size:.70rem;
+    font-weight:800;
+    color:#64748b;
+    margin-bottom:.35rem;
+  }
+
+  .orders-table{
+    margin:0;
+    font-size:.75rem;
+  }
+
+  .orders-table thead th{
+    background:#f8fafc;
+    color:#475569;
+    font-size:.67rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:800;
+    border-bottom:1px solid #e5e7eb;
+    padding:.7rem .75rem;
+    white-space:nowrap;
+  }
+
+  .orders-table tbody td{
+    padding:.72rem .75rem;
+    vertical-align:middle;
+    border-bottom:1px solid #eef2f7;
+  }
+
+  .orders-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .empty-state{
+    padding:2rem 1rem;
+    text-align:center;
+    color:var(--ord-muted);
+  }
+
+  .empty-state i{
+    width:52px;
+    height:52px;
+    border-radius:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(37,99,235,.08);
+    color:var(--ord-primary);
+    font-size:1.2rem;
+    margin-bottom:.65rem;
+  }
+
+  @media(max-width:768px){
+    .orders-btn{
+      width:100%;
+    }
+
+    .orders-table{
+      min-width:760px;
+    }
+  }
+</style>
+
+<div class="container-fluid py-3 orders-shell">
+
+  <div class="orders-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h4 class="orders-title">Order #{{ order.id }}</h4>
+        <div class="orders-sub">
+          {{ order.customer_name }}{% if order.customer_phone %} • {{ order.customer_phone }}{% endif %}
+          {% if order.branch %} • {{ order.branch.name }}{% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row gap-2">
+        <a href="{% url 'orders:order_list' %}" class="orders-btn orders-btn-light">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
+        </a>
+        <a href="{% url 'orders:order_create' %}" class="orders-btn orders-btn-primary">
+          <i class="fa-solid fa-plus"></i>
+          New Order
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+
+      <div class="card orders-card mb-3">
+        <div class="orders-card-header">
+          <div>
+            <h5 class="orders-card-title">Order Information</h5>
+            <div class="orders-card-sub">Customer, product, style, and payment summary</div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            {% if order.order_status == "pending" %}
+              <span class="orders-badge badge-pending">Pending</span>
+            {% elif order.order_status == "in_progress" %}
+              <span class="orders-badge badge-progress">In Progress</span>
+            {% elif order.order_status == "completed" %}
+              <span class="orders-badge badge-completed">Completed</span>
+            {% else %}
+              <span class="orders-badge badge-cancelled">{{ order.get_order_status_display }}</span>
+            {% endif %}
+
+            {% if order.payment_status == "unpaid" %}
+              <span class="orders-badge badge-unpaid">Unpaid</span>
+            {% elif order.payment_status == "partial" %}
+              <span class="orders-badge badge-partial">Partial</span>
+            {% else %}
+              <span class="orders-badge badge-paid">Paid</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="orders-label">Customer</div>
+              <div class="orders-value">{{ order.customer_name }}</div>
+              <div class="orders-muted">{{ order.customer_phone|default:"No phone number" }}</div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="orders-label">Product</div>
+              <div class="orders-value">{{ order.product_name }}</div>
+              <div class="orders-muted">Quantity: {{ order.quantity }}</div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="orders-label">Branch</div>
+              <div class="orders-value">{{ order.branch.name|default:"Main / No branch" }}</div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="orders-label">Expected Date</div>
+              <div class="orders-value">{{ order.expected_date|date:"d M Y"|default:"Not set" }}</div>
+            </div>
+
+            <div class="col-md-12">
+              <div class="orders-label">Description</div>
+              <div class="orders-value" style="font-weight:600; line-height:1.55;">
+                {{ order.description|linebreaks }}
+              </div>
+            </div>
+
+            {% if order.notes %}
+            <div class="col-md-12">
+              <div class="orders-label">Notes</div>
+              <div class="orders-value" style="font-weight:600; line-height:1.55;">
+                {{ order.notes|linebreaks }}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="orders-money">
+                <div class="orders-money-label">Total Amount</div>
+                <div class="orders-money-value">TZS {{ order.total_amount|floatformat:0|intcomma }}</div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="orders-money">
+                <div class="orders-money-label">Paid Amount</div>
+                <div class="orders-money-value text-success">TZS {{ order.paid_amount|floatformat:0|intcomma }}</div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="orders-money">
+                <div class="orders-money-label">Balance</div>
+                <div class="orders-money-value {% if order.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                  TZS {{ order.balance|floatformat:0|intcomma }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card orders-card">
+        <div class="orders-card-header">
+          <div>
+            <h5 class="orders-card-title">Payment History</h5>
+            <div class="orders-card-sub">All payments received for this order</div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table orders-table align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Received By</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payments %}
+              <tr>
+                <td>{{ p.paid_at|date:"d M Y H:i" }}</td>
+                <td class="fw-bold text-success">TZS {{ p.amount|floatformat:0|intcomma }}</td>
+                <td>{{ p.get_method_display }}</td>
+                <td>{{ p.received_by|default:"-" }}</td>
+                <td>{{ p.note|default:"-" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <div class="fw-bold">No payments yet</div>
+                    <div class="orders-muted">Record advance or remaining payment from the right side.</div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+      <div class="card orders-card mb-3">
+        <div class="orders-card-header">
+          <div>
+            <h5 class="orders-card-title">Current Status</h5>
+            <div class="orders-card-sub">Order and payment progress</div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="orders-label">Order Status</div>
+            {% if order.order_status == "pending" %}
+              <span class="orders-badge badge-pending">Pending</span>
+            {% elif order.order_status == "in_progress" %}
+              <span class="orders-badge badge-progress">In Progress</span>
+            {% elif order.order_status == "completed" %}
+              <span class="orders-badge badge-completed">Completed</span>
+            {% else %}
+              <span class="orders-badge badge-cancelled">{{ order.get_order_status_display }}</span>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <div class="orders-label">Payment Status</div>
+            {% if order.payment_status == "unpaid" %}
+              <span class="orders-badge badge-unpaid">Unpaid</span>
+            {% elif order.payment_status == "partial" %}
+              <span class="orders-badge badge-partial">Partial</span>
+            {% else %}
+              <span class="orders-badge badge-paid">Paid</span>
+            {% endif %}
+          </div>
+
+          <div>
+            <div class="orders-label">Created</div>
+            <div class="orders-value">{{ order.created_at|date:"d M Y H:i" }}</div>
+          </div>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'orders:order_update_status' order.id %}" class="card orders-card orders-form mb-3">
+        {% csrf_token %}
+
+        <div class="orders-card-header">
+          <div>
+            <h5 class="orders-card-title">Update Order Status</h5>
+            <div class="orders-card-sub">Move pending order to progress or completed</div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <label class="orders-form-label">Order Status</label>
+          {{ status_form.order_status }}
+
+          <label class="orders-form-label mt-3">Expected Date</label>
+          {{ status_form.expected_date }}
+
+          <label class="orders-form-label mt-3">Notes</label>
+          {{ status_form.notes }}
+        </div>
+
+        <div class="card-body pt-0">
+          <button class="orders-btn orders-btn-dark w-100" type="submit">
+            <i class="fa-solid fa-rotate"></i>
+            Update Status
+          </button>
+        </div>
+      </form>
+
+      <form method="post" action="{% url 'orders:order_add_payment' order.id %}" class="card orders-card orders-form">
+        {% csrf_token %}
+
+        <div class="orders-card-header">
+          <div>
+            <h5 class="orders-card-title">Add Payment</h5>
+            <div class="orders-card-sub">Record advance or remaining balance</div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <label class="orders-form-label">Amount</label>
+          {{ payment_form.amount }}
+
+          <label class="orders-form-label mt-3">Method</label>
+          {{ payment_form.method }}
+
+          <label class="orders-form-label mt-3">Note</label>
+          {{ payment_form.note }}
+        </div>
+
+        <div class="card-body pt-0">
+          <button class="orders-btn orders-btn-success w-100" type="submit">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            Record Payment
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

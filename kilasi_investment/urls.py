@@ -40,6 +40,7 @@ urlpatterns = [
     path("sms/", include("sms.urls")),
     
     path("topup/", include("topup.urls")),
+     path("orders/", include("orders.urls")),
 ]
 
 # Branding

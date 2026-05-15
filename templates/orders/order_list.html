@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Customer Orders — Kilasi Investment{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ord-text:#0f172a;
+    --ord-muted:#64748b;
+    --ord-line:#e5e7eb;
+    --ord-primary:#2563eb;
+    --ord-primary-2:#3b82f6;
+    --ord-success:#16a34a;
+    --ord-danger:#dc2626;
+    --ord-warning:#d97706;
+    --ord-info:#0891b2;
+    --ord-shadow:0 10px 26px rgba(15,23,42,.06);
+  }
+
+  .orders-shell{
+    font-size:.82rem;
+    color:var(--ord-text);
+  }
+
+  .orders-hero,
+  .orders-filter,
+  .orders-panel{
+    border:0;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:var(--ord-shadow);
+  }
+
+  .orders-hero{
+    padding:1rem;
+    margin-bottom:1rem;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(8,145,178,.03)),
+      linear-gradient(180deg,#ffffff,#fbfdff);
+  }
+
+  .orders-title{
+    font-size:1.05rem;
+    font-weight:800;
+    letter-spacing:-.02em;
+    margin:0;
+  }
+
+  .orders-sub{
+    font-size:.74rem;
+    color:var(--ord-muted);
+    margin-top:.16rem;
+  }
+
+  .orders-btn{
+    border-radius:14px;
+    min-height:38px;
+    padding:.5rem .85rem;
+    font-size:.76rem;
+    font-weight:800;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.42rem;
+    text-decoration:none;
+    transition:.18s ease;
+    border:1px solid transparent;
+  }
+
+  .orders-btn-primary{
+    background:linear-gradient(135deg,var(--ord-primary),var(--ord-primary-2));
+    color:#fff;
+    border:0;
+    box-shadow:0 10px 22px rgba(37,99,235,.22);
+  }
+
+  .orders-btn-primary:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .orders-btn-light{
+    background:#fff;
+    color:#334155;
+    border-color:var(--ord-line);
+  }
+
+  .orders-btn-light:hover{
+    background:#f8fafc;
+    color:#0f172a;
+  }
+
+  .orders-filter{
+    padding:1rem;
+    margin-bottom:1rem;
+  }
+
+  .orders-label{
+    font-size:.70rem;
+    font-weight:800;
+    color:var(--ord-muted);
+    margin-bottom:.35rem;
+  }
+
+  .orders-control{
+    height:40px;
+    border-radius:14px;
+    border:1px solid var(--ord-line);
+    font-size:.78rem;
+    box-shadow:none !important;
+  }
+
+  .orders-control:focus{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 0 0 .2rem rgba(37,99,235,.10) !important;
+  }
+
+  .orders-panel{
+    overflow:hidden;
+  }
+
+  .orders-panel-header{
+    padding:.85rem 1rem;
+    border-bottom:1px solid #eef2f7;
+    background:linear-gradient(180deg,#fff,#fbfdff);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+  }
+
+  .orders-panel-title{
+    font-size:.86rem;
+    font-weight:800;
+    margin:0;
+  }
+
+  .orders-panel-sub{
+    font-size:.68rem;
+    color:var(--ord-muted);
+    margin-top:.1rem;
+  }
+
+  .orders-table{
+    margin:0;
+    font-size:.75rem;
+  }
+
+  .orders-table thead th{
+    background:#f8fafc;
+    color:#475569;
+    font-size:.67rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:800;
+    border-bottom:1px solid #e5e7eb;
+    padding:.7rem .75rem;
+    white-space:nowrap;
+  }
+
+  .orders-table tbody td{
+    padding:.72rem .75rem;
+    vertical-align:middle;
+    border-bottom:1px solid #eef2f7;
+  }
+
+  .orders-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .orders-customer{
+    font-weight:800;
+    font-size:.78rem;
+  }
+
+  .orders-muted{
+    color:var(--ord-muted);
+    font-size:.68rem;
+  }
+
+  .orders-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    border-radius:999px;
+    padding:.28rem .55rem;
+    font-size:.66rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .badge-pending{ background:#fff7ed; color:#c2410c; }
+  .badge-progress{ background:#eff6ff; color:#1d4ed8; }
+  .badge-completed{ background:#ecfdf5; color:#047857; }
+  .badge-cancelled{ background:#fef2f2; color:#b91c1c; }
+  .badge-unpaid{ background:#fef2f2; color:#b91c1c; }
+  .badge-partial{ background:#fffbeb; color:#b45309; }
+  .badge-paid{ background:#ecfdf5; color:#047857; }
+
+  .pager-wrap .page-link{
+    border-radius:12px !important;
+    margin:0 .12rem;
+    border:1px solid #e5e7eb;
+    color:#334155;
+    font-size:.74rem;
+    font-weight:800;
+  }
+
+  .pager-wrap .page-item.active .page-link{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+
+  .empty-state{
+    padding:2.2rem 1rem;
+    text-align:center;
+    color:var(--ord-muted);
+  }
+
+  .empty-state i{
+    width:54px;
+    height:54px;
+    border-radius:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(37,99,235,.08);
+    color:var(--ord-primary);
+    font-size:1.25rem;
+    margin-bottom:.65rem;
+  }
+
+  @media(max-width:768px){
+    .orders-btn{
+      width:100%;
+    }
+
+    .orders-table{
+      min-width:1000px;
+    }
+  }
+</style>
+
+<div class="container-fluid py-3 orders-shell">
+
+  <div class="orders-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h4 class="orders-title">Customer Orders</h4>
+        <div class="orders-sub">
+          Manage custom orders, pending work, partial payments, completed orders, and paid orders.
+        </div>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row gap-2">
+        <a href="{% url 'orders:dashboard' %}" class="orders-btn orders-btn-light">
+          <i class="fa-solid fa-gauge-high"></i>
+          Dashboard
+        </a>
+        <a href="{% url 'orders:order_create' %}" class="orders-btn orders-btn-primary">
+          <i class="fa-solid fa-plus"></i>
+          New Order
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <form method="get" class="orders-filter">
+    <div class="row g-2 align-items-end">
+      <div class="col-lg-4">
+        <label class="orders-label">Search</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control orders-control"
+               placeholder="Customer, phone, product, description">
+      </div>
+
+      <div class="col-lg-3">
+        <label class="orders-label">Order Status</label>
+        <select name="status" class="form-select orders-control">
+          <option value="">All Order Status</option>
+          {% for key,label in order_status_choices %}
+            <option value="{{ key }}" {% if status == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-lg-3">
+        <label class="orders-label">Payment Status</label>
+        <select name="payment_status" class="form-select orders-control">
+          <option value="">All Payment Status</option>
+          {% for key,label in payment_status_choices %}
+            <option value="{{ key }}" {% if payment_status == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-lg-2">
+        <button class="orders-btn orders-btn-primary w-100" type="submit">
+          <i class="fa-solid fa-filter"></i>
+          Filter
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="orders-panel">
+    <div class="orders-panel-header">
+      <div>
+        <h5 class="orders-panel-title">Orders List</h5>
+        <div class="orders-panel-sub">Search and track all customer custom orders</div>
+      </div>
+
+      <a href="{% url 'orders:order_list' %}" class="orders-btn orders-btn-light">
+        <i class="fa-solid fa-rotate-right"></i>
+        Reset
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table orders-table align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Order Status</th>
+            <th>Payment</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td class="fw-bold">#{{ order.id }}</td>
+            <td>
+              <div class="orders-customer">{{ order.customer_name }}</div>
+              <div class="orders-muted">{{ order.customer_phone|default:"No phone" }}</div>
+            </td>
+            <td>
+              <div class="fw-bold">{{ order.product_name }}</div>
+              <div class="orders-muted">Qty: {{ order.quantity }}</div>
+            </td>
+            <td class="fw-bold">TZS {{ order.total_amount|floatformat:0|intcomma }}</td>
+            <td class="text-success fw-bold">TZS {{ order.paid_amount|floatformat:0|intcomma }}</td>
+            <td class="{% if order.balance > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+              TZS {{ order.balance|floatformat:0|intcomma }}
+            </td>
+            <td>
+              {% if order.order_status == "pending" %}
+                <span class="orders-badge badge-pending">Pending</span>
+              {% elif order.order_status == "in_progress" %}
+                <span class="orders-badge badge-progress">In Progress</span>
+              {% elif order.order_status == "completed" %}
+                <span class="orders-badge badge-completed">Completed</span>
+              {% else %}
+                <span class="orders-badge badge-cancelled">{{ order.get_order_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if order.payment_status == "unpaid" %}
+                <span class="orders-badge badge-unpaid">Unpaid</span>
+              {% elif order.payment_status == "partial" %}
+                <span class="orders-badge badge-partial">Partial</span>
+              {% else %}
+                <span class="orders-badge badge-paid">Paid</span>
+              {% endif %}
+            </td>
+            <td>{{ order.created_at|date:"d M Y" }}</td>
+            <td>
+              <a href="{% url 'orders:order_detail' order.id %}" class="orders-btn orders-btn-light">
+                Open
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10">
+              <div class="empty-state">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <div class="fw-bold">No orders found</div>
+                <div class="orders-muted">Try changing filters or create a new order.</div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <nav class="pager-wrap mt-3">
+    <ul class="pagination justify-content-center mb-0">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}&payment_status={{ payment_status }}">« Prev</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">« Prev</span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}&q={{ q }}&status={{ status }}&payment_status={{ payment_status }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}&payment_status={{ payment_status }}">Next »</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next »</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'sms',
     'rangefilter',
     'topup',
+    'orders'
 ]
 
 
