@@ -816,12 +816,13 @@
             </a>
           {% endif %}
 
-          {% if role == 'seller' %}
-            <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
-               href="{% url 'sales:stock_transfer_list' %}">
-              <i class="fa-solid fa-right-left"></i> <span class="label">Stock Transfers</span>
-            </a>
-          {% endif %}
+                  {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+  <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
+     href="{% url 'sales:stock_transfer_list' %}">
+    <i class="fa-solid fa-right-left"></i>
+    <span class="label">Stock Transfers</span>
+  </a>
+{% endif %}
 
           {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
             <a class="sb-link {% if request.resolver_match.namespace == 'sms' %}active{% endif %}"
@@ -1300,11 +1301,13 @@
             </a>
           {% endif %}
 
-          {% if role == 'seller' %}
-            <a class="sb-link" href="{% url 'sales:stock_transfer_list' %}">
-              <i class="fa-solid fa-right-left"></i> Stock Transfers
-            </a>
-          {% endif %}
+          {% if role == 'admin' or role == 'cashier' or role == 'seller' %}
+  <a class="sb-link {% if request.resolver_match.url_name == 'stock_transfer_list' %}active{% endif %}"
+     href="{% url 'sales:stock_transfer_list' %}">
+    <i class="fa-solid fa-right-left"></i>
+    <span class="label">Stock Transfers</span>
+  </a>
+{% endif %}
 
           {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
             <a class="sb-link" data-bs-toggle="collapse" href="#sbSmsMob"
