@@ -38,6 +38,11 @@ from .forms import GenjiSaleForm
 from django.apps import apps
 from collections import OrderedDict
 
+from decimal import Decimal
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField, Value
+from django.db.models.functions import Coalesce
+from inventory.models import ProductStock
+
 # ───────────────────────────────────────────────────────────────
 # TEMPLATE RENDER HELPER (supports both "sales/x.html" and "x.html")
 # ───────────────────────────────────────────────────────────────
@@ -1517,6 +1522,33 @@ def _business_dashboard_title(business_type):
         "magodoro": "Magodoro Dashboard",
     }.get(business_type, "Admin Dashboard")
 
+def compute_stock_worth(branch=None, business_type=None):
+    """
+    Stock worth = quantity * buying_price
+    This shows only unsold stock value.
+    """
+    qs = ProductStock.objects.select_related("product", "branch")
+
+    if branch:
+        qs = qs.filter(branch=branch)
+
+    if business_type:
+        qs = qs.filter(product__business_type=business_type)
+
+    worth_expr = ExpressionWrapper(
+        F("quantity") * Coalesce(F("product__buying_price"), Value(0)),
+        output_field=DecimalField(max_digits=18, decimal_places=2),
+    )
+
+    total = qs.aggregate(
+        total=Coalesce(
+            Sum(worth_expr),
+            Value(Decimal("0.00")),
+            output_field=DecimalField(max_digits=18, decimal_places=2),
+        )
+    )["total"] or Decimal("0.00")
+
+    return Decimal(total)
 
 def _business_dashboard_context(request, business_type=None):
     today = localdate()
@@ -1753,6 +1785,32 @@ def _business_dashboard_context(request, business_type=None):
     remaining_after_expenses_today = revenue_today - expenses_today
 
     # -------------------------------------------------
+    # STOCK WORTH
+    # stock worth = quantity × buying_price
+    # unsold stock only
+    # -------------------------------------------------
+    stock_qs = ProductStock.objects.select_related("product", "branch")
+
+    if selected_branch:
+        stock_qs = stock_qs.filter(branch=selected_branch)
+
+    if business_type:
+        stock_qs = stock_qs.filter(product__business_type=business_type)
+
+    stock_worth_total = stock_qs.aggregate(
+        total=Coalesce(
+            Sum(
+                ExpressionWrapper(
+                    F("quantity") * Coalesce(F("product__buying_price"), Value(0)),
+                    output_field=DecimalField(max_digits=18, decimal_places=2),
+                )
+            ),
+            Value(Decimal("0.00")),
+            output_field=DecimalField(max_digits=18, decimal_places=2),
+        )
+    )["total"] or Decimal("0.00")
+
+    # -------------------------------------------------
     # DEBTS
     # -------------------------------------------------
     if business_type:
@@ -1955,6 +2013,8 @@ def _business_dashboard_context(request, business_type=None):
         "remaining_after_expenses_period": remaining_after_expenses_period,
         "remaining_after_expenses_today": remaining_after_expenses_today,
 
+        "stock_worth_total": stock_worth_total,
+
         "num_debts": num_debts,
         "total_outstanding_debt": total_outstanding_debt,
         "total_customer_credit": total_customer_credit,
@@ -1978,7 +2038,6 @@ def _business_dashboard_context(request, business_type=None):
         "month_expense_values_json": json.dumps(month_expense_values),
     }
     return context
-
 
 @login_required
 @role_required(["admin", "cashier"])

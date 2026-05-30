@@ -134,13 +134,13 @@
     font-weight:600;
   }
 
-  .pd-stats{
-    display:grid;
-    grid-template-columns:repeat(4, minmax(0,1fr));
-    gap:.8rem;
-    margin-bottom:1rem;
-  }
-
+ .pd-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:.8rem;
+  margin-bottom:1rem;
+  align-items:stretch;
+}
   .pd-stat{
     background:var(--pd-card);
     border:1px solid var(--pd-line);
@@ -558,20 +558,21 @@
     </div>
 
     <div class="pd-stat">
+      <div class="pd-stat-label">Buying Price</div>
+      <div class="pd-stat-value">
+        <span class="pd-price-pill" style="background:rgba(22,163,74,.08); color:#16a34a; border-color:rgba(22,163,74,.10);">
+          Tsh {{ product.buying_price|floatformat:2|intcomma }}
+        </span>
+      </div>
+    </div>
+
+    <div class="pd-stat">
       <div class="pd-stat-label">{% if use_branch_stock %}Branch Stock{% else %}Total Stock{% endif %}</div>
       <div class="pd-stat-value">
         <span class="pd-stock-pill {% if current_stock|default:0 > product.reorder_level|default:0 %}good{% else %}low{% endif %}">
           <span class="pd-stock-dot"></span>
           {{ current_stock|default:0 }}
         </span>
-      </div>
-    </div>
-
-    <div class="pd-stat">
-      <div class="pd-stat-label">Reorder Level</div>
-      <div class="pd-stat-value pd-mono">
-        <i class="fa-solid fa-bell text-warning"></i>
-        {{ product.reorder_level|default:0 }}
       </div>
     </div>
 

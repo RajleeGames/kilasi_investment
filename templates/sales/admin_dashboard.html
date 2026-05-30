@@ -729,6 +729,20 @@
       </div>
     </div>
 
+
+    <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
+  <div class="card stat-card">
+    <div class="card-body d-flex align-items-center gap-3">
+      <div class="stat-icon bg-soft-info"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <div>
+        <div class="stat-title">Stock Worth</div>
+        <div class="stat-amount">Tsh {{ stock_worth_total|floatformat:0|intcomma }}</div>
+        <div class="stat-note">Unsold stock × buying price</div>
+      </div>
+    </div>
+  </div>
+</div>
+
     <div class="col-12 col-md-6 col-xl-3 animate__animated animate__fadeInUp">
       <div class="card stat-card">
         <div class="card-body d-flex align-items-center gap-3">
@@ -860,91 +874,7 @@
     </div>
   </div>
 
-  <div class="section-head">
-    <h5 class="section-title">Recently Added Products</h5>
-    <a href="{% url 'sales:product_list' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-      <i class="fa-solid fa-list me-1"></i> View All
-    </a>
-  </div>
-
-  <div class="card list-card mb-3">
-    <div class="card-body">
-      {% for prod in recent_products %}
-        {% with sp=prod.selling_price|default_if_none:0 %}
-        {% with st=prod.branch_qty|default_if_none:prod.stock|default_if_none:0 %}
-        {% with rl=prod.reorder_level|default_if_none:0 %}
-          <div class="product-item">
-            <div class="d-flex align-items-center gap-3">
-              <div class="stat-icon bg-soft-primary" style="width:42px;height:42px;border-radius:14px;font-size:1rem;">
-                <i class="fa-solid fa-box"></i>
-              </div>
-              <div>
-                <p class="product-name mb-0">
-                  <a href="{% url 'sales:product_detail' prod.pk %}" class="text-decoration-none">
-                    {{ prod.name }}
-                  </a>
-                </p>
-                <div class="product-meta">
-                  {% if prod.category %}{{ prod.category.name }}{% else %}—{% endif %}
-                  {% if prod.business_type %} • {{ prod.business_type|title }}{% endif %}
-                </div>
-              </div>
-            </div>
-
-            <div class="text-end">
-              <div class="fw-bold">Tsh {{ sp|floatformat:0|intcomma }}</div>
-              <span class="stock-badge {% if st|add:0 > rl|add:0 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
-                Stock: {{ st|default:0 }}
-              </span>
-            </div>
-          </div>
-        {% endwith %}
-        {% endwith %}
-        {% endwith %}
-      {% empty %}
-        <div class="text-center text-muted py-4">No recently added products.</div>
-      {% endfor %}
-    </div>
-  </div>
-
-  {% if recent_products.has_other_pages %}
-    <nav class="pager-wrap">
-      <ul class="pagination justify-content-center mb-0">
-        {% if recent_products.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="?recent_page={{ recent_products.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}&date_from={{ date_from }}&date_to={{ date_to }}">
-              « Prev
-            </a>
-          </li>
-        {% else %}
-          <li class="page-item disabled"><span class="page-link">« Prev</span></li>
-        {% endif %}
-
-        {% for num in recent_products.paginator.page_range %}
-          {% if recent_products.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= recent_products.number|add:"-2" and num <= recent_products.number|add:"2" %}
-            <li class="page-item">
-              <a class="page-link" href="?recent_page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}&date_from={{ date_from }}&date_to={{ date_to }}">
-                {{ num }}
-              </a>
-            </li>
-          {% endif %}
-        {% endfor %}
-
-        {% if recent_products.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="?recent_page={{ recent_products.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}&date_from={{ date_from }}&date_to={{ date_to }}">
-              Next »
-            </a>
-          </li>
-        {% else %}
-          <li class="page-item disabled"><span class="page-link">Next »</span></li>
-        {% endif %}
-      </ul>
-    </nav>
-  {% endif %}
-</div>
+  
 
 <script>
   const dailyLabels = {{ chart_labels_json|safe }};
