@@ -39,6 +39,15 @@ class TopupTransaction(models.Model):
         (STATUS_CANCELLED, "Cancelled"),
     ]
 
+    CATEGORY_ELECTRONICS = "electronics"
+    CATEGORY_FURNITURE = "furniture"
+    CATEGORY_MAGODORO = "magodoro"
+    CATEGORY_CHOICES = [
+        (CATEGORY_ELECTRONICS, "Electronics"),
+        (CATEGORY_FURNITURE, "Furniture"),
+        (CATEGORY_MAGODORO, "Magodoro"),
+    ]
+
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
@@ -63,17 +72,34 @@ class TopupTransaction(models.Model):
 
     # used item coming in
     used_item_name = models.CharField(max_length=255)
-    used_item_category = models.CharField(max_length=255, blank=True)
+    used_item_category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        blank=True,
+    )
     used_item_condition = models.CharField(max_length=255, blank=True)
 
     # what Kilasi accepts as value/cost of the used item
-    used_item_buying_price = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    used_item_buying_price = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
 
     # cash added by customer during top-up
-    addon_amount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    addon_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
 
     note = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_COMPLETED, db_index=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_COMPLETED,
+        db_index=True,
+    )
 
     created_by = models.ForeignKey(
         "auth.User",
@@ -131,7 +157,11 @@ class UsedTopupStock(models.Model):
     )
 
     item_name = models.CharField(max_length=255)
-    item_category = models.CharField(max_length=255, blank=True)
+    item_category = models.CharField(
+        max_length=20,
+        choices=TopupTransaction.CATEGORY_CHOICES,
+        blank=True,
+    )
     condition = models.CharField(max_length=255, blank=True)
 
     buying_price = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))

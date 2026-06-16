@@ -5,7 +5,6 @@ from inventory.models import Branch, Product
 from sales.models import Customer
 from .models import TopupTransaction, UsedTopupStock, UsedTopupSale
 
-
 class TopupCreateForm(forms.Form):
     customer = forms.ModelChoiceField(
         queryset=Customer.objects.all().order_by("name"),
@@ -38,9 +37,15 @@ class TopupCreateForm(forms.Form):
     used_item_name = forms.CharField(
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Used item name"}),
     )
-    used_item_category = forms.CharField(
+    used_item_category = forms.ChoiceField(
+        choices=[
+            ("", "Select category"),
+            ("electronics", "Electronics"),
+            ("furniture", "Furniture"),
+            ("magodoro", "Magodoro"),
+        ],
         required=False,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Used item category"}),
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     used_item_condition = forms.CharField(
         required=False,
