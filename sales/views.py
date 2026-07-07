@@ -43,6 +43,76 @@ from django.db.models import Sum, F, ExpressionWrapper, DecimalField, Value
 from django.db.models.functions import Coalesce
 from inventory.models import ProductStock
 
+
+
+def _sync_customer_to_sms_contact(customer, created_by=None):
+    """
+    Save sales customer into SMS Contact automatically.
+    Safe: if SMS app has issue, sale will not fail.
+    """
+    if not customer:
+        return None
+
+    try:
+        from sms.models import Contact, ContactGroup
+        from sms.services import clean_phone, is_valid_tz_phone
+    except Exception:
+        return None
+
+    name = (getattr(customer, "name", "") or "").strip()
+    raw_phone = (getattr(customer, "phone", "") or "").strip()
+
+    if not raw_phone:
+        return None
+
+    phone = clean_phone(raw_phone)
+
+    if not is_valid_tz_phone(phone):
+        return None
+
+    if not name:
+        name = phone
+
+    group, _ = ContactGroup.objects.get_or_create(
+        name="Sales Customers",
+        defaults={
+            "description": "Customers collected automatically from sales invoices."
+        }
+    )
+
+    contact = Contact.objects.filter(phone=phone).first()
+
+    if contact:
+        changed = False
+
+        weak_names = ["", "customer", "walk-in", "unknown", "n/a", "-"]
+        old_name = (contact.name or "").strip().lower()
+
+        if name and old_name in weak_names:
+            contact.name = name
+            changed = True
+
+        if not contact.is_active:
+            contact.is_active = True
+            changed = True
+
+        if changed:
+            contact.save(update_fields=["name", "is_active", "updated_at"])
+
+        contact.groups.add(group)
+        return contact
+
+    contact = Contact.objects.create(
+        name=name,
+        phone=phone,
+        is_active=True,
+        created_by=created_by,
+        notes="Auto-saved from sales invoice.",
+    )
+
+    contact.groups.add(group)
+    return contact
+
 # ───────────────────────────────────────────────────────────────
 # TEMPLATE RENDER HELPER (supports both "sales/x.html" and "x.html")
 # ───────────────────────────────────────────────────────────────
@@ -872,6 +942,9 @@ def lookup_product(request):
         }
     })
 
+
+
+
 @login_required
 @role_required(["seller", "admin"])
 def submit_sale(request):
@@ -883,6 +956,7 @@ def submit_sale(request):
       - branch-aware: seller sells only from their branch
       - customer name/phone allowed for ALL payment methods
       - saved contacts also go to Customer table
+      - saved customers also auto-sync to SMS Center contacts
     """
     if request.method != "POST":
         return redirect("sales:seller_dashboard")
@@ -901,7 +975,7 @@ def submit_sale(request):
     if payment not in ("cash", "debt", "ebt", "bank"):
         payment = "debt"
 
-    # debt can require at least some customer identification
+    # Debt must have at least customer name or phone
     if payment == "debt" and not customer_name and not customer_phone:
         messages.error(request, "For debt sale, enter at least customer name or phone number.")
         return redirect("sales:seller_dashboard")
@@ -916,11 +990,12 @@ def submit_sale(request):
     if payment == "debt" and customer is None:
         customer = _save_customer_contact(customer_name or "Customer", customer_phone or "")
 
-    # IMPORTANT: paid flag
+    # Paid flag
     paid_flag = payment in ("cash", "bank", "ebt")
 
     try:
         with transaction.atomic():
+
             # 1) Validate stock first
             if branch:
                 for pid, data in cart.items():
@@ -933,6 +1008,7 @@ def submit_sale(request):
                         .filter(product=prod, branch=branch)
                         .first()
                     )
+
                     available = int(ps.quantity) if ps else 0
 
                     if qty > available:
@@ -947,14 +1023,15 @@ def submit_sale(request):
                 "seller": request.user,
                 "status": payment,
                 "paid": paid_flag,
-                "invoice_state": "active"
+                "invoice_state": "active",
             }
+
             if branch and hasattr(Invoice, "branch_id"):
                 inv_kwargs["branch"] = branch
 
             inv = Invoice.objects.create(**inv_kwargs)
 
-            # 3) Create items + stock entries
+            # 3) Create invoice items + stock entries
             for pid, data in cart.items():
                 prod = get_object_or_404(Product, pk=int(pid))
                 qty = max(1, int(data.get("qty", 1)))
@@ -972,6 +1049,7 @@ def submit_sale(request):
 
                 if hasattr(InvoiceItem, "selling_price"):
                     item_kwargs["selling_price"] = selling
+
                     if hasattr(InvoiceItem, "buying_cost"):
                         item_kwargs["buying_cost"] = buying
                 else:
@@ -986,16 +1064,21 @@ def submit_sale(request):
                     note=f"Sale #{inv.pk} ({payment})",
                 )
 
-            # 4) Totals
+            # 4) Calculate invoice totals
             if hasattr(inv, "calculate_totals") and callable(getattr(inv, "calculate_totals")):
                 inv.calculate_totals()
 
             # 5) Extra safety: if invoice has no customer but form had data, attach saved customer again
             if (customer_name or customer_phone) and getattr(inv, "customer", None) is None:
                 customer = _save_customer_contact(customer_name, customer_phone)
+
                 if customer:
                     inv.customer = customer
                     inv.save(update_fields=["customer"])
+
+            # 6) Auto-save customer into SMS Center contacts too
+            if customer:
+                _sync_customer_to_sms_contact(customer, created_by=request.user)
 
     except (ValueError, ValidationError) as e:
         messages.error(request, str(e))
@@ -1003,9 +1086,9 @@ def submit_sale(request):
 
     request.session["cart"] = {}
     request.session.modified = True
+
     messages.success(request, "Sale submitted successfully.")
     return redirect("sales:invoice_detail", pk=inv.pk)
-# ───────────────────────────────────────────────────────────────
 
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render

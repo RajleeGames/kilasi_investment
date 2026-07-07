@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Sales Customers SMS{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --sc-bg:#f8fafc;
+    --sc-card:#ffffff;
+    --sc-line:#e2e8f0;
+    --sc-soft:#f1f5f9;
+    --sc-text:#0f172a;
+    --sc-muted:#64748b;
+    --sc-primary:#2563eb;
+    --sc-success:#16a34a;
+    --sc-danger:#dc2626;
+    --sc-shadow:0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .sc-wrap{
+    max-width:1280px;
+    margin:1rem auto 1.4rem;
+    padding:0 .75rem;
+    color:var(--sc-text);
+  }
+
+  .sc-hero{
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,130,246,.03)),
+      linear-gradient(180deg, #fff, #fbfdff);
+    border:1px solid var(--sc-line);
+    border-radius:20px;
+    box-shadow:var(--sc-shadow);
+    padding:1rem;
+    margin-bottom:.9rem;
+  }
+
+  .sc-title{
+    margin:0;
+    font-size:1rem;
+    font-weight:900;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+
+  .sc-sub{
+    margin-top:.25rem;
+    font-size:.74rem;
+    color:var(--sc-muted);
+  }
+
+  .sc-stats{
+    display:flex;
+    gap:.45rem;
+    flex-wrap:wrap;
+    margin-top:.75rem;
+  }
+
+  .sc-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.34rem .62rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:800;
+    background:#fff;
+    border:1px solid var(--sc-line);
+    color:#334155;
+  }
+
+  .sc-chip.primary{
+    background:rgba(37,99,235,.08);
+    color:var(--sc-primary);
+    border-color:rgba(37,99,235,.12);
+  }
+
+  .sc-card{
+    background:var(--sc-card);
+    border:1px solid var(--sc-line);
+    border-radius:18px;
+    box-shadow:var(--sc-shadow);
+    overflow:hidden;
+    margin-bottom:.9rem;
+  }
+
+  .sc-card-head{
+    padding:.85rem .95rem;
+    border-bottom:1px solid #eef2f7;
+    display:flex;
+    justify-content:space-between;
+    gap:.7rem;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .sc-card-title{
+    margin:0;
+    font-size:.84rem;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .sc-card-body{
+    padding:.95rem;
+  }
+
+  .sc-label{
+    display:block;
+    font-size:.68rem;
+    font-weight:900;
+    color:var(--sc-muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:.32rem;
+  }
+
+  .sc-control{
+    width:100%;
+    min-height:38px;
+    border-radius:11px;
+    border:1px solid var(--sc-line);
+    font-size:.76rem;
+    box-shadow:none !important;
+  }
+
+  textarea.sc-control{
+    min-height:110px;
+    padding:.7rem .75rem;
+  }
+
+  .sc-control:focus{
+    border-color:rgba(37,99,235,.38);
+    box-shadow:0 0 0 .16rem rgba(37,99,235,.08) !important;
+  }
+
+  .sc-btn{
+    height:38px;
+    border:none;
+    border-radius:11px;
+    padding:0 .85rem;
+    font-size:.74rem;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.38rem;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+
+  .sc-btn-primary{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:#fff;
+  }
+
+  .sc-btn-primary:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .sc-btn-soft{
+    background:#fff;
+    border:1px solid var(--sc-line);
+    color:#334155;
+  }
+
+  .sc-btn-soft:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+  }
+
+  .sc-table-wrap{
+    overflow-x:auto;
+  }
+
+  .sc-table{
+    width:100%;
+    margin:0;
+    border-collapse:collapse;
+  }
+
+  .sc-table thead th{
+    background:#f8fafc;
+    color:#475569;
+    font-size:.65rem;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:.7rem .75rem;
+    border-bottom:1px solid var(--sc-line);
+    white-space:nowrap;
+  }
+
+  .sc-table tbody td{
+    padding:.72rem .75rem;
+    border-top:1px solid #eef2f7;
+    font-size:.74rem;
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+
+  .sc-name{
+    font-weight:900;
+    color:var(--sc-text);
+  }
+
+  .sc-small{
+    font-size:.65rem;
+    color:var(--sc-muted);
+    margin-top:.1rem;
+  }
+
+  .sc-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:900;
+  }
+
+  .sc-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:.25rem .5rem;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#334155;
+    font-size:.64rem;
+    font-weight:900;
+  }
+
+  .sc-empty{
+    padding:1.5rem .9rem;
+    text-align:center;
+    color:var(--sc-muted);
+    font-size:.78rem;
+  }
+
+  .sc-check{
+    width:17px;
+    height:17px;
+    cursor:pointer;
+  }
+
+  @media(max-width:768px){
+    .sc-card-body{
+      padding:.8rem;
+    }
+
+    .sc-table thead{
+      display:none;
+    }
+
+    .sc-table,
+    .sc-table tbody,
+    .sc-table tr,
+    .sc-table td{
+      display:block;
+      width:100%;
+    }
+
+    .sc-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.55rem 0;
+    }
+
+    .sc-table tbody td{
+      border:none;
+      padding:.35rem .75rem;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      white-space:normal;
+    }
+
+    .sc-table tbody td::before{
+      content:attr(data-label);
+      color:#64748b;
+      font-size:.62rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+  }
+</style>
+
+<div class="sc-wrap">
+
+  <div class="sc-hero">
+    <h3 class="sc-title">
+      <i class="fa-solid fa-message text-primary"></i>
+      Sales Customers SMS
+    </h3>
+    <div class="sc-sub">
+      Filter customers who bought from Kilasi, select them, type one SMS, and send to all.
+    </div>
+
+    <div class="sc-stats">
+      <span class="sc-chip primary">
+        <i class="fa-solid fa-users"></i>
+        Customers: {{ total_customers|intcomma }}
+      </span>
+      <span class="sc-chip">
+        <i class="fa-solid fa-receipt"></i>
+        Invoices: {{ total_invoice_count|intcomma }}
+      </span>
+      <span class="sc-chip">
+        <i class="fa-solid fa-money-bill"></i>
+        Sales: Tsh {{ total_amount|intcomma }}
+      </span>
+      <span class="sc-chip">
+        <i class="fa-solid fa-calendar"></i>
+        {{ start_date }} to {{ end_date }}
+      </span>
+    </div>
+  </div>
+
+  <div class="sc-card">
+    <div class="sc-card-head">
+      <h5 class="sc-card-title">
+        <i class="fa-solid fa-filter text-primary"></i>
+        Filter Customers
+      </h5>
+    </div>
+
+    <div class="sc-card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="sc-label">From Date</label>
+          {{ form.start_date }}
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label class="sc-label">To Date</label>
+          {{ form.end_date }}
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label class="sc-label">Payment Method</label>
+          {{ form.payment_method }}
+        </div>
+
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button type="submit" class="sc-btn sc-btn-primary w-100">
+            <i class="fa-solid fa-filter"></i>
+            Apply
+          </button>
+
+          <a href="{% url 'sms:sales_customers_sms' %}" class="sc-btn sc-btn-soft">
+            Reset
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+    <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+    <input type="hidden" name="payment_method" value="{{ payment_method }}">
+
+    <div class="sc-card">
+      <div class="sc-card-head">
+        <h5 class="sc-card-title">
+          <i class="fa-solid fa-pen-to-square text-primary"></i>
+          Compose Message
+        </h5>
+
+        <button type="button" class="sc-btn sc-btn-soft" onclick="toggleAllCustomers()">
+          <i class="fa-solid fa-check-double"></i>
+          Select / Unselect All
+        </button>
+      </div>
+
+      <div class="sc-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-lg-4">
+            <label class="sc-label">Sender ID</label>
+            {{ form.sender_id }}
+            <div class="sc-small">Optional if default sender exists.</div>
+          </div>
+
+          <div class="col-12 col-lg-8">
+            <label class="sc-label">Message</label>
+            {{ form.message }}
+            <div class="sc-small">
+              Example: Thanks for visiting Kilasi Investment. We are happy to serve you. Karibu tena.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-card">
+      <div class="sc-card-head">
+        <h5 class="sc-card-title">
+          <i class="fa-solid fa-address-book text-primary"></i>
+          Customers Found
+        </h5>
+
+        <button type="submit" class="sc-btn sc-btn-primary">
+          <i class="fa-solid fa-paper-plane"></i>
+          Send to Selected
+        </button>
+      </div>
+
+      {% if rows %}
+        <div class="sc-table-wrap">
+          <table class="sc-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Pick</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Invoices</th>
+                <th>Total Bought</th>
+                <th>Payment</th>
+                <th>Last Visit</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td data-label="Pick">
+                    <input type="checkbox"
+                           class="sc-check customer-check"
+                           name="selected_phones"
+                           value="{{ row.phone }}"
+                           checked>
+                  </td>
+
+                  <td data-label="Customer">
+                    <div>
+                      <div class="sc-name">{{ row.name }}</div>
+                      <div class="sc-small">First: {{ row.first_date|date:"Y-m-d H:i" }}</div>
+                    </div>
+                  </td>
+
+                  <td data-label="Phone">
+                    <span class="sc-money">{{ row.phone }}</span>
+                  </td>
+
+                  <td data-label="Invoices">
+                    <span class="sc-badge">{{ row.invoice_count }}</span>
+                  </td>
+
+                  <td data-label="Total Bought">
+                    <span class="sc-money">Tsh {{ row.total_amount|intcomma }}</span>
+                  </td>
+
+                  <td data-label="Payment">
+                    <span class="sc-badge">{{ row.payments_text }}</span>
+                  </td>
+
+                  <td data-label="Last Visit">
+                    {{ row.last_date|date:"Y-m-d H:i" }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="sc-empty">
+          <i class="fa-regular fa-face-frown"></i><br>
+          No valid sales customers with phone numbers found for this filter.
+        </div>
+      {% endif %}
+    </div>
+  </form>
+
+</div>
+
+<script>
+  function toggleAllCustomers() {
+    const checks = document.querySelectorAll(".customer-check");
+    if (!checks.length) return;
+
+    let allChecked = true;
+
+    checks.forEach(function (c) {
+      if (!c.checked) {
+        allChecked = false;
+      }
+    });
+
+    checks.forEach(function (c) {
+      c.checked = !allChecked;
+    });
+  }
+</script>
+{% endblock %}

@@ -29,4 +29,5 @@ urlpatterns = [
     path("campaigns/<int:pk>/sync-delivery/", views.campaign_sync_delivery_view, name="campaign_sync_delivery"),
     path("contacts/delete-all/", views.contact_delete_all, name="contact_delete_all"),
     path("logs/", views.sms_logs, name="sms_logs"),
+    path("sales-customers/", views.sales_customers_sms, name="sales_customers_sms"),
 ]

@@ -11,6 +11,7 @@ from .forms import (
     ContactForm,
     ContactImportForm,
     QuickSMSForm,
+    SalesCustomersSMSForm,
     SMSCampaignForm,
     SenderIDForm,
     SMSTemplateForm,
@@ -33,6 +34,7 @@ from .services import (
     sync_campaign_delivery,
 )
 from .utils import check_balance
+from sales.models import Invoice
 
 
 # =========================================================
@@ -67,7 +69,557 @@ def _style_form_fields(form):
 
     return form
 
+# =========================================================
+# SALES CUSTOMERS SMS
+# Personalized SMS using customer names
+# =========================================================
 
+def _looks_like_phone_name(name, phone):
+    """
+    Detect contacts where the name was accidentally saved as phone number.
+    Example:
+      name = 255712345678
+      phone = 255712345678
+    """
+    name_digits = "".join(ch for ch in (name or "") if ch.isdigit())
+    phone_digits = "".join(ch for ch in (phone or "") if ch.isdigit())
+
+    return bool(name_digits and phone_digits and name_digits == phone_digits)
+
+
+def _first_name(full_name):
+    """
+    Get first name only.
+    Example:
+      Miraji Ally => Miraji
+    """
+    full_name = (full_name or "").strip()
+
+    if not full_name:
+        return "Customer"
+
+    parts = full_name.split()
+    return parts[0].strip() if parts else "Customer"
+
+
+def _message_has_name_placeholder(message):
+    """
+    If user manually writes a placeholder, we replace it.
+    If user does NOT write placeholder, we automatically add the name.
+    """
+    message = (message or "").lower()
+
+    tokens = [
+        "{name}",
+        "{first_name}",
+        "{phone}",
+
+        "{{ name }}",
+        "{{ first_name }}",
+        "{{ phone }}",
+
+        "{{name}}",
+        "{{first_name}}",
+        "{{phone}}",
+
+        "[name]",
+        "[first_name]",
+        "[phone]",
+
+        "user.name",
+        "user.first_name",
+        "user.phone",
+
+        "customer.name",
+        "customer.first_name",
+        "customer.phone",
+    ]
+
+    return any(token in message for token in tokens)
+
+
+def _clean_existing_greeting(message):
+    """
+    Remove generic greeting if user wrote it without name.
+
+    Examples:
+      Hello, thanks...        => thanks...
+      Ndugu, asante...        => asante...
+      Ndugu mteja, asante...  => asante...
+      Habari, karibu...       => karibu...
+
+    But:
+      Asante kwa kununua...   => stays same
+      Karibu tena...          => stays same
+
+    Then we force:
+      Ndugu Miraji, asante...
+    """
+    msg = (message or "").strip()
+
+    if not msg:
+        return ""
+
+    low = msg.lower().strip()
+
+    starters = [
+        "hello,",
+        "hello ",
+        "hi,",
+        "hi ",
+        "hey,",
+        "hey ",
+        "dear,",
+        "dear ",
+        "dear customer,",
+        "dear customer ",
+
+        "habari,",
+        "habari ",
+        "hujambo,",
+        "hujambo ",
+        "mambo,",
+        "mambo ",
+        "salam,",
+        "salam ",
+        "salamu,",
+        "salamu ",
+
+        "ndugu,",
+        "ndugu ",
+        "ndg,",
+        "ndg ",
+        "mteja,",
+        "mteja ",
+        "mteja wetu,",
+        "mteja wetu ",
+
+        "bwana,",
+        "bwana ",
+        "bi,",
+        "bi ",
+    ]
+
+    for starter in starters:
+        if low.startswith(starter):
+            msg = msg[len(starter):].strip()
+            break
+
+    # Extra cleanup for patterns like:
+    # "mteja, asante..."
+    # "customer, thanks..."
+    low2 = msg.lower().strip()
+    second_starters = [
+        "mteja,",
+        "mteja ",
+        "customer,",
+        "customer ",
+        "wetu,",
+        "wetu ",
+    ]
+
+    for starter in second_starters:
+        if low2.startswith(starter):
+            msg = msg[len(starter):].strip()
+            break
+
+    return msg.strip()
+
+
+def _get_best_customer_name(row, contact=None):
+    """
+    Choose the best saved customer name.
+
+    Priority:
+      1. SMS contact name, if it is real
+      2. Sales customer name from invoice
+      3. Customer
+    """
+    row_name = (row.get("name") or "").strip()
+    row_phone = (row.get("phone") or "").strip()
+
+    contact_name = ""
+    contact_phone = ""
+
+    if contact:
+        contact_name = (getattr(contact, "name", "") or "").strip()
+        contact_phone = (getattr(contact, "phone", "") or "").strip()
+
+    phone = contact_phone or row_phone
+
+    weak_names = ["", "customer", "walk-in", "unknown", "n/a", "-", "—", "mteja"]
+
+    name = contact_name or row_name or "Customer"
+
+    # If SMS contact name is weak or phone-like, use sales customer name
+    if row_name:
+        if name.strip().lower() in weak_names or _looks_like_phone_name(name, phone):
+            name = row_name
+
+    if not name:
+        name = "Customer"
+
+    return name, phone
+
+
+def _render_customer_message(message_template, row, contact=None):
+    """
+    Final SMS renderer.
+
+    Case 1: User writes normal message:
+      Asante kwa kutembelea Kilasi Investment.
+
+    Customer receives:
+      Ndugu Miraji, Asante kwa kutembelea Kilasi Investment.
+
+    Case 2: User writes:
+      Hello {{ name }}, thanks for visiting Kilasi Investment.
+
+    Customer receives:
+      Hello Miraji, thanks for visiting Kilasi Investment.
+    """
+    message = (message_template or "").strip()
+
+    name, phone = _get_best_customer_name(row, contact=contact)
+    first_name = _first_name(name)
+
+    replacements = {
+        "{name}": name,
+        "{first_name}": first_name,
+        "{phone}": phone,
+
+        "{{ name }}": name,
+        "{{ first_name }}": first_name,
+        "{{ phone }}": phone,
+
+        "{{name}}": name,
+        "{{first_name}}": first_name,
+        "{{phone}}": phone,
+
+        "[name]": name,
+        "[first_name]": first_name,
+        "[phone]": phone,
+
+        "user.name": name,
+        "user.first_name": first_name,
+        "user.phone": phone,
+
+        "customer.name": name,
+        "customer.first_name": first_name,
+        "customer.phone": phone,
+    }
+
+    # If user wrote placeholder manually, only replace placeholders
+    if _message_has_name_placeholder(message):
+        for key, value in replacements.items():
+            message = message.replace(key, value)
+        return message.strip()
+
+    # If user wrote normal message, force name automatically
+    body = _clean_existing_greeting(message)
+
+    if not body:
+        body = "Asante kwa kutembelea Kilasi Investment. Karibu tena."
+
+    return f"Ndugu {first_name}, {body}".strip()
+
+
+def _sync_sales_customer_to_sms_contact(customer, created_by=None):
+    """
+    Create/update SMS Contact from sales Customer.
+    This keeps sales customers available in SMS Center.
+
+    Important:
+    - If existing SMS contact name is phone number, update it to real saved customer name.
+    - If existing SMS contact name is Customer / Walk-in / Unknown, update it.
+    """
+    if not customer:
+        return None
+
+    raw_name = (getattr(customer, "name", "") or "").strip()
+    raw_phone = (getattr(customer, "phone", "") or "").strip()
+
+    if not raw_phone:
+        return None
+
+    try:
+        from .services import clean_phone, is_valid_tz_phone
+    except Exception:
+        return None
+
+    phone = clean_phone(raw_phone)
+
+    if not is_valid_tz_phone(phone):
+        return None
+
+    name = raw_name or phone
+
+    group, _ = ContactGroup.objects.get_or_create(
+        name="Sales Customers",
+        defaults={
+            "description": "Customers collected automatically from sales invoices."
+        }
+    )
+
+    contact = Contact.objects.filter(phone=phone).first()
+
+    if contact:
+        changed = False
+
+        weak_names = ["", "customer", "walk-in", "unknown", "n/a", "-", "—", "mteja"]
+        old_name = (contact.name or "").strip()
+        old_name_lower = old_name.lower()
+
+        should_update_name = (
+            name
+            and (
+                old_name_lower in weak_names
+                or _looks_like_phone_name(old_name, phone)
+                or old_name == phone
+            )
+        )
+
+        if should_update_name and old_name != name:
+            contact.name = name
+            changed = True
+
+        if not contact.is_active:
+            contact.is_active = True
+            changed = True
+
+        if changed:
+            contact.save(update_fields=["name", "is_active", "updated_at"])
+
+        contact.groups.add(group)
+        return contact
+
+    contact = Contact.objects.create(
+        name=name,
+        phone=phone,
+        is_active=True,
+        created_by=created_by,
+        notes="Auto-saved from sales invoice.",
+    )
+    contact.groups.add(group)
+
+    return contact
+
+
+def _sales_customer_rows(start_date, end_date, payment_method=""):
+    """
+    Get unique customers from invoices between date range.
+    Deduplication is by normalized phone number.
+    """
+    qs = (
+        Invoice.objects
+        .select_related("customer", "seller", "branch")
+        .filter(
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+            customer__isnull=False,
+        )
+        .exclude(customer__phone__isnull=True)
+        .exclude(customer__phone__exact="")
+        .order_by("-created_at")
+    )
+
+    if hasattr(Invoice, "invoice_state"):
+        qs = qs.filter(invoice_state="active")
+
+    if payment_method:
+        qs = qs.filter(status=payment_method)
+
+    rows_by_phone = {}
+
+    try:
+        from .services import clean_phone, is_valid_tz_phone
+    except Exception:
+        clean_phone = None
+        is_valid_tz_phone = None
+
+    for inv in qs:
+        customer = inv.customer
+        raw_phone = (getattr(customer, "phone", "") or "").strip()
+
+        if clean_phone:
+            phone = clean_phone(raw_phone)
+        else:
+            phone = raw_phone.replace(" ", "").replace("-", "")
+
+        if is_valid_tz_phone and not is_valid_tz_phone(phone):
+            continue
+
+        if not phone:
+            continue
+
+        name = (getattr(customer, "name", "") or "").strip() or "Customer"
+        amount = int(getattr(inv, "total_amount", 0) or 0)
+        status = (getattr(inv, "status", "") or "").upper()
+
+        if phone not in rows_by_phone:
+            rows_by_phone[phone] = {
+                "name": name,
+                "phone": phone,
+                "raw_phone": raw_phone,
+                "invoice_count": 0,
+                "total_amount": 0,
+                "first_date": inv.created_at,
+                "last_date": inv.created_at,
+                "payments": set(),
+                "customer": customer,
+            }
+
+        row = rows_by_phone[phone]
+        row["invoice_count"] += 1
+        row["total_amount"] += amount
+        row["payments"].add(status)
+
+        if inv.created_at < row["first_date"]:
+            row["first_date"] = inv.created_at
+
+        if inv.created_at > row["last_date"]:
+            row["last_date"] = inv.created_at
+
+        weak_names = ["customer", "walk-in", "unknown", "n/a", "-", "—", "mteja"]
+
+        if row["name"].strip().lower() in weak_names and name:
+            row["name"] = name
+
+    rows = list(rows_by_phone.values())
+
+    for row in rows:
+        row["payments_text"] = ", ".join(sorted(row["payments"]))
+
+    rows.sort(key=lambda x: x["last_date"], reverse=True)
+
+    return rows
+
+
+@login_required
+@role_required(["admin", "cashier"])
+def sales_customers_sms(request):
+    """
+    SMS Center page:
+    - filter sales customers by date range/payment method
+    - show unique phone numbers
+    - send personalized SMS to selected customers
+    - automatically adds customer name even if user types normal message
+    """
+    if request.method == "POST":
+        form = SalesCustomersSMSForm(request.POST)
+        form = _style_form_fields(form)
+
+        if form.is_valid():
+            start_date = form.cleaned_data["start_date"]
+            end_date = form.cleaned_data["end_date"]
+            payment_method = form.cleaned_data.get("payment_method") or ""
+            sender = form.cleaned_data.get("sender_id")
+            message_template = (form.cleaned_data.get("message") or "").strip()
+
+            selected_phones = request.POST.getlist("selected_phones")
+
+            redirect_url = (
+                f"{request.path}"
+                f"?start_date={start_date}"
+                f"&end_date={end_date}"
+                f"&payment_method={payment_method}"
+            )
+
+            if not message_template:
+                messages.error(request, "Type the SMS message first.")
+                return redirect(redirect_url)
+
+            if not selected_phones:
+                messages.error(request, "Select at least one customer.")
+                return redirect(redirect_url)
+
+            rows = _sales_customer_rows(start_date, end_date, payment_method)
+            selected_set = set(selected_phones)
+
+            sent_count = 0
+            failed_count = 0
+            skipped_count = 0
+
+            for row in rows:
+                if row["phone"] not in selected_set:
+                    continue
+
+                contact = _sync_sales_customer_to_sms_contact(
+                    row.get("customer"),
+                    created_by=request.user,
+                )
+
+                if not contact:
+                    skipped_count += 1
+                    continue
+
+                personalized_message = _render_customer_message(
+                    message_template,
+                    row,
+                    contact=contact,
+                )
+
+                if not personalized_message:
+                    skipped_count += 1
+                    continue
+
+                # Send one-by-one because each customer gets a different name/message
+                result = send_quick_sms(
+                    message=personalized_message,
+                    contacts=[contact],
+                    manual_numbers=[],
+                    sender=sender,
+                    created_by=request.user,
+                )
+
+                if result.get("ok"):
+                    sent_count += int(result.get("count", 0) or 0)
+                else:
+                    failed_count += 1
+
+            if sent_count > 0:
+                messages.success(
+                    request,
+                    f"Personalized SMS sent to {sent_count} customer(s). "
+                    f"Failed: {failed_count}. Skipped invalid: {skipped_count}."
+                )
+            else:
+                messages.error(
+                    request,
+                    f"No SMS was sent. Failed: {failed_count}. Skipped invalid: {skipped_count}."
+                )
+
+            return redirect(redirect_url)
+
+    else:
+        form = SalesCustomersSMSForm(request.GET or None)
+        form = _style_form_fields(form)
+
+    if form.is_valid():
+        start_date = form.cleaned_data["start_date"]
+        end_date = form.cleaned_data["end_date"]
+        payment_method = form.cleaned_data.get("payment_method") or ""
+    else:
+        today = timezone.localdate()
+        start_date = today
+        end_date = today
+        payment_method = ""
+
+    rows = _sales_customer_rows(start_date, end_date, payment_method)
+
+    total_invoice_count = sum(int(r["invoice_count"] or 0) for r in rows)
+    total_amount = sum(int(r["total_amount"] or 0) for r in rows)
+
+    return render(request, "sms/sales_customers_sms.html", {
+        "form": form,
+        "rows": rows,
+        "start_date": start_date,
+        "end_date": end_date,
+        "payment_method": payment_method,
+        "total_customers": len(rows),
+        "total_invoice_count": total_invoice_count,
+        "total_amount": total_amount,
+    })
 # =========================================================
 # DASHBOARD
 # =========================================================
