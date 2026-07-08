@@ -213,6 +213,12 @@
     color:#334155;
   }
 
+  .trip-customer{
+    font-size:.78rem;
+    font-weight:800;
+    color:#0f172a;
+  }
+
   .trip-phone{
     color:#0369a1;
     font-weight:700;
@@ -324,10 +330,6 @@
     margin-top:.75rem;
   }
 
-  .td-label{
-    display:none;
-  }
-
   @media (max-width: 991.98px){
     .trips-hero{
       padding:.9rem;
@@ -416,6 +418,7 @@
           <i class="fa-solid fa-road text-primary"></i>
           Trips
         </h3>
+
         <div class="trips-subtitle">
           Filter by date and vehicle, then search trips quickly.
         </div>
@@ -444,18 +447,28 @@
           <div class="col-12">
             <div class="trips-search-wrap">
               <i class="fa-solid fa-magnifying-glass trips-search-icon"></i>
-              <input id="tripSearch" type="search" class="form-control trips-search"
-                     placeholder="Search vehicle, driver, phone, from, to..."
+              <input id="tripSearch"
+                     type="search"
+                     class="form-control trips-search"
+                     placeholder="Search customer, phone, vehicle, driver, from, to..."
                      aria-label="Search trips">
             </div>
           </div>
 
           <div class="col-md-4">
-            <input id="tripDate" type="date" name="date" value="{{ selected_date }}" class="form-control" aria-label="Select date">
+            <input id="tripDate"
+                   type="date"
+                   name="date"
+                   value="{{ selected_date }}"
+                   class="form-control"
+                   aria-label="Select date">
           </div>
 
           <div class="col-md-4">
-            <select id="tripVehicle" name="vehicle" class="form-select" aria-label="Select vehicle">
+            <select id="tripVehicle"
+                    name="vehicle"
+                    class="form-select"
+                    aria-label="Select vehicle">
               <option value="">All Vehicles</option>
               {% for v in vehicles %}
                 <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
@@ -480,7 +493,7 @@
               Date:
               <strong>
                 {% if selected_date %}
-                  {{ selected_date|date:"d M Y" }}
+                  {{ selected_date }}
                 {% else %}
                   All
                 {% endif %}
@@ -507,6 +520,7 @@
         <i class="fa-solid fa-list-ul text-primary"></i>
         Trip List
       </h4>
+
       <div class="trips-table-note">
         {% if page_obj %}
           Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
@@ -524,7 +538,8 @@
               <th>Date</th>
               <th>Vehicle</th>
               <th>Driver</th>
-              <th>Customer Phone</th>
+              <th>Customer</th>
+              <th>Phone</th>
               <th>From</th>
               <th>To</th>
               <th class="text-end">Amount</th>
@@ -534,106 +549,127 @@
 
           <tbody>
             {% for t in trips %}
-            <tr class="trip-row-link trip-row-js"
-                {% if t.get_absolute_url %}data-href="{{ t.get_absolute_url }}"{% endif %}
-                tabindex="0"
-                aria-label="Trip row">
-              <td data-label="Date">
-                <span class="trip-date">{{ t.trip_date|date:"d M Y" }}</span>
-              </td>
+              <tr class="trip-row-link trip-row-js"
+                  {% if t.get_absolute_url %}data-href="{{ t.get_absolute_url }}"{% endif %}
+                  tabindex="0"
+                  aria-label="Trip row">
 
-              <td data-label="Vehicle">
-                <span>{{ t.vehicle|default:"—" }}</span>
-              </td>
+                <td data-label="Date">
+                  <span class="trip-date">{{ t.trip_date|date:"d M Y" }}</span>
+                </td>
 
-              <td data-label="Driver">
-                <span class="trip-muted">{{ t.driver|default:"—" }}</span>
-              </td>
+                <td data-label="Vehicle">
+                  <span>{{ t.vehicle|default:"—" }}</span>
+                </td>
 
-              <td data-label="Customer Phone">
-                <span class="trip-phone">{{ t.customer_phone|default:"—" }}</span>
-              </td>
+                <td data-label="Driver">
+                  <span class="trip-muted">{{ t.driver|default:"—" }}</span>
+                </td>
 
-              <td data-label="From">
-                <span class="trip-muted">{{ t.origin|default:"—" }}</span>
-              </td>
+                <td data-label="Customer">
+                  <span class="trip-customer">{{ t.customer_name|default:"—" }}</span>
+                </td>
 
-              <td data-label="To">
-                <span class="trip-muted">{{ t.destination|default:"—" }}</span>
-              </td>
+                <td data-label="Phone">
+                  <span class="trip-phone">{{ t.customer_phone|default:"—" }}</span>
+                </td>
 
-              <td data-label="Amount" class="trip-amount">
-                <span class="amount-pill amount-badge" data-raw="{{ t.amount_charged }}">
-                  <span class="tzs">TZS</span>
-                  <span class="amt">{{ t.amount_charged|floatformat:2|intcomma }}</span>
-                </span>
-              </td>
+                <td data-label="From">
+                  <span class="trip-muted">{{ t.origin|default:"—" }}</span>
+                </td>
 
-              <td data-label="Branch">
-                <span class="trip-muted">{{ t.branch|default:"—" }}</span>
-              </td>
-            </tr>
+                <td data-label="To">
+                  <span class="trip-muted">{{ t.destination|default:"—" }}</span>
+                </td>
+
+                <td data-label="Amount" class="trip-amount">
+                  <span class="amount-pill amount-badge" data-raw="{{ t.amount_charged }}">
+                    <span class="tzs">TZS</span>
+                    <span class="amt">{{ t.amount_charged|floatformat:2|intcomma }}</span>
+                  </span>
+                </td>
+
+                <td data-label="Branch">
+                  <span class="trip-muted">{{ t.branch|default:"—" }}</span>
+                </td>
+
+              </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
       {% if page_obj and page_obj.paginator.num_pages > 1 %}
-      <div class="trips-pagination-wrap">
-        <ul class="trips-pagination">
+        <div class="trips-pagination-wrap">
+          <ul class="trips-pagination">
 
-          {% if page_obj.has_previous %}
-            <li>
-              <a class="page-link" href="?page=1{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                <i class="fa-solid fa-angles-left"></i>
-              </a>
-            </li>
-            <li>
-              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                <i class="fa-solid fa-angle-left"></i>
-              </a>
-            </li>
-          {% else %}
-            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angles-left"></i></span></li>
-            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angle-left"></i></span></li>
-          {% endif %}
+            {% if page_obj.has_previous %}
+              <li>
+                <a class="page-link" href="?page=1{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                  <i class="fa-solid fa-angles-left"></i>
+                </a>
+              </li>
 
-          {% for num in page_obj.paginator.page_range %}
-            {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-              {% if page_obj.number == num %}
-                <li class="active"><span class="page-link">{{ num }}</span></li>
-              {% else %}
-                <li>
-                  <a class="page-link" href="?page={{ num }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                    {{ num }}
-                  </a>
-                </li>
-              {% endif %}
+              <li>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                  <i class="fa-solid fa-angle-left"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="disabled">
+                <span class="page-link"><i class="fa-solid fa-angles-left"></i></span>
+              </li>
+
+              <li class="disabled">
+                <span class="page-link"><i class="fa-solid fa-angle-left"></i></span>
+              </li>
             {% endif %}
-          {% endfor %}
 
-          {% if page_obj.has_next %}
-            <li>
-              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                <i class="fa-solid fa-angle-right"></i>
-              </a>
-            </li>
-            <li>
-              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                <i class="fa-solid fa-angles-right"></i>
-              </a>
-            </li>
-          {% else %}
-            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angle-right"></i></span></li>
-            <li class="disabled"><span class="page-link"><i class="fa-solid fa-angles-right"></i></span></li>
-          {% endif %}
-        </ul>
+            {% for num in page_obj.paginator.page_range %}
+              {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                {% if page_obj.number == num %}
+                  <li class="active">
+                    <span class="page-link">{{ num }}</span>
+                  </li>
+                {% else %}
+                  <li>
+                    <a class="page-link" href="?page={{ num }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                      {{ num }}
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
 
-        <div class="trips-page-summary">
-          Showing page <strong>{{ page_obj.number }}</strong> of <strong>{{ page_obj.paginator.num_pages }}</strong>
-          • Total trips: <strong>{{ total_trips_count|intcomma }}</strong>
+            {% if page_obj.has_next %}
+              <li>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                  <i class="fa-solid fa-angle-right"></i>
+                </a>
+              </li>
+
+              <li>
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
+                  <i class="fa-solid fa-angles-right"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="disabled">
+                <span class="page-link"><i class="fa-solid fa-angle-right"></i></span>
+              </li>
+
+              <li class="disabled">
+                <span class="page-link"><i class="fa-solid fa-angles-right"></i></span>
+              </li>
+            {% endif %}
+
+          </ul>
+
+          <div class="trips-page-summary">
+            Showing page <strong>{{ page_obj.number }}</strong> of <strong>{{ page_obj.paginator.num_pages }}</strong>
+            • Total trips: <strong>{{ total_trips_count|intcomma }}</strong>
+          </div>
         </div>
-      </div>
       {% endif %}
 
     {% else %}
@@ -656,19 +692,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateCounts(){
     if (!table) return;
+
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     const visible = rows.filter(r => r.style.display !== 'none');
-    if (pageTripsEl) pageTripsEl.textContent = rows.length;
-    if (visibleEl) visibleEl.textContent = visible.length;
+
+    if (pageTripsEl) {
+      pageTripsEl.textContent = rows.length;
+    }
+
+    if (visibleEl) {
+      visibleEl.textContent = visible.length;
+    }
   }
 
   document.querySelectorAll('.trip-row-js').forEach(function (row) {
     const href = row.dataset.href;
+
     if (!href) return;
 
     row.addEventListener('click', function (e) {
       const interactive = e.target.closest('a, button, input, select, textarea');
+
       if (interactive) return;
+
       window.location.assign(href);
     });
 
@@ -684,24 +730,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function applyFilter(){
     if (!table) return;
+
     const q = (search?.value || '').trim().toLowerCase();
 
-    table.querySelectorAll('tbody tr').forEach(r => {
-      const text = r.textContent.trim().toLowerCase();
-      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    table.querySelectorAll('tbody tr').forEach(function (row) {
+      const text = row.textContent.trim().toLowerCase();
+      row.style.display = (!q || text.includes(q)) ? '' : 'none';
     });
 
     updateCounts();
   }
 
-  if (search) search.addEventListener('input', applyFilter);
+  if (search) {
+    search.addEventListener('input', applyFilter);
+  }
 
   document.querySelectorAll('.amount-badge').forEach(function (pill) {
     const raw = pill.dataset.raw;
+
     if (!raw) return;
+
     const n = Number(raw);
+
     if (Number.isFinite(n)) {
       const amt = pill.querySelector('.amt');
+
       if (amt) {
         amt.textContent = n.toLocaleString(undefined, {
           minimumFractionDigits: 2,
@@ -719,14 +772,20 @@ document.addEventListener('DOMContentLoaded', function () {
   if (dateInput) {
     dateInput.addEventListener('change', function () {
       const form = this.closest('form');
-      if (form) form.submit();
+
+      if (form) {
+        form.submit();
+      }
     });
   }
 
   if (vehicleInput) {
     vehicleInput.addEventListener('change', function () {
       const form = this.closest('form');
-      if (form) form.submit();
+
+      if (form) {
+        form.submit();
+      }
     });
   }
 });

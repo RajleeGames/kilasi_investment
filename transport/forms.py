@@ -17,6 +17,9 @@ class VehicleForm(forms.ModelForm):
 # -------------------------
 # Trip Form
 # -------------------------
+# -------------------------
+# Trip Form
+# -------------------------
 class TripForm(forms.ModelForm):
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.filter(is_active=True).order_by("plate_number"),
@@ -24,6 +27,7 @@ class TripForm(forms.ModelForm):
         label="Vehicle",
         widget=forms.Select()
     )
+
     driver = forms.ModelChoiceField(
         queryset=Driver.objects.filter(is_active=True).select_related("user").order_by("user__username"),
         empty_label="Select Driver",
@@ -38,17 +42,20 @@ class TripForm(forms.ModelForm):
             "trip_date",
             "vehicle",
             "driver",
+            "customer_name",
+            "customer_phone",
             "origin",
             "destination",
-            "customer_phone",   # ✅ NEW
             "amount_charged",
             "notes",
         ]
+
         widgets = {
             "trip_date": forms.DateTimeInput(attrs={"type": "datetime-local"}),
-            "origin": forms.TextInput(attrs={"placeholder": "Origin"}),
-            "destination": forms.TextInput(attrs={"placeholder": "Destination"}),
+            "customer_name": forms.TextInput(attrs={"placeholder": "Customer full name"}),
             "customer_phone": forms.TextInput(attrs={"placeholder": "Customer phone number"}),
+            "origin": forms.TextInput(attrs={"placeholder": "Origin / Pickup area"}),
+            "destination": forms.TextInput(attrs={"placeholder": "Destination"}),
             "amount_charged": forms.NumberInput(attrs={"placeholder": "Amount charged"}),
             "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Optional notes..."}),
         }
@@ -67,6 +74,22 @@ class TripForm(forms.ModelForm):
             self.fields["branch"].initial = user.profile.branch
             self.fields["branch"].queryset = Branch.objects.filter(pk=user.profile.branch.pk)
             self.fields["branch"].disabled = True
+
+    def clean_customer_name(self):
+        return (self.cleaned_data.get("customer_name") or "").strip()
+
+    def clean_customer_phone(self):
+        return (self.cleaned_data.get("customer_phone") or "").strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        customer_name = (cleaned.get("customer_name") or "").strip()
+        customer_phone = (cleaned.get("customer_phone") or "").strip()
+
+        if not customer_name and not customer_phone:
+            raise forms.ValidationError("Enter customer name or customer phone.")
+
+        return cleaned
 
 
 # -------------------------

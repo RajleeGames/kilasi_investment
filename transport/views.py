@@ -355,16 +355,26 @@ def trip_list(request):
 def trip_create(request):
     if request.method == 'POST':
         form = TripForm(request.POST, user=request.user)
+
         if form.is_valid():
             trip = form.save(commit=False)
             trip.created_by = request.user
+
+            trip.customer_name = (trip.customer_name or "").strip()
+            trip.customer_phone = (trip.customer_phone or "").strip()
+
             if request.user.profile.role == 'transport' and request.user.profile.branch:
                 trip.branch = request.user.profile.branch
+
             trip.save()
-            messages.success(request, "Trip recorded.")
+
+            messages.success(request, "Trip recorded successfully.")
             return redirect('transport:trip_list')
+        else:
+            messages.error(request, "Please correct the trip form errors.")
     else:
         form = TripForm(user=request.user)
+
     return render(request, 'transport/trip_form.html', {'form': form})
 
 

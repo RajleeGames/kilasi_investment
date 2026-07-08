@@ -16,11 +16,14 @@ class ContactForm(forms.ModelForm):
 
 class ContactImportForm(forms.Form):
     csv_file = forms.FileField(required=False)
+
     group = forms.ModelChoiceField(
         queryset=ContactGroup.objects.all(),
         required=False
     )
+
     overwrite_names = forms.BooleanField(required=False)
+
     pasted_contacts = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 8}),
@@ -59,12 +62,17 @@ class QuickSMSForm(forms.Form):
         queryset=SenderID.objects.filter(is_active=True),
         required=False
     )
-    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 6}))
+
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 6})
+    )
+
     contacts = forms.ModelMultipleChoiceField(
         queryset=Contact.objects.filter(is_active=True),
         required=False,
         widget=forms.SelectMultiple(attrs={"size": 12})
     )
+
     manual_numbers = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 6}),
@@ -73,6 +81,14 @@ class QuickSMSForm(forms.Form):
 
 
 class SalesCustomersSMSForm(forms.Form):
+    SOURCE_CHOICES = [
+        ("all", "All Customers"),
+        ("sales", "Normal Sales Only"),
+        ("orders", "Customer Orders Only"),
+        ("genji", "Genji Only"),
+        ("topup", "Top-up Only"),
+    ]
+
     PAYMENT_CHOICES = [
         ("", "All Payment Methods"),
         ("cash", "Cash"),
@@ -80,6 +96,13 @@ class SalesCustomersSMSForm(forms.Form):
         ("ebt", "EBT"),
         ("debt", "Debt"),
     ]
+
+    customer_source = forms.ChoiceField(
+        choices=SOURCE_CHOICES,
+        required=False,
+        initial="all",
+        label="Customer Source",
+    )
 
     start_date = forms.DateField(
         required=False,
@@ -105,7 +128,7 @@ class SalesCustomersSMSForm(forms.Form):
     message = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 5}),
-        help_text="Type one message and send to all selected sales customers.",
+        help_text="Type normal message only. Customer name will be added automatically.",
     )
 
     def clean(self):
@@ -113,6 +136,7 @@ class SalesCustomersSMSForm(forms.Form):
 
         start_date = cleaned.get("start_date")
         end_date = cleaned.get("end_date")
+        customer_source = cleaned.get("customer_source") or "all"
 
         today = timezone.localdate()
 
@@ -125,7 +149,86 @@ class SalesCustomersSMSForm(forms.Form):
         if start_date > end_date:
             start_date, end_date = end_date, start_date
 
+        if customer_source not in ("all", "sales", "orders", "genji", "topup"):
+            customer_source = "all"
+
         cleaned["start_date"] = start_date
         cleaned["end_date"] = end_date
+        cleaned["customer_source"] = customer_source
+
+        return cleaned
+
+
+class TransportCustomersSMSForm(forms.Form):
+    SOURCE_CHOICES = [
+        ("all", "Bookings + Trips"),
+        ("bookings", "Bookings Only"),
+        ("trips", "Trips Only"),
+    ]
+
+    STATUS_CHOICES = [
+        ("", "All Booking Status"),
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    source = forms.ChoiceField(
+        choices=SOURCE_CHOICES,
+        required=False,
+        initial="all",
+    )
+
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        required=False,
+    )
+
+    sender_id = forms.ModelChoiceField(
+        queryset=SenderID.objects.filter(is_active=True),
+        required=False,
+        label="Sender ID",
+    )
+
+    message = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 5}),
+        help_text="Type normal transport message only. Customer name will be added automatically.",
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+
+        start_date = cleaned.get("start_date")
+        end_date = cleaned.get("end_date")
+        source = cleaned.get("source") or "all"
+
+        today = timezone.localdate()
+
+        if not start_date:
+            start_date = today
+
+        if not end_date:
+            end_date = today
+
+        if start_date > end_date:
+            start_date, end_date = end_date, start_date
+
+        if source not in ("all", "bookings", "trips"):
+            source = "all"
+
+        cleaned["start_date"] = start_date
+        cleaned["end_date"] = end_date
+        cleaned["source"] = source
 
         return cleaned

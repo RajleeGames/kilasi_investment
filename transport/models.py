@@ -81,6 +81,8 @@ class Driver(models.Model):
 # -------------------------
 # Trip
 # -------------------------
+# Trip
+# -------------------------
 class Trip(models.Model):
     branch = models.ForeignKey(
         Branch,
@@ -103,7 +105,8 @@ class Trip(models.Model):
     origin = models.CharField(max_length=255)
     destination = models.CharField(max_length=255)
 
-    # ✅ NEW
+    # Customer details
+    customer_name = models.CharField(max_length=150, blank=True, default="")
     customer_phone = models.CharField(max_length=20, blank=True, default="")
 
     amount_charged = models.DecimalField(max_digits=12, decimal_places=2)
@@ -124,11 +127,13 @@ class Trip(models.Model):
             models.Index(fields=["branch", "trip_date"]),
             models.Index(fields=["vehicle"]),
             models.Index(fields=["driver"]),
-            models.Index(fields=["customer_phone"]),  # ✅ NEW
+            models.Index(fields=["customer_name"]),
+            models.Index(fields=["customer_phone"]),
         ]
 
     def __str__(self):
-        return f"{self.vehicle} | {self.origin} → {self.destination}"
+        customer = self.customer_name or self.customer_phone or "Customer"
+        return f"{customer} | {self.vehicle} | {self.origin} → {self.destination}"
 
     def get_absolute_url(self):
         return reverse("transport:trip_list")

@@ -850,6 +850,11 @@
         <i class="fa-solid fa-users"></i> <span class="label">Send sms to Customers</span>
       </a>
 
+      <a class="sb-link {% if request.resolver_match.url_name == 'transport_customers_sms' %}active{% endif %}"
+   href="{% url 'sms:transport_customers_sms' %}">
+  <i class="fa-solid fa-truck-fast"></i> <span class="label"> Send sms to Transport Customers</span>
+</a>
+
                 <a class="sb-link {% if request.resolver_match.url_name == 'contact_list' and request.resolver_match.namespace == 'sms' %}active{% endif %}"
                    href="{% url 'sms:contact_list' %}">
                   <i class="fa-solid fa-address-book"></i> <span class="label">Contacts</span>
@@ -1334,6 +1339,11 @@
          href="{% url 'sms:sales_customers_sms' %}">
         <i class="fa-solid fa-users"></i> Send sms to Customers
       </a>
+
+      <a class="sb-link {% if request.resolver_match.url_name == 'transport_customers_sms' %}active{% endif %}"
+   href="{% url 'sms:transport_customers_sms' %}">
+  <i class="fa-solid fa-truck-fast"></i>Send sms to Transport Customers
+</a>
                 <a class="sb-link" href="{% url 'sms:contact_list' %}">
                   <i class="fa-solid fa-address-book"></i> Contacts
                 </a>

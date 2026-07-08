@@ -30,4 +30,5 @@ urlpatterns = [
     path("contacts/delete-all/", views.contact_delete_all, name="contact_delete_all"),
     path("logs/", views.sms_logs, name="sms_logs"),
     path("sales-customers/", views.sales_customers_sms, name="sales_customers_sms"),
+    path("transport-customers/", views.transport_customers_sms, name="transport_customers_sms"),
 ]

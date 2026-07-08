@@ -13,6 +13,7 @@
     --sc-text:#0f172a;
     --sc-muted:#64748b;
     --sc-primary:#2563eb;
+    --sc-primary-2:#3b82f6;
     --sc-success:#16a34a;
     --sc-danger:#dc2626;
     --sc-shadow:0 10px 28px rgba(15,23,42,.06);
@@ -50,6 +51,7 @@
     margin-top:.25rem;
     font-size:.74rem;
     color:var(--sc-muted);
+    line-height:1.45;
   }
 
   .sc-stats{
@@ -95,6 +97,7 @@
     gap:.7rem;
     align-items:center;
     flex-wrap:wrap;
+    background:linear-gradient(180deg,#fff,#fbfdff);
   }
 
   .sc-card-title{
@@ -120,22 +123,28 @@
     margin-bottom:.32rem;
   }
 
+  .form-control,
+  .form-select,
   .sc-control{
     width:100%;
     min-height:38px;
-    border-radius:11px;
-    border:1px solid var(--sc-line);
-    font-size:.76rem;
+    border-radius:11px !important;
+    border:1px solid var(--sc-line) !important;
+    font-size:.76rem !important;
     box-shadow:none !important;
   }
 
+  textarea.form-control,
   textarea.sc-control{
     min-height:110px;
     padding:.7rem .75rem;
+    line-height:1.45;
   }
 
+  .form-control:focus,
+  .form-select:focus,
   .sc-control:focus{
-    border-color:rgba(37,99,235,.38);
+    border-color:rgba(37,99,235,.38) !important;
     box-shadow:0 0 0 .16rem rgba(37,99,235,.08) !important;
   }
 
@@ -152,6 +161,7 @@
     gap:.38rem;
     text-decoration:none;
     white-space:nowrap;
+    transition:.16s ease;
   }
 
   .sc-btn-primary{
@@ -173,6 +183,49 @@
   .sc-btn-soft:hover{
     color:#0f172a;
     border-color:#cbd5e1;
+    transform:translateY(-1px);
+  }
+
+  .sc-note{
+    border:1px dashed rgba(37,99,235,.24);
+    background:#f8fbff;
+    border-radius:14px;
+    padding:.72rem .82rem;
+    font-size:.68rem;
+    color:#475569;
+    line-height:1.45;
+    height:100%;
+  }
+
+  .sc-note strong{
+    color:#0f172a;
+  }
+
+  .sc-small{
+    font-size:.65rem;
+    color:var(--sc-muted);
+    margin-top:.25rem;
+    line-height:1.45;
+  }
+
+  .sc-template-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.32rem;
+    padding:.25rem .5rem;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#334155;
+    border:1px solid #dbe4f0;
+    font-size:.62rem;
+    font-weight:850;
+    cursor:pointer;
+    margin:.12rem;
+    user-select:none;
+  }
+
+  .sc-template-pill:hover{
+    background:#e0e7ff;
   }
 
   .sc-table-wrap{
@@ -205,15 +258,13 @@
     white-space:nowrap;
   }
 
+  .sc-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
   .sc-name{
     font-weight:900;
     color:var(--sc-text);
-  }
-
-  .sc-small{
-    font-size:.65rem;
-    color:var(--sc-muted);
-    margin-top:.1rem;
   }
 
   .sc-money{
@@ -232,6 +283,12 @@
     font-weight:900;
   }
 
+  .sc-badge.source{
+    background:#ecfeff;
+    color:#155e75;
+    border:1px solid #cffafe;
+  }
+
   .sc-empty{
     padding:1.5rem .9rem;
     text-align:center;
@@ -245,9 +302,30 @@
     cursor:pointer;
   }
 
+  .sc-pagination{
+    padding:.85rem .95rem;
+    border-top:1px solid #eef2f7;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.7rem;
+    flex-wrap:wrap;
+    background:#fff;
+  }
+
+  .sc-page-text{
+    font-size:.68rem;
+    color:var(--sc-muted);
+    font-weight:800;
+  }
+
   @media(max-width:768px){
     .sc-card-body{
       padding:.8rem;
+    }
+
+    .sc-card-head{
+      align-items:flex-start;
     }
 
     .sc-table thead{
@@ -284,6 +362,10 @@
       text-transform:uppercase;
       letter-spacing:.04em;
     }
+
+    .sc-btn{
+      width:100%;
+    }
   }
 </style>
 
@@ -294,8 +376,9 @@
       <i class="fa-solid fa-message text-primary"></i>
       Sales Customers SMS
     </h3>
+
     <div class="sc-sub">
-      Filter customers who bought from Kilasi, select them, type one SMS, and send to all.
+      Filter customers from normal sales, customer orders, Genji, and Top-up. Select customers, type one SMS, and send to all. Customer names are added automatically.
     </div>
 
     <div class="sc-stats">
@@ -303,17 +386,25 @@
         <i class="fa-solid fa-users"></i>
         Customers: {{ total_customers|intcomma }}
       </span>
+
       <span class="sc-chip">
-        <i class="fa-solid fa-receipt"></i>
-        Invoices: {{ total_invoice_count|intcomma }}
+        <i class="fa-solid fa-list"></i>
+        Records: {{ total_invoice_count|intcomma }}
       </span>
+
       <span class="sc-chip">
         <i class="fa-solid fa-money-bill"></i>
-        Sales: Tsh {{ total_amount|intcomma }}
+        Amount: Tsh {{ total_amount|intcomma }}
       </span>
+
       <span class="sc-chip">
         <i class="fa-solid fa-calendar"></i>
         {{ start_date }} to {{ end_date }}
+      </span>
+
+      <span class="sc-chip primary">
+        <i class="fa-solid fa-layer-group"></i>
+        Source: {{ customer_source|default:"all" }}
       </span>
     </div>
   </div>
@@ -328,22 +419,35 @@
 
     <div class="sc-card-body">
       <form method="get" class="row g-3 align-items-end">
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
           <label class="sc-label">From Date</label>
           {{ form.start_date }}
         </div>
 
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
           <label class="sc-label">To Date</label>
           {{ form.end_date }}
         </div>
 
         <div class="col-12 col-md-3">
+          <label class="sc-label">Customer Source</label>
+          {{ form.customer_source }}
+        </div>
+
+        <div class="col-12 col-md-2">
           <label class="sc-label">Payment Method</label>
           {{ form.payment_method }}
         </div>
 
-        <div class="col-12 col-md-3 d-flex gap-2">
+        <div class="col-12 col-md-1">
+          <label class="sc-label">Per Page</label>
+          <select name="per_page" class="form-select">
+            <option value="50" {% if per_page == "50" %}selected{% endif %}>50</option>
+            <option value="100" {% if per_page == "100" %}selected{% endif %}>100</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-2 d-flex gap-2">
           <button type="submit" class="sc-btn sc-btn-primary w-100">
             <i class="fa-solid fa-filter"></i>
             Apply
@@ -354,6 +458,10 @@
           </a>
         </div>
       </form>
+
+      <div class="sc-small mt-2">
+        Payment Method affects normal sales only. Orders, Genji, and Top-up are controlled by source and date.
+      </div>
     </div>
   </div>
 
@@ -363,6 +471,7 @@
     <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
     <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
     <input type="hidden" name="payment_method" value="{{ payment_method }}">
+    <input type="hidden" name="customer_source" value="{{ customer_source }}">
 
     <div class="sc-card">
       <div class="sc-card-head">
@@ -379,17 +488,41 @@
 
       <div class="sc-card-body">
         <div class="row g-3">
-          <div class="col-12 col-lg-4">
+          <div class="col-12 col-lg-3">
             <label class="sc-label">Sender ID</label>
             {{ form.sender_id }}
             <div class="sc-small">Optional if default sender exists.</div>
+
+            <div class="sc-note mt-3">
+              <strong>Auto name is enabled.</strong><br>
+              Type the message normally. The system will add each customer name automatically before sending.
+            </div>
           </div>
 
-          <div class="col-12 col-lg-8">
+          <div class="col-12 col-lg-9">
             <label class="sc-label">Message</label>
             {{ form.message }}
+
             <div class="sc-small">
-              Example: Thanks for visiting Kilasi Investment. We are happy to serve you. Karibu tena.
+              Example: Asante kwa kutembelea Kilasi Investment. Karibu tena.
+            </div>
+
+            <div class="mt-2">
+              <span class="sc-template-pill" onclick="setSmsTemplate('Asante kwa kutembelea Kilasi Investment. Tunafurahi kukuhudumia. Karibu tena.')">
+                <i class="fa-solid fa-bolt"></i> Asante
+              </span>
+
+              <span class="sc-template-pill" onclick="setSmsTemplate('Tunashukuru kwa kufanya manunuzi Kilasi Investment. Karibu tena kwa huduma bora.')">
+                <i class="fa-solid fa-heart"></i> Shukrani
+              </span>
+
+              <span class="sc-template-pill" onclick="setSmsTemplate('Order yako imepokelewa vizuri. Tutawasiliana nawe kwa maelezo zaidi. Asante kwa kuchagua Kilasi Investment.')">
+                <i class="fa-solid fa-box"></i> Order
+              </span>
+
+              <span class="sc-template-pill" onclick="setSmsTemplate('Thanks for visiting Kilasi Investment. We are happy to serve you. Karibu tena.')">
+                <i class="fa-solid fa-language"></i> English
+              </span>
             </div>
           </div>
         </div>
@@ -417,10 +550,11 @@
                 <th style="width:50px;">Pick</th>
                 <th>Customer</th>
                 <th>Phone</th>
-                <th>Invoices</th>
-                <th>Total Bought</th>
-                <th>Payment</th>
-                <th>Last Visit</th>
+                <th>Source</th>
+                <th>Records</th>
+                <th>Total Amount</th>
+                <th>Status / Payment</th>
+                <th>Last Date</th>
               </tr>
             </thead>
 
@@ -446,19 +580,23 @@
                     <span class="sc-money">{{ row.phone }}</span>
                   </td>
 
-                  <td data-label="Invoices">
+                  <td data-label="Source">
+                    <span class="sc-badge source">{{ row.source_text }}</span>
+                  </td>
+
+                  <td data-label="Records">
                     <span class="sc-badge">{{ row.invoice_count }}</span>
                   </td>
 
-                  <td data-label="Total Bought">
+                  <td data-label="Total Amount">
                     <span class="sc-money">Tsh {{ row.total_amount|intcomma }}</span>
                   </td>
 
-                  <td data-label="Payment">
+                  <td data-label="Status / Payment">
                     <span class="sc-badge">{{ row.payments_text }}</span>
                   </td>
 
-                  <td data-label="Last Visit">
+                  <td data-label="Last Date">
                     {{ row.last_date|date:"Y-m-d H:i" }}
                   </td>
                 </tr>
@@ -466,10 +604,46 @@
             </tbody>
           </table>
         </div>
+
+        {% if page_obj %}
+          <div class="sc-pagination">
+            <div class="sc-page-text">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+              • Showing {{ rows|length }} customer(s)
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+              {% if page_obj.has_previous %}
+                <a class="sc-btn sc-btn-soft"
+                   href="?page=1&per_page={{ per_page }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&payment_method={{ payment_method }}&customer_source={{ customer_source }}">
+                  First
+                </a>
+
+                <a class="sc-btn sc-btn-soft"
+                   href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&payment_method={{ payment_method }}&customer_source={{ customer_source }}">
+                  Previous
+                </a>
+              {% endif %}
+
+              {% if page_obj.has_next %}
+                <a class="sc-btn sc-btn-soft"
+                   href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&payment_method={{ payment_method }}&customer_source={{ customer_source }}">
+                  Next
+                </a>
+
+                <a class="sc-btn sc-btn-soft"
+                   href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&payment_method={{ payment_method }}&customer_source={{ customer_source }}">
+                  Last
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
       {% else %}
         <div class="sc-empty">
           <i class="fa-regular fa-face-frown"></i><br>
-          No valid sales customers with phone numbers found for this filter.
+          No valid customers with phone numbers found for this filter.
         </div>
       {% endif %}
     </div>
@@ -494,5 +668,28 @@
       c.checked = !allChecked;
     });
   }
+
+  function setSmsTemplate(text) {
+    const textarea = document.getElementById("id_message");
+    if (!textarea) return;
+
+    textarea.value = text;
+    textarea.focus();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const textarea = document.getElementById("id_message");
+
+    if (textarea) {
+      if (!textarea.value.trim()) {
+        textarea.value = "Asante kwa kutembelea Kilasi Investment. Tunafurahi kukuhudumia. Karibu tena.";
+      }
+
+      textarea.setAttribute(
+        "placeholder",
+        "Type normal message only. Customer name is added automatically."
+      );
+    }
+  });
 </script>
 {% endblock %}

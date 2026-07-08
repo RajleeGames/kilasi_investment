@@ -1,0 +1,690 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Transport Customers SMS{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --tc-text:#0f172a;
+    --tc-muted:#64748b;
+    --tc-line:#e2e8f0;
+    --tc-card:#ffffff;
+    --tc-primary:#0891b2;
+    --tc-primary-2:#06b6d4;
+    --tc-success:#16a34a;
+    --tc-danger:#dc2626;
+    --tc-shadow:0 10px 28px rgba(15,23,42,.055);
+  }
+
+  @keyframes tcFloat{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-3px); }
+  }
+
+  @keyframes tcPulse{
+    0%{ box-shadow:0 0 0 0 rgba(8,145,178,.22); }
+    70%{ box-shadow:0 0 0 10px rgba(8,145,178,0); }
+    100%{ box-shadow:0 0 0 0 rgba(8,145,178,0); }
+  }
+
+  @keyframes tcShine{
+    0%{ transform:translateX(-120%); }
+    100%{ transform:translateX(120%); }
+  }
+
+  .tc-wrap{
+    max-width:1280px;
+    margin:1rem auto 1.4rem;
+    padding:0 .75rem;
+    color:var(--tc-text);
+  }
+
+  .tc-hero{
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at top right, rgba(6,182,212,.15), transparent 35%),
+      linear-gradient(135deg, rgba(8,145,178,.08), rgba(37,99,235,.035)),
+      linear-gradient(180deg, #fff, #fbfdff);
+    border:1px solid var(--tc-line);
+    border-radius:22px;
+    box-shadow:var(--tc-shadow);
+    padding:1rem;
+    margin-bottom:.9rem;
+  }
+
+  .tc-hero::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    width:45%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    animation:tcShine 4s ease-in-out infinite;
+    pointer-events:none;
+  }
+
+  .tc-title{
+    position:relative;
+    z-index:1;
+    margin:0;
+    font-size:1.02rem;
+    font-weight:900;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+
+  .tc-title-icon{
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,145,178,.10);
+    color:var(--tc-primary);
+    animation:tcFloat 2.8s ease-in-out infinite;
+    flex-shrink:0;
+  }
+
+  .tc-sub{
+    position:relative;
+    z-index:1;
+    margin-top:.25rem;
+    font-size:.74rem;
+    color:var(--tc-muted);
+  }
+
+  .tc-stats{
+    position:relative;
+    z-index:1;
+    display:flex;
+    gap:.45rem;
+    flex-wrap:wrap;
+    margin-top:.75rem;
+  }
+
+  .tc-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.34rem .62rem;
+    border-radius:999px;
+    font-size:.68rem;
+    font-weight:850;
+    background:#fff;
+    border:1px solid var(--tc-line);
+    color:#334155;
+  }
+
+  .tc-chip.primary{
+    background:rgba(8,145,178,.08);
+    color:var(--tc-primary);
+    border-color:rgba(8,145,178,.14);
+  }
+
+  .tc-card{
+    background:var(--tc-card);
+    border:1px solid var(--tc-line);
+    border-radius:18px;
+    box-shadow:var(--tc-shadow);
+    overflow:hidden;
+    margin-bottom:.9rem;
+    transition:.18s ease;
+  }
+
+  .tc-card:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 32px rgba(15,23,42,.075);
+  }
+
+  .tc-card-head{
+    padding:.82rem .95rem;
+    border-bottom:1px solid #eef2f7;
+    display:flex;
+    justify-content:space-between;
+    gap:.7rem;
+    align-items:center;
+    flex-wrap:wrap;
+    background:linear-gradient(180deg,#fff,#fbfdff);
+  }
+
+  .tc-card-title{
+    margin:0;
+    font-size:.82rem;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+  }
+
+  .tc-card-body{
+    padding:.9rem;
+  }
+
+  .tc-label{
+    display:block;
+    font-size:.66rem;
+    font-weight:900;
+    color:var(--tc-muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:.32rem;
+  }
+
+  .tc-control,
+  .form-control,
+  .form-select{
+    width:100%;
+    min-height:38px;
+    border-radius:11px;
+    border:1px solid var(--tc-line);
+    font-size:.75rem;
+    box-shadow:none !important;
+  }
+
+  textarea.tc-control,
+  textarea.form-control{
+    min-height:112px;
+    padding:.7rem .75rem;
+    line-height:1.45;
+  }
+
+  .tc-control:focus,
+  .form-control:focus,
+  .form-select:focus{
+    border-color:rgba(8,145,178,.42);
+    box-shadow:0 0 0 .16rem rgba(8,145,178,.08) !important;
+  }
+
+  .tc-btn{
+    height:38px;
+    border:none;
+    border-radius:11px;
+    padding:0 .85rem;
+    font-size:.73rem;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.38rem;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.16s ease;
+  }
+
+  .tc-btn-primary{
+    background:linear-gradient(135deg,#0891b2,#06b6d4);
+    color:#fff;
+    animation:tcPulse 2.8s infinite;
+  }
+
+  .tc-btn-primary:hover{
+    color:#fff;
+    transform:translateY(-1px);
+  }
+
+  .tc-btn-soft{
+    background:#fff;
+    border:1px solid var(--tc-line);
+    color:#334155;
+  }
+
+  .tc-btn-soft:hover{
+    color:#0f172a;
+    border-color:#cbd5e1;
+    transform:translateY(-1px);
+  }
+
+  .tc-note{
+    border:1px dashed rgba(8,145,178,.24);
+    background:#f8fbff;
+    border-radius:14px;
+    padding:.75rem .85rem;
+    font-size:.68rem;
+    color:#475569;
+    line-height:1.45;
+    height:100%;
+  }
+
+  .tc-note strong{
+    color:#0f172a;
+  }
+
+  .tc-small{
+    font-size:.64rem;
+    color:var(--tc-muted);
+    margin-top:.25rem;
+    line-height:1.45;
+  }
+
+  .tc-template-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.32rem;
+    padding:.25rem .5rem;
+    border-radius:999px;
+    background:#ecfeff;
+    color:#155e75;
+    border:1px solid #cffafe;
+    font-size:.62rem;
+    font-weight:850;
+    cursor:pointer;
+    margin:.12rem;
+    user-select:none;
+  }
+
+  .tc-template-pill:hover{
+    background:#cffafe;
+  }
+
+  .tc-table-wrap{
+    overflow-x:auto;
+  }
+
+  .tc-table{
+    width:100%;
+    margin:0;
+    border-collapse:collapse;
+  }
+
+  .tc-table thead th{
+    background:#f8fafc;
+    color:#475569;
+    font-size:.64rem;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:.66rem .72rem;
+    border-bottom:1px solid var(--tc-line);
+    white-space:nowrap;
+  }
+
+  .tc-table tbody td{
+    padding:.68rem .72rem;
+    border-top:1px solid #eef2f7;
+    font-size:.72rem;
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+
+  .tc-table tbody tr{
+    transition:.14s ease;
+  }
+
+  .tc-table tbody tr:hover{
+    background:#fbfdff;
+  }
+
+  .tc-name{
+    font-weight:900;
+    color:var(--tc-text);
+  }
+
+  .tc-money{
+    font-variant-numeric:tabular-nums;
+    font-weight:900;
+  }
+
+  .tc-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:.25rem .5rem;
+    border-radius:999px;
+    background:#ecfeff;
+    color:#155e75;
+    font-size:.62rem;
+    font-weight:900;
+  }
+
+  .tc-empty{
+    padding:1.5rem .9rem;
+    text-align:center;
+    color:var(--tc-muted);
+    font-size:.78rem;
+  }
+
+  .tc-check{
+    width:17px;
+    height:17px;
+    cursor:pointer;
+  }
+
+  @media(max-width:768px){
+    .tc-card-body{
+      padding:.78rem;
+    }
+
+    .tc-table thead{
+      display:none;
+    }
+
+    .tc-table,
+    .tc-table tbody,
+    .tc-table tr,
+    .tc-table td{
+      display:block;
+      width:100%;
+    }
+
+    .tc-table tbody tr{
+      border-top:1px solid #eef2f7;
+      padding:.55rem 0;
+    }
+
+    .tc-table tbody td{
+      border:none;
+      padding:.35rem .75rem;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      white-space:normal;
+    }
+
+    .tc-table tbody td::before{
+      content:attr(data-label);
+      color:#64748b;
+      font-size:.61rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .tc-card-head{
+      align-items:flex-start;
+    }
+
+    .tc-btn{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="tc-wrap">
+
+  <div class="tc-hero">
+    <h3 class="tc-title">
+      <span class="tc-title-icon"><i class="fa-solid fa-truck-fast"></i></span>
+      Transport Customers SMS
+    </h3>
+
+    <div class="tc-sub">
+      Send SMS to transport customers only. This page is separate from Sales Customers SMS.
+    </div>
+
+    <div class="tc-stats">
+      <span class="tc-chip primary">
+        <i class="fa-solid fa-users"></i>
+        Customers: {{ total_customers|intcomma }}
+      </span>
+
+      <span class="tc-chip">
+        <i class="fa-solid fa-calendar-check"></i>
+        Bookings: {{ total_booking_count|intcomma }}
+      </span>
+
+      <span class="tc-chip">
+        <i class="fa-solid fa-route"></i>
+        Trips: {{ total_trip_count|intcomma }}
+      </span>
+
+      <span class="tc-chip">
+        <i class="fa-solid fa-money-bill"></i>
+        Trip Income: Tsh {{ total_amount|intcomma }}
+      </span>
+
+      <span class="tc-chip">
+        <i class="fa-solid fa-calendar"></i>
+        {{ start_date }} to {{ end_date }}
+      </span>
+
+      <span class="tc-chip primary">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        Auto Name: ON
+      </span>
+    </div>
+  </div>
+
+  <div class="tc-card">
+    <div class="tc-card-head">
+      <h5 class="tc-card-title">
+        <i class="fa-solid fa-filter text-info"></i>
+        Filter Transport Customers
+      </h5>
+    </div>
+
+    <div class="tc-card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-md-2">
+          <label class="tc-label">From Date</label>
+          {{ form.start_date }}
+        </div>
+
+        <div class="col-12 col-md-2">
+          <label class="tc-label">To Date</label>
+          {{ form.end_date }}
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label class="tc-label">Source</label>
+          {{ form.source }}
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label class="tc-label">Booking Status</label>
+          {{ form.status }}
+        </div>
+
+        <div class="col-12 col-md-2 d-flex gap-2">
+          <button type="submit" class="tc-btn tc-btn-primary w-100">
+            <i class="fa-solid fa-filter"></i>
+            Apply
+          </button>
+
+          <a href="{% url 'sms:transport_customers_sms' %}" class="tc-btn tc-btn-soft">
+            Reset
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+    <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+    <input type="hidden" name="source" value="{{ source }}">
+    <input type="hidden" name="status" value="{{ status }}">
+
+    <div class="tc-card">
+      <div class="tc-card-head">
+        <h5 class="tc-card-title">
+          <i class="fa-solid fa-pen-to-square text-info"></i>
+          Compose Transport Message
+        </h5>
+
+        <button type="button" class="tc-btn tc-btn-soft" onclick="toggleAllTransportCustomers()">
+          <i class="fa-solid fa-check-double"></i>
+          Select / Unselect All
+        </button>
+      </div>
+
+      <div class="tc-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-lg-3">
+            <label class="tc-label">Sender ID</label>
+            {{ form.sender_id }}
+            <div class="tc-small">Optional if default sender exists.</div>
+
+            <div class="tc-note mt-3">
+              <strong>Auto name is enabled.</strong><br>
+              Type the message normally. The system will add each transport customer name automatically before sending.
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-9">
+            <label class="tc-label">Message</label>
+            {{ form.message }}
+
+            <div class="tc-small">
+              Example: Asante kwa kutumia huduma ya usafiri ya Kilasi Investment. Karibu tena.
+            </div>
+
+            <div class="mt-2">
+              <span class="tc-template-pill" onclick="setTransportSmsTemplate('Asante kwa kutumia huduma ya usafiri ya Kilasi Investment. Tunafurahi kukuhudumia. Karibu tena.')">
+                <i class="fa-solid fa-bolt"></i> Asante
+              </span>
+
+              <span class="tc-template-pill" onclick="setTransportSmsTemplate('Safari yako/booking yako imepokelewa. Tutawasiliana nawe kwa maelezo zaidi. Asante kwa kuchagua Kilasi Investment.')">
+                <i class="fa-solid fa-calendar-check"></i> Booking
+              </span>
+
+              <span class="tc-template-pill" onclick="setTransportSmsTemplate('Tunathamini kuwa mteja wetu wa huduma za usafiri. Karibu tena Kilasi Investment.')">
+                <i class="fa-solid fa-heart"></i> Appreciation
+              </span>
+
+              <span class="tc-template-pill" onclick="setTransportSmsTemplate('Thanks for choosing Kilasi Investment transport service. We are happy to serve you again.')">
+                <i class="fa-solid fa-language"></i> English
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tc-card">
+      <div class="tc-card-head">
+        <h5 class="tc-card-title">
+          <i class="fa-solid fa-address-book text-info"></i>
+          Transport Customers Found
+        </h5>
+
+        <button type="submit" class="tc-btn tc-btn-primary">
+          <i class="fa-solid fa-paper-plane"></i>
+          Send Transport SMS
+        </button>
+      </div>
+
+      {% if rows %}
+        <div class="tc-table-wrap">
+          <table class="tc-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Pick</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Source</th>
+                <th>Bookings</th>
+                <th>Trips</th>
+                <th>Pickup</th>
+                <th>Destination</th>
+                <th>Last Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td data-label="Pick">
+                    <input type="checkbox"
+                           class="tc-check transport-customer-check"
+                           name="selected_phones"
+                           value="{{ row.phone }}"
+                           checked>
+                  </td>
+
+                  <td data-label="Customer">
+                    <div>
+                      <div class="tc-name">{{ row.name }}</div>
+                      <div class="tc-small">{{ row.status_text }}</div>
+                    </div>
+                  </td>
+
+                  <td data-label="Phone">
+                    <span class="tc-money">{{ row.phone }}</span>
+                  </td>
+
+                  <td data-label="Source">
+                    <span class="tc-badge">{{ row.source_text }}</span>
+                  </td>
+
+                  <td data-label="Bookings">
+                    <span class="tc-badge">{{ row.booking_count }}</span>
+                  </td>
+
+                  <td data-label="Trips">
+                    <span class="tc-badge">{{ row.trip_count }}</span>
+                  </td>
+
+                  <td data-label="Pickup">
+                    {{ row.pickup|default:"-" }}
+                  </td>
+
+                  <td data-label="Destination">
+                    {{ row.destination|default:"-" }}
+                  </td>
+
+                  <td data-label="Last Date">
+                    {{ row.last_date_text }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="tc-empty">
+          <i class="fa-regular fa-face-frown"></i><br>
+          No transport customers with valid phone numbers found for this filter.
+        </div>
+      {% endif %}
+    </div>
+  </form>
+
+</div>
+
+<script>
+  function toggleAllTransportCustomers() {
+    const checks = document.querySelectorAll(".transport-customer-check");
+    if (!checks.length) return;
+
+    let allChecked = true;
+
+    checks.forEach(function (c) {
+      if (!c.checked) {
+        allChecked = false;
+      }
+    });
+
+    checks.forEach(function (c) {
+      c.checked = !allChecked;
+    });
+  }
+
+  function setTransportSmsTemplate(text) {
+    const textarea = document.getElementById("id_message");
+    if (!textarea) return;
+
+    textarea.value = text;
+    textarea.focus();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const textarea = document.getElementById("id_message");
+
+    if (textarea) {
+      if (!textarea.value.trim()) {
+        textarea.value = "Asante kwa kutumia huduma ya usafiri ya Kilasi Investment. Tunafurahi kukuhudumia. Karibu tena.";
+      }
+
+      textarea.setAttribute(
+        "placeholder",
+        "Type normal transport message only. Customer name is added automatically."
+      );
+    }
+  });
+</script>
+{% endblock %}

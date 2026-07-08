@@ -4,8 +4,15 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from datetime import datetime, time, date
+from django.utils import timezone
 
+from sales.models import Invoice, Customer, GenjiSale
+from orders.models import CustomerOrder
+from topup.models import TopupTransaction, UsedTopupSale
 from users.utils import role_required
+
+from transport.models import Booking, Trip
 
 from .forms import (
     ContactForm,
@@ -13,6 +20,7 @@ from .forms import (
     QuickSMSForm,
     SalesCustomersSMSForm,
     SMSCampaignForm,
+    TransportCustomersSMSForm,
     SenderIDForm,
     SMSTemplateForm,
 )
@@ -40,27 +48,44 @@ from sales.models import Invoice
 # =========================================================
 # FORM STYLING HELPER
 # =========================================================
+# ADD THESE IMPORTS AT THE TOP OF views.py IF THEY ARE MISSING:
+# from datetime import date, datetime, time
+# from django.core.paginator import Paginator
+# from django.shortcuts import redirect, render
+# from django.contrib import messages
+# from django.utils import timezone
+#
+# Keep your existing imports for:
+# login_required, role_required, SalesCustomersSMSForm,
+# Contact, ContactGroup, Invoice, CustomerOrder, GenjiSale,
+# TopupTransaction, UsedTopupSale, send_quick_sms
+
+from datetime import date, datetime, time
+
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+
+# =========================================================
+# COMMON FORM STYLE HELPER
+# =========================================================
+
 def _style_form_fields(form):
     """
-    Apply Bootstrap-friendly classes to Django form widgets
-    so all SMS templates look clean without repeating code.
+    Apply Bootstrap-friendly classes to Django form widgets.
     """
     for _, field in form.fields.items():
         widget = field.widget
         existing = widget.attrs.get("class", "").strip()
         widget_name = widget.__class__.__name__
 
-        if widget_name in ["CheckboxInput"]:
+        if widget_name in ["CheckboxInput", "CheckboxSelectMultiple"]:
             css = "form-check-input"
-        elif widget_name in ["CheckboxSelectMultiple"]:
-            css = "form-check-input"
-        elif widget_name in ["SelectMultiple"]:
+        elif widget_name in ["Select", "SelectMultiple"]:
             css = "form-select"
-        elif widget_name in ["Select"]:
-            css = "form-select"
-        elif widget_name in ["Textarea"]:
-            css = "form-control"
-        elif widget_name in ["ClearableFileInput", "FileInput"]:
+        elif widget_name in ["Textarea", "ClearableFileInput", "FileInput"]:
             css = "form-control"
         else:
             css = "form-control"
@@ -69,17 +94,72 @@ def _style_form_fields(form):
 
     return form
 
+
 # =========================================================
 # SALES CUSTOMERS SMS
+# Normal Sales + Orders + Genji + Top-up
+# Deduplicated by phone number
 # Personalized SMS using customer names
 # =========================================================
+
+SMS_NAME_PLACEHOLDERS = [
+    "{name}",
+    "{first_name}",
+    "{phone}",
+    "{{ name }}",
+    "{{ first_name }}",
+    "{{ phone }}",
+    "{{name}}",
+    "{{first_name}}",
+    "{{phone}}",
+    "[name]",
+    "[first_name]",
+    "[phone]",
+    "user.name",
+    "user.first_name",
+    "user.phone",
+    "customer.name",
+    "customer.first_name",
+    "customer.phone",
+]
+
+WEAK_CUSTOMER_NAMES = [
+    "",
+    "customer",
+    "mteja",
+    "walk-in",
+    "walk in",
+    "unknown",
+    "n/a",
+    "-",
+    "—",
+]
+
+
+def _model_has_field(model_class, field_name):
+    """
+    Safely check if a Django model has a field.
+    Prevents crashes if different versions of the project have slightly
+    different field names.
+    """
+    try:
+        model_class._meta.get_field(field_name)
+        return True
+    except Exception:
+        return False
+
+
+def _safe_model(model_name):
+    """
+    Return model class if it is already imported in this views.py.
+    This prevents NameError crashes if one source model is not available.
+    """
+    return globals().get(model_name)
+
 
 def _looks_like_phone_name(name, phone):
     """
     Detect contacts where the name was accidentally saved as phone number.
-    Example:
-      name = 255712345678
-      phone = 255712345678
     """
     name_digits = "".join(ch for ch in (name or "") if ch.isdigit())
     phone_digits = "".join(ch for ch in (phone or "") if ch.isdigit())
@@ -90,8 +170,7 @@ def _looks_like_phone_name(name, phone):
 def _first_name(full_name):
     """
     Get first name only.
-    Example:
-      Miraji Ally => Miraji
+    Example: Miraji Ally -> Miraji
     """
     full_name = (full_name or "").strip()
 
@@ -105,55 +184,23 @@ def _first_name(full_name):
 def _message_has_name_placeholder(message):
     """
     If user manually writes a placeholder, we replace it.
-    If user does NOT write placeholder, we automatically add the name.
+    If user does not write a placeholder, we automatically add the name.
     """
     message = (message or "").lower()
-
-    tokens = [
-        "{name}",
-        "{first_name}",
-        "{phone}",
-
-        "{{ name }}",
-        "{{ first_name }}",
-        "{{ phone }}",
-
-        "{{name}}",
-        "{{first_name}}",
-        "{{phone}}",
-
-        "[name]",
-        "[first_name]",
-        "[phone]",
-
-        "user.name",
-        "user.first_name",
-        "user.phone",
-
-        "customer.name",
-        "customer.first_name",
-        "customer.phone",
-    ]
-
-    return any(token in message for token in tokens)
+    return any(token in message for token in SMS_NAME_PLACEHOLDERS)
 
 
 def _clean_existing_greeting(message):
     """
-    Remove generic greeting if user wrote it without name.
+    Remove generic greetings before we force the customer name.
 
-    Examples:
-      Hello, thanks...        => thanks...
-      Ndugu, asante...        => asante...
-      Ndugu mteja, asante...  => asante...
-      Habari, karibu...       => karibu...
+    Example:
+      Ndugu, asante kwa kununua...
+    becomes:
+      asante kwa kununua...
 
-    But:
-      Asante kwa kununua...   => stays same
-      Karibu tena...          => stays same
-
-    Then we force:
-      Ndugu Miraji, asante...
+    Then final renderer makes it:
+      Ndugu Miraji, asante kwa kununua...
     """
     msg = (message or "").strip()
 
@@ -173,7 +220,6 @@ def _clean_existing_greeting(message):
         "dear ",
         "dear customer,",
         "dear customer ",
-
         "habari,",
         "habari ",
         "hujambo,",
@@ -184,7 +230,6 @@ def _clean_existing_greeting(message):
         "salam ",
         "salamu,",
         "salamu ",
-
         "ndugu,",
         "ndugu ",
         "ndg,",
@@ -193,7 +238,6 @@ def _clean_existing_greeting(message):
         "mteja ",
         "mteja wetu,",
         "mteja wetu ",
-
         "bwana,",
         "bwana ",
         "bi,",
@@ -205,10 +249,8 @@ def _clean_existing_greeting(message):
             msg = msg[len(starter):].strip()
             break
 
-    # Extra cleanup for patterns like:
-    # "mteja, asante..."
-    # "customer, thanks..."
     low2 = msg.lower().strip()
+
     second_starters = [
         "mteja,",
         "mteja ",
@@ -231,8 +273,8 @@ def _get_best_customer_name(row, contact=None):
     Choose the best saved customer name.
 
     Priority:
-      1. SMS contact name, if it is real
-      2. Sales customer name from invoice
+      1. SMS contact name, if real
+      2. Row/customer name from sales/order/genji/topup
       3. Customer
     """
     row_name = (row.get("name") or "").strip()
@@ -246,14 +288,10 @@ def _get_best_customer_name(row, contact=None):
         contact_phone = (getattr(contact, "phone", "") or "").strip()
 
     phone = contact_phone or row_phone
-
-    weak_names = ["", "customer", "walk-in", "unknown", "n/a", "-", "—", "mteja"]
-
     name = contact_name or row_name or "Customer"
 
-    # If SMS contact name is weak or phone-like, use sales customer name
     if row_name:
-        if name.strip().lower() in weak_names or _looks_like_phone_name(name, phone):
+        if name.strip().lower() in WEAK_CUSTOMER_NAMES or _looks_like_phone_name(name, phone):
             name = row_name
 
     if not name:
@@ -272,7 +310,7 @@ def _render_customer_message(message_template, row, contact=None):
     Customer receives:
       Ndugu Miraji, Asante kwa kutembelea Kilasi Investment.
 
-    Case 2: User writes:
+    Case 2: User writes placeholder:
       Hello {{ name }}, thanks for visiting Kilasi Investment.
 
     Customer receives:
@@ -287,35 +325,30 @@ def _render_customer_message(message_template, row, contact=None):
         "{name}": name,
         "{first_name}": first_name,
         "{phone}": phone,
-
         "{{ name }}": name,
         "{{ first_name }}": first_name,
         "{{ phone }}": phone,
-
         "{{name}}": name,
         "{{first_name}}": first_name,
         "{{phone}}": phone,
-
         "[name]": name,
         "[first_name]": first_name,
         "[phone]": phone,
-
         "user.name": name,
         "user.first_name": first_name,
         "user.phone": phone,
-
         "customer.name": name,
         "customer.first_name": first_name,
         "customer.phone": phone,
     }
 
-    # If user wrote placeholder manually, only replace placeholders
+    # If user wrote placeholder manually, only replace placeholders.
     if _message_has_name_placeholder(message):
         for key, value in replacements.items():
-            message = message.replace(key, value)
+            message = message.replace(key, str(value or ""))
         return message.strip()
 
-    # If user wrote normal message, force name automatically
+    # If user wrote normal message, force name automatically.
     body = _clean_existing_greeting(message)
 
     if not body:
@@ -324,27 +357,377 @@ def _render_customer_message(message_template, row, contact=None):
     return f"Ndugu {first_name}, {body}".strip()
 
 
-def _sync_sales_customer_to_sms_contact(customer, created_by=None):
+def _sms_to_datetime(value):
     """
-    Create/update SMS Contact from sales Customer.
-    This keeps sales customers available in SMS Center.
+    Convert date/datetime/empty values into timezone-aware datetime.
+    """
+    if not value:
+        return timezone.now()
 
-    Important:
-    - If existing SMS contact name is phone number, update it to real saved customer name.
-    - If existing SMS contact name is Customer / Walk-in / Unknown, update it.
+    if isinstance(value, datetime):
+        if timezone.is_naive(value):
+            return timezone.make_aware(value)
+        return value
+
+    if isinstance(value, date):
+        return timezone.make_aware(datetime.combine(value, time.min))
+
+    return timezone.now()
+
+
+def _sms_safe_int(value):
     """
-    if not customer:
+    Convert money-like values to int safely for display totals.
+    """
+    try:
+        return int(float(value or 0))
+    except Exception:
+        return 0
+
+
+def _get_sales_customer_group():
+    """
+    Create/get SMS group safely.
+    Works whether ContactGroup has description field or not.
+    """
+    group_defaults = {}
+
+    try:
+        group_fields = {f.name for f in ContactGroup._meta.fields}
+        if "description" in group_fields:
+            group_defaults["description"] = "Customers collected automatically from sales invoices, orders, genji and top-up."
+    except Exception:
+        group_defaults = {}
+
+    try:
+        group, _ = ContactGroup.objects.get_or_create(
+            name="Sales Customers",
+            defaults=group_defaults,
+        )
+        return group
+    except Exception:
         return None
 
-    raw_name = (getattr(customer, "name", "") or "").strip()
-    raw_phone = (getattr(customer, "phone", "") or "").strip()
 
-    if not raw_phone:
-        return None
-
+def _add_customer_sms_row(
+    rows_by_phone,
+    *,
+    name,
+    phone,
+    amount=0,
+    source="Sales",
+    when=None,
+    status="",
+    customer=None,
+):
+    """
+    Add/update one customer row by normalized phone.
+    This is where duplicate customers are combined.
+    """
     try:
         from .services import clean_phone, is_valid_tz_phone
     except Exception:
+        return
+
+    raw_phone = (phone or "").strip()
+    normalized_phone = clean_phone(raw_phone)
+
+    if not is_valid_tz_phone(normalized_phone):
+        return
+
+    name = (name or "").strip() or "Customer"
+    when = _sms_to_datetime(when)
+
+    if normalized_phone not in rows_by_phone:
+        rows_by_phone[normalized_phone] = {
+            "name": name,
+            "phone": normalized_phone,
+            "raw_phone": raw_phone,
+            "invoice_count": 0,
+            "total_amount": 0,
+            "first_date": when,
+            "last_date": when,
+            "payments": set(),
+            "sources": set(),
+            "customer": customer,
+        }
+
+    row = rows_by_phone[normalized_phone]
+
+    if row["name"].strip().lower() in WEAK_CUSTOMER_NAMES and name:
+        row["name"] = name
+
+    if not row.get("customer") and customer:
+        row["customer"] = customer
+
+    row["invoice_count"] += 1
+    row["total_amount"] += _sms_safe_int(amount)
+
+    if source:
+        row["sources"].add(source)
+
+    if status:
+        row["payments"].add(status)
+
+    if when < row["first_date"]:
+        row["first_date"] = when
+
+    if when > row["last_date"]:
+        row["last_date"] = when
+
+
+def _sales_customer_rows(start_date, end_date, payment_method="", customer_source="all"):
+    """
+    Collect unique customers from:
+      - Normal Sales
+      - Customer Orders
+      - Genji
+      - Top-up transactions
+      - Used Top-up sales
+
+    Deduplicate by normalized phone number.
+    """
+    rows_by_phone = {}
+    customer_source = customer_source or "all"
+
+    # =====================================================
+    # 1. NORMAL SALES CUSTOMERS
+    # =====================================================
+    InvoiceModel = _safe_model("Invoice")
+
+    if InvoiceModel and customer_source in ("all", "sales"):
+        sales_qs = (
+            InvoiceModel.objects
+            .select_related("customer")
+            .filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date,
+                customer__isnull=False,
+            )
+            .exclude(customer__phone__isnull=True)
+            .exclude(customer__phone__exact="")
+            .order_by("-created_at")
+        )
+
+        if _model_has_field(InvoiceModel, "invoice_state"):
+            sales_qs = sales_qs.filter(invoice_state="active")
+
+        if payment_method:
+            sales_qs = sales_qs.filter(status=payment_method)
+
+        for inv in sales_qs:
+            customer = getattr(inv, "customer", None)
+            if not customer:
+                continue
+
+            _add_customer_sms_row(
+                rows_by_phone,
+                name=getattr(customer, "name", "") or "",
+                phone=getattr(customer, "phone", "") or "",
+                amount=getattr(inv, "total_amount", 0) or 0,
+                source="Sales",
+                when=getattr(inv, "created_at", None),
+                status=(getattr(inv, "status", "") or "").upper(),
+                customer=customer,
+            )
+
+    # =====================================================
+    # 2. CUSTOMER ORDERS
+    # =====================================================
+    CustomerOrderModel = _safe_model("CustomerOrder")
+
+    if CustomerOrderModel and customer_source in ("all", "orders"):
+        orders_qs = (
+            CustomerOrderModel.objects
+            .filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date,
+            )
+            .exclude(customer_phone__isnull=True)
+            .exclude(customer_phone__exact="")
+            .order_by("-created_at")
+        )
+
+        # Only select_related fields that exist in your model.
+        select_fields = []
+        for field_name in ["branch", "created_by", "product"]:
+            if _model_has_field(CustomerOrderModel, field_name):
+                select_fields.append(field_name)
+        if select_fields:
+            orders_qs = orders_qs.select_related(*select_fields)
+
+        for order in orders_qs:
+            order_status = (getattr(order, "order_status", "") or "").upper()
+            payment_status = (getattr(order, "payment_status", "") or "").upper()
+
+            status_text = "ORDER"
+            if order_status:
+                status_text = f"ORDER-{order_status}"
+            if payment_status:
+                status_text = f"{status_text}-{payment_status}"
+
+            _add_customer_sms_row(
+                rows_by_phone,
+                name=getattr(order, "customer_name", "") or "",
+                phone=getattr(order, "customer_phone", "") or "",
+                amount=getattr(order, "total_amount", 0) or 0,
+                source="Orders",
+                when=getattr(order, "created_at", None),
+                status=status_text,
+                customer=None,
+            )
+
+    # =====================================================
+    # 3. GENJI CUSTOMERS
+    # =====================================================
+    GenjiSaleModel = _safe_model("GenjiSale")
+
+    if GenjiSaleModel and customer_source in ("all", "genji"):
+        genji_qs = (
+            GenjiSaleModel.objects
+            .filter(
+                sell_date__gte=start_date,
+                sell_date__lte=end_date,
+            )
+            .exclude(customer_phone__isnull=True)
+            .exclude(customer_phone__exact="")
+            .order_by("-sell_date", "-id")
+        )
+
+        select_fields = []
+        for field_name in ["branch", "created_by"]:
+            if _model_has_field(GenjiSaleModel, field_name):
+                select_fields.append(field_name)
+        if select_fields:
+            genji_qs = genji_qs.select_related(*select_fields)
+
+        for genji in genji_qs:
+            try:
+                amount = genji.total_selling
+            except Exception:
+                amount = getattr(genji, "selling_price", 0) or 0
+
+            _add_customer_sms_row(
+                rows_by_phone,
+                name=getattr(genji, "customer_name", "") or "",
+                phone=getattr(genji, "customer_phone", "") or "",
+                amount=amount,
+                source="Genji",
+                when=getattr(genji, "sell_date", None),
+                status="GENJI",
+                customer=None,
+            )
+
+    # =====================================================
+    # 4. TOP-UP CUSTOMERS
+    # =====================================================
+    TopupTransactionModel = _safe_model("TopupTransaction")
+
+    if TopupTransactionModel and customer_source in ("all", "topup"):
+        topup_qs = (
+            TopupTransactionModel.objects
+            .filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date,
+            )
+            .exclude(customer__isnull=True)
+            .exclude(customer__phone__isnull=True)
+            .exclude(customer__phone__exact="")
+            .order_by("-created_at")
+        )
+
+        select_fields = []
+        for field_name in ["customer", "branch", "new_product", "created_by"]:
+            if _model_has_field(TopupTransactionModel, field_name):
+                select_fields.append(field_name)
+        if select_fields:
+            topup_qs = topup_qs.select_related(*select_fields)
+
+        if _model_has_field(TopupTransactionModel, "status"):
+            topup_qs = topup_qs.filter(status="completed")
+
+        for tx in topup_qs:
+            customer = getattr(tx, "customer", None)
+            if not customer:
+                continue
+
+            _add_customer_sms_row(
+                rows_by_phone,
+                name=getattr(customer, "name", "") or "",
+                phone=getattr(customer, "phone", "") or "",
+                amount=getattr(tx, "addon_amount", 0) or 0,
+                source="Top-up",
+                when=getattr(tx, "created_at", None),
+                status="TOP-UP",
+                customer=customer,
+            )
+
+    # =====================================================
+    # 5. USED TOP-UP SALES CUSTOMERS
+    # =====================================================
+    UsedTopupSaleModel = _safe_model("UsedTopupSale")
+
+    if UsedTopupSaleModel and customer_source in ("all", "topup"):
+        used_sales_qs = (
+            UsedTopupSaleModel.objects
+            .filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date,
+            )
+            .exclude(customer__isnull=True)
+            .exclude(customer__phone__isnull=True)
+            .exclude(customer__phone__exact="")
+            .order_by("-created_at")
+        )
+
+        select_fields = []
+        for field_name in ["customer", "branch", "used_stock", "sold_by"]:
+            if _model_has_field(UsedTopupSaleModel, field_name):
+                select_fields.append(field_name)
+        if select_fields:
+            used_sales_qs = used_sales_qs.select_related(*select_fields)
+
+        for sale in used_sales_qs:
+            customer = getattr(sale, "customer", None)
+            if not customer:
+                continue
+
+            _add_customer_sms_row(
+                rows_by_phone,
+                name=getattr(customer, "name", "") or "",
+                phone=getattr(customer, "phone", "") or "",
+                amount=getattr(sale, "sold_price", 0) or 0,
+                source="Used Top-up",
+                when=getattr(sale, "created_at", None),
+                status="USED-SALE",
+                customer=customer,
+            )
+
+    rows = list(rows_by_phone.values())
+
+    for row in rows:
+        row["payments_text"] = ", ".join(sorted(row["payments"])) if row["payments"] else "-"
+        row["source_text"] = ", ".join(sorted(row["sources"])) if row["sources"] else "-"
+
+    rows.sort(key=lambda x: x["last_date"], reverse=True)
+
+    return rows
+
+
+def _sync_sales_sms_row_to_contact(row, created_by=None):
+    """
+    Sync any row from sales/orders/genji/topup into SMS Contact.
+    Works even when row does not have a sales.Customer object.
+    """
+    try:
+        from .services import clean_phone, is_valid_tz_phone
+    except Exception:
+        return None
+
+    raw_name = (row.get("name") or "").strip()
+    raw_phone = (row.get("phone") or "").strip()
+
+    if not raw_phone:
         return None
 
     phone = clean_phone(raw_phone)
@@ -352,147 +735,86 @@ def _sync_sales_customer_to_sms_contact(customer, created_by=None):
     if not is_valid_tz_phone(phone):
         return None
 
-    name = raw_name or phone
+    name = raw_name or "Customer"
+    group = _get_sales_customer_group()
 
-    group, _ = ContactGroup.objects.get_or_create(
-        name="Sales Customers",
-        defaults={
-            "description": "Customers collected automatically from sales invoices."
-        }
-    )
-
+    contact_fields = {f.name for f in Contact._meta.fields}
     contact = Contact.objects.filter(phone=phone).first()
 
     if contact:
         changed = False
 
-        weak_names = ["", "customer", "walk-in", "unknown", "n/a", "-", "—", "mteja"]
-        old_name = (contact.name or "").strip()
+        old_name = (getattr(contact, "name", "") or "").strip()
         old_name_lower = old_name.lower()
 
-        should_update_name = (
-            name
-            and (
+        weak_names = WEAK_CUSTOMER_NAMES + [phone.lower()]
+
+        if "name" in contact_fields:
+            if name and (
                 old_name_lower in weak_names
                 or _looks_like_phone_name(old_name, phone)
-                or old_name == phone
-            )
-        )
+            ):
+                contact.name = name
+                changed = True
 
-        if should_update_name and old_name != name:
-            contact.name = name
-            changed = True
-
-        if not contact.is_active:
+        if "is_active" in contact_fields and getattr(contact, "is_active", True) is False:
             contact.is_active = True
             changed = True
 
         if changed:
-            contact.save(update_fields=["name", "is_active", "updated_at"])
+            contact.save()
 
-        contact.groups.add(group)
+        if group:
+            try:
+                contact.groups.add(group)
+            except Exception:
+                pass
+
         return contact
 
-    contact = Contact.objects.create(
-        name=name,
-        phone=phone,
-        is_active=True,
-        created_by=created_by,
-        notes="Auto-saved from sales invoice.",
-    )
-    contact.groups.add(group)
+    kwargs = {}
+
+    if "name" in contact_fields:
+        kwargs["name"] = name
+
+    if "phone" in contact_fields:
+        kwargs["phone"] = phone
+
+    if "is_active" in contact_fields:
+        kwargs["is_active"] = True
+
+    if "notes" in contact_fields:
+        kwargs["notes"] = "Auto-saved from Sales Customers SMS sources."
+
+    if "created_by" in contact_fields and created_by:
+        kwargs["created_by"] = created_by
+
+    contact = Contact.objects.create(**kwargs)
+
+    if group:
+        try:
+            contact.groups.add(group)
+        except Exception:
+            pass
 
     return contact
 
 
-def _sales_customer_rows(start_date, end_date, payment_method=""):
+def _sync_sales_customer_to_sms_contact(customer, created_by=None):
     """
-    Get unique customers from invoices between date range.
-    Deduplication is by normalized phone number.
+    Backward-compatible helper.
+    Keep this if other sales views already call it after normal invoice sale.
+    It now uses the new combined row sync logic, so no duplicate code is needed.
     """
-    qs = (
-        Invoice.objects
-        .select_related("customer", "seller", "branch")
-        .filter(
-            created_at__date__gte=start_date,
-            created_at__date__lte=end_date,
-            customer__isnull=False,
-        )
-        .exclude(customer__phone__isnull=True)
-        .exclude(customer__phone__exact="")
-        .order_by("-created_at")
-    )
+    if not customer:
+        return None
 
-    if hasattr(Invoice, "invoice_state"):
-        qs = qs.filter(invoice_state="active")
+    row = {
+        "name": (getattr(customer, "name", "") or "").strip(),
+        "phone": (getattr(customer, "phone", "") or "").strip(),
+    }
 
-    if payment_method:
-        qs = qs.filter(status=payment_method)
-
-    rows_by_phone = {}
-
-    try:
-        from .services import clean_phone, is_valid_tz_phone
-    except Exception:
-        clean_phone = None
-        is_valid_tz_phone = None
-
-    for inv in qs:
-        customer = inv.customer
-        raw_phone = (getattr(customer, "phone", "") or "").strip()
-
-        if clean_phone:
-            phone = clean_phone(raw_phone)
-        else:
-            phone = raw_phone.replace(" ", "").replace("-", "")
-
-        if is_valid_tz_phone and not is_valid_tz_phone(phone):
-            continue
-
-        if not phone:
-            continue
-
-        name = (getattr(customer, "name", "") or "").strip() or "Customer"
-        amount = int(getattr(inv, "total_amount", 0) or 0)
-        status = (getattr(inv, "status", "") or "").upper()
-
-        if phone not in rows_by_phone:
-            rows_by_phone[phone] = {
-                "name": name,
-                "phone": phone,
-                "raw_phone": raw_phone,
-                "invoice_count": 0,
-                "total_amount": 0,
-                "first_date": inv.created_at,
-                "last_date": inv.created_at,
-                "payments": set(),
-                "customer": customer,
-            }
-
-        row = rows_by_phone[phone]
-        row["invoice_count"] += 1
-        row["total_amount"] += amount
-        row["payments"].add(status)
-
-        if inv.created_at < row["first_date"]:
-            row["first_date"] = inv.created_at
-
-        if inv.created_at > row["last_date"]:
-            row["last_date"] = inv.created_at
-
-        weak_names = ["customer", "walk-in", "unknown", "n/a", "-", "—", "mteja"]
-
-        if row["name"].strip().lower() in weak_names and name:
-            row["name"] = name
-
-    rows = list(rows_by_phone.values())
-
-    for row in rows:
-        row["payments_text"] = ", ".join(sorted(row["payments"]))
-
-    rows.sort(key=lambda x: x["last_date"], reverse=True)
-
-    return rows
+    return _sync_sales_sms_row_to_contact(row, created_by=created_by)
 
 
 @login_required
@@ -500,10 +822,13 @@ def _sales_customer_rows(start_date, end_date, payment_method=""):
 def sales_customers_sms(request):
     """
     SMS Center page:
-    - filter sales customers by date range/payment method
-    - show unique phone numbers
-    - send personalized SMS to selected customers
-    - automatically adds customer name even if user types normal message
+    - Normal sales customers
+    - Customer orders customers
+    - Genji customers
+    - Top-up customers
+    - Filter by customer source
+    - Pagination: 50 or 100 per page
+    - Send personalized SMS using saved names
     """
     if request.method == "POST":
         form = SalesCustomersSMSForm(request.POST)
@@ -513,16 +838,23 @@ def sales_customers_sms(request):
             start_date = form.cleaned_data["start_date"]
             end_date = form.cleaned_data["end_date"]
             payment_method = form.cleaned_data.get("payment_method") or ""
+            customer_source = form.cleaned_data.get("customer_source") or "all"
             sender = form.cleaned_data.get("sender_id")
             message_template = (form.cleaned_data.get("message") or "").strip()
 
             selected_phones = request.POST.getlist("selected_phones")
+            per_page = request.POST.get("per_page") or request.GET.get("per_page") or "50"
+
+            if per_page not in ["50", "100"]:
+                per_page = "50"
 
             redirect_url = (
                 f"{request.path}"
                 f"?start_date={start_date}"
                 f"&end_date={end_date}"
                 f"&payment_method={payment_method}"
+                f"&customer_source={customer_source}"
+                f"&per_page={per_page}"
             )
 
             if not message_template:
@@ -533,7 +865,13 @@ def sales_customers_sms(request):
                 messages.error(request, "Select at least one customer.")
                 return redirect(redirect_url)
 
-            rows = _sales_customer_rows(start_date, end_date, payment_method)
+            rows = _sales_customer_rows(
+                start_date=start_date,
+                end_date=end_date,
+                payment_method=payment_method,
+                customer_source=customer_source,
+            )
+
             selected_set = set(selected_phones)
 
             sent_count = 0
@@ -544,8 +882,8 @@ def sales_customers_sms(request):
                 if row["phone"] not in selected_set:
                     continue
 
-                contact = _sync_sales_customer_to_sms_contact(
-                    row.get("customer"),
+                contact = _sync_sales_sms_row_to_contact(
+                    row,
                     created_by=request.user,
                 )
 
@@ -563,7 +901,6 @@ def sales_customers_sms(request):
                     skipped_count += 1
                     continue
 
-                # Send one-by-one because each customer gets a different name/message
                 result = send_quick_sms(
                     message=personalized_message,
                     contacts=[contact],
@@ -599,27 +936,46 @@ def sales_customers_sms(request):
         start_date = form.cleaned_data["start_date"]
         end_date = form.cleaned_data["end_date"]
         payment_method = form.cleaned_data.get("payment_method") or ""
+        customer_source = form.cleaned_data.get("customer_source") or "all"
     else:
         today = timezone.localdate()
         start_date = today
         end_date = today
         payment_method = ""
+        customer_source = "all"
 
-    rows = _sales_customer_rows(start_date, end_date, payment_method)
+    all_rows = _sales_customer_rows(
+        start_date=start_date,
+        end_date=end_date,
+        payment_method=payment_method,
+        customer_source=customer_source,
+    )
 
-    total_invoice_count = sum(int(r["invoice_count"] or 0) for r in rows)
-    total_amount = sum(int(r["total_amount"] or 0) for r in rows)
+    total_invoice_count = sum(int(r["invoice_count"] or 0) for r in all_rows)
+    total_amount = sum(int(r["total_amount"] or 0) for r in all_rows)
+
+    per_page = request.GET.get("per_page") or "50"
+    if per_page not in ["50", "100"]:
+        per_page = "50"
+
+    paginator = Paginator(all_rows, int(per_page))
+    page_number = request.GET.get("page") or 1
+    page_obj = paginator.get_page(page_number)
 
     return render(request, "sms/sales_customers_sms.html", {
         "form": form,
-        "rows": rows,
+        "rows": page_obj.object_list,
+        "page_obj": page_obj,
+        "per_page": per_page,
         "start_date": start_date,
         "end_date": end_date,
         "payment_method": payment_method,
-        "total_customers": len(rows),
+        "customer_source": customer_source,
+        "total_customers": len(all_rows),
         "total_invoice_count": total_invoice_count,
         "total_amount": total_amount,
     })
+
 # =========================================================
 # DASHBOARD
 # =========================================================
@@ -1196,4 +1552,657 @@ def contact_delete_all(request):
 
     return render(request, "sms/contact_delete_all.html", {
         "total_contacts": total_contacts,
+    })
+
+# =========================================================
+# TRANSPORT CUSTOMERS SMS
+# Separate from Sales Customers SMS
+# =========================================================
+
+def _transport_digits(value):
+    return "".join(ch for ch in (value or "") if ch.isdigit())
+
+
+def _transport_normalize_phone(phone):
+    phone = (phone or "").strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+
+    if phone.startswith("+"):
+        phone = phone[1:]
+
+    if phone.startswith("0"):
+        phone = "255" + phone[1:]
+
+    return phone
+
+
+def _transport_valid_phone(phone):
+    phone = _transport_normalize_phone(phone)
+    return bool(phone.startswith("255") and len(phone) >= 12)
+
+
+def _transport_first_name(full_name):
+    full_name = (full_name or "").strip()
+
+    if not full_name:
+        return "Mteja"
+
+    parts = full_name.split()
+    return parts[0].strip() if parts else "Mteja"
+
+
+def _transport_looks_like_phone_name(name, phone):
+    name_digits = _transport_digits(name)
+    phone_digits = _transport_digits(phone)
+    return bool(name_digits and phone_digits and name_digits == phone_digits)
+
+
+def _transport_get_role_branch(request):
+    profile = getattr(request.user, "profile", None)
+    role = (getattr(profile, "role", "") or "").lower()
+    branch = getattr(profile, "branch", None)
+    return role, branch
+
+
+def _transport_message_has_placeholder(message):
+    message = (message or "").lower()
+
+    tokens = [
+        "{name}",
+        "{first_name}",
+        "{phone}",
+        "{pickup}",
+        "{destination}",
+        "{date}",
+        "{source}",
+
+        "{{ name }}",
+        "{{ first_name }}",
+        "{{ phone }}",
+        "{{ pickup }}",
+        "{{ destination }}",
+        "{{ date }}",
+        "{{ source }}",
+
+        "{{name}}",
+        "{{first_name}}",
+        "{{phone}}",
+        "{{pickup}}",
+        "{{destination}}",
+        "{{date}}",
+        "{{source}}",
+
+        "[name]",
+        "[first_name]",
+        "[phone]",
+        "[pickup]",
+        "[destination]",
+        "[date]",
+        "[source]",
+
+        "user.name",
+        "user.first_name",
+        "customer.name",
+        "customer.first_name",
+    ]
+
+    return any(token in message for token in tokens)
+
+
+def _transport_clean_existing_greeting(message):
+    """
+    Remove only generic greetings so we do not duplicate:
+      Ndugu, asante... => asante...
+      Hello, thanks... => thanks...
+
+    But if message starts with:
+      Asante kwa...
+    we keep it and send:
+      Ndugu Miraji, Asante kwa...
+    """
+    msg = (message or "").strip()
+
+    if not msg:
+        return ""
+
+    low = msg.lower().strip()
+
+    starters = [
+        "hello,",
+        "hello ",
+        "hi,",
+        "hi ",
+        "hey,",
+        "hey ",
+        "dear,",
+        "dear ",
+        "dear customer,",
+        "dear customer ",
+
+        "habari,",
+        "habari ",
+        "hujambo,",
+        "hujambo ",
+        "mambo,",
+        "mambo ",
+        "salam,",
+        "salam ",
+        "salamu,",
+        "salamu ",
+
+        "ndugu,",
+        "ndugu ",
+        "ndg,",
+        "ndg ",
+        "mteja,",
+        "mteja ",
+        "mteja wetu,",
+        "mteja wetu ",
+
+        "bwana,",
+        "bwana ",
+        "bi,",
+        "bi ",
+    ]
+
+    for starter in starters:
+        if low.startswith(starter):
+            msg = msg[len(starter):].strip()
+            break
+
+    low2 = msg.lower().strip()
+
+    second_starters = [
+        "mteja,",
+        "mteja ",
+        "customer,",
+        "customer ",
+        "wetu,",
+        "wetu ",
+    ]
+
+    for starter in second_starters:
+        if low2.startswith(starter):
+            msg = msg[len(starter):].strip()
+            break
+
+    return msg.strip()
+
+
+def _transport_best_name(row, contact=None):
+    row_name = (row.get("name") or "").strip()
+    row_phone = (row.get("phone") or "").strip()
+
+    contact_name = ""
+    contact_phone = ""
+
+    if contact:
+        contact_name = (getattr(contact, "name", "") or "").strip()
+        contact_phone = (getattr(contact, "phone", "") or "").strip()
+
+    phone = contact_phone or row_phone
+    name = contact_name or row_name or "Mteja"
+
+    weak_names = ["", "customer", "mteja", "transport customer", "walk-in", "unknown", "n/a", "-", "—"]
+
+    if row_name:
+        if name.strip().lower() in weak_names or _transport_looks_like_phone_name(name, phone):
+            name = row_name
+
+    if not name:
+        name = "Mteja"
+
+    return name, phone
+
+
+def _render_transport_customer_message(message_template, row, contact=None):
+    """
+    User can type:
+      Asante kwa kutumia huduma ya usafiri ya Kilasi Investment.
+
+    Customer receives:
+      Ndugu Miraji, Asante kwa kutumia huduma ya usafiri ya Kilasi Investment.
+    """
+    message = (message_template or "").strip()
+
+    name, phone = _transport_best_name(row, contact=contact)
+    first_name = _transport_first_name(name)
+
+    pickup = (row.get("pickup") or "").strip()
+    destination = (row.get("destination") or "").strip()
+    date_text = (row.get("last_date_text") or "").strip()
+    source_text = (row.get("source_text") or "").strip()
+
+    replacements = {
+        "{name}": name,
+        "{first_name}": first_name,
+        "{phone}": phone,
+        "{pickup}": pickup,
+        "{destination}": destination,
+        "{date}": date_text,
+        "{source}": source_text,
+
+        "{{ name }}": name,
+        "{{ first_name }}": first_name,
+        "{{ phone }}": phone,
+        "{{ pickup }}": pickup,
+        "{{ destination }}": destination,
+        "{{ date }}": date_text,
+        "{{ source }}": source_text,
+
+        "{{name}}": name,
+        "{{first_name}}": first_name,
+        "{{phone}}": phone,
+        "{{pickup}}": pickup,
+        "{{destination}}": destination,
+        "{{date}}": date_text,
+        "{{source}}": source_text,
+
+        "[name]": name,
+        "[first_name]": first_name,
+        "[phone]": phone,
+        "[pickup]": pickup,
+        "[destination]": destination,
+        "[date]": date_text,
+        "[source]": source_text,
+
+        "user.name": name,
+        "user.first_name": first_name,
+        "customer.name": name,
+        "customer.first_name": first_name,
+    }
+
+    if _transport_message_has_placeholder(message):
+        for key, value in replacements.items():
+            message = message.replace(key, value)
+        return message.strip()
+
+    body = _transport_clean_existing_greeting(message)
+
+    if not body:
+        body = "Asante kwa kutumia huduma ya usafiri ya Kilasi Investment. Karibu tena."
+
+    return f"Ndugu {first_name}, {body}".strip()
+
+
+def _sync_transport_customer_to_sms_contact(row, created_by=None):
+    """
+    Save/update transport customer into SMS Contact.
+    Separate group = Transport Customers.
+    It does not mix with Sales Customers page.
+    """
+    raw_name = (row.get("name") or "").strip()
+    raw_phone = (row.get("phone") or "").strip()
+
+    if not raw_phone:
+        return None
+
+    phone = _transport_normalize_phone(raw_phone)
+
+    if not _transport_valid_phone(phone):
+        return None
+
+    name = raw_name or "Transport Customer"
+
+    group, _ = ContactGroup.objects.get_or_create(
+        name="Transport Customers",
+        defaults={
+            "description": "Customers collected automatically from transport bookings and trips."
+        }
+    )
+
+    contact = Contact.objects.filter(phone=phone).first()
+
+    if contact:
+        changed = False
+
+        old_name = (contact.name or "").strip()
+        old_name_lower = old_name.lower()
+        weak_names = ["", "customer", "mteja", "transport customer", "walk-in", "unknown", "n/a", "-", "—"]
+
+        should_update_name = (
+            name
+            and (
+                old_name_lower in weak_names
+                or _transport_looks_like_phone_name(old_name, phone)
+                or old_name == phone
+            )
+        )
+
+        if should_update_name and old_name != name:
+            contact.name = name
+            changed = True
+
+        if not contact.is_active:
+            contact.is_active = True
+            changed = True
+
+        if changed:
+            contact.save(update_fields=["name", "is_active", "updated_at"])
+
+        contact.groups.add(group)
+        return contact
+
+    contact = Contact.objects.create(
+        name=name,
+        phone=phone,
+        is_active=True,
+        created_by=created_by,
+        notes="Auto-saved from transport bookings/trips.",
+    )
+
+    contact.groups.add(group)
+    return contact
+
+
+def _transport_customer_name_map(request):
+    """
+    Get names from bookings by phone.
+    Useful because Trip model has customer_phone only.
+    """
+    role, branch = _transport_get_role_branch(request)
+
+    qs = Booking.objects.select_related("branch").exclude(customer_phone__isnull=True).exclude(customer_phone__exact="")
+
+    if role == "transport" and branch:
+        qs = qs.filter(branch=branch)
+
+    name_map = {}
+
+    for b in qs.order_by("-booking_datetime", "-id"):
+        phone = _transport_normalize_phone(getattr(b, "customer_phone", "") or "")
+        name = (getattr(b, "customer_name", "") or "").strip()
+
+        if phone and name and phone not in name_map:
+            name_map[phone] = name
+
+    return name_map
+
+
+def _add_transport_row(rows_by_phone, phone, name, amount=0, source="Transport", pickup="", destination="", when=None, status=""):
+    phone = _transport_normalize_phone(phone)
+
+    if not _transport_valid_phone(phone):
+        return
+
+    name = (name or "").strip() or "Transport Customer"
+
+    if phone not in rows_by_phone:
+        rows_by_phone[phone] = {
+            "name": name,
+            "phone": phone,
+            "booking_count": 0,
+            "trip_count": 0,
+            "total_amount": 0,
+            "first_date": when,
+            "last_date": when,
+            "last_date_text": "",
+            "sources": set(),
+            "statuses": set(),
+            "pickup": pickup or "",
+            "destination": destination or "",
+        }
+
+    row = rows_by_phone[phone]
+
+    weak_names = ["", "customer", "mteja", "transport customer", "unknown", "n/a", "-", "—"]
+
+    if row["name"].strip().lower() in weak_names and name:
+        row["name"] = name
+
+    if source:
+        row["sources"].add(source)
+
+    if status:
+        row["statuses"].add(status)
+
+    if source == "Booking":
+        row["booking_count"] += 1
+    elif source == "Trip":
+        row["trip_count"] += 1
+
+    try:
+        row["total_amount"] += int(float(amount or 0))
+    except Exception:
+        row["total_amount"] += 0
+
+    if pickup and not row["pickup"]:
+        row["pickup"] = pickup
+
+    if destination and not row["destination"]:
+        row["destination"] = destination
+
+    if when:
+        if not row["first_date"] or when < row["first_date"]:
+            row["first_date"] = when
+
+        if not row["last_date"] or when > row["last_date"]:
+            row["last_date"] = when
+
+
+def _transport_customer_rows(request, start_date, end_date, source="all", status=""):
+    """
+    Collect unique transport customers from:
+      - Booking.customer_name + Booking.customer_phone
+      - Trip.customer_phone
+
+    Separate from sales customers.
+    """
+    role, branch = _transport_get_role_branch(request)
+    rows_by_phone = {}
+    name_map = _transport_customer_name_map(request)
+
+    source = source or "all"
+
+    if source in ("all", "bookings"):
+        bookings = (
+            Booking.objects
+            .select_related("branch", "created_by")
+            .filter(
+                booking_datetime__date__gte=start_date,
+                booking_datetime__date__lte=end_date,
+            )
+            .exclude(customer_phone__isnull=True)
+            .exclude(customer_phone__exact="")
+            .order_by("-booking_datetime", "-id")
+        )
+
+        if role == "transport" and branch:
+            bookings = bookings.filter(branch=branch)
+
+        if status:
+            bookings = bookings.filter(status=status)
+
+        for b in bookings:
+            _add_transport_row(
+                rows_by_phone=rows_by_phone,
+                phone=getattr(b, "customer_phone", "") or "",
+                name=getattr(b, "customer_name", "") or "",
+                amount=0,
+                source="Booking",
+                pickup=getattr(b, "pickup_area", "") or "",
+                destination=getattr(b, "destination", "") or "",
+                when=getattr(b, "booking_datetime", None),
+                status=(getattr(b, "status", "") or "").upper(),
+            )
+
+    if source in ("all", "trips"):
+        trips = (
+            Trip.objects
+            .select_related("branch", "vehicle", "driver")
+            .filter(
+                trip_date__date__gte=start_date,
+                trip_date__date__lte=end_date,
+            )
+            .exclude(customer_phone__isnull=True)
+            .exclude(customer_phone__exact="")
+            .order_by("-trip_date", "-id")
+        )
+
+        if role == "transport" and branch:
+            trips = trips.filter(branch=branch)
+
+        for t in trips:
+            phone = _transport_normalize_phone(getattr(t, "customer_phone", "") or "")
+            trip_name = (getattr(t, "customer_name", "") or "").strip()
+            name = trip_name or name_map.get(phone) or "Transport Customer"
+
+            _add_transport_row(
+                rows_by_phone=rows_by_phone,
+                phone=phone,
+                name=name,
+                amount=getattr(t, "amount_charged", 0) or 0,
+                source="Trip",
+                pickup=getattr(t, "origin", "") or "",
+                destination=getattr(t, "destination", "") or "",
+                when=getattr(t, "trip_date", None),
+                status="TRIP",
+            )
+
+    rows = list(rows_by_phone.values())
+
+    for row in rows:
+        row["source_text"] = ", ".join(sorted(row["sources"])) if row["sources"] else "Transport"
+        row["status_text"] = ", ".join(sorted(row["statuses"])) if row["statuses"] else "-"
+        if row.get("last_date"):
+            try:
+                row["last_date_text"] = timezone.localtime(row["last_date"]).strftime("%Y-%m-%d %H:%M")
+            except Exception:
+                row["last_date_text"] = str(row["last_date"])
+        else:
+            row["last_date_text"] = "-"
+
+    rows.sort(key=lambda x: x["last_date"] or timezone.now(), reverse=True)
+
+    return rows
+
+
+@login_required
+@role_required(["admin", "cashier", "transport"])
+def transport_customers_sms(request):
+    """
+    SMS Center page:
+    - transport customers only
+    - separate from sales customers
+    - sends personalized SMS with saved names
+    """
+    if request.method == "POST":
+        form = TransportCustomersSMSForm(request.POST)
+        form = _style_form_fields(form)
+
+        if form.is_valid():
+            start_date = form.cleaned_data["start_date"]
+            end_date = form.cleaned_data["end_date"]
+            source = form.cleaned_data.get("source") or "all"
+            status = form.cleaned_data.get("status") or ""
+            sender = form.cleaned_data.get("sender_id")
+            message_template = (form.cleaned_data.get("message") or "").strip()
+
+            selected_phones = request.POST.getlist("selected_phones")
+
+            redirect_url = (
+                f"{request.path}"
+                f"?start_date={start_date}"
+                f"&end_date={end_date}"
+                f"&source={source}"
+                f"&status={status}"
+            )
+
+            if not message_template:
+                messages.error(request, "Type the SMS message first.")
+                return redirect(redirect_url)
+
+            if not selected_phones:
+                messages.error(request, "Select at least one transport customer.")
+                return redirect(redirect_url)
+
+            rows = _transport_customer_rows(request, start_date, end_date, source=source, status=status)
+            selected_set = set(selected_phones)
+
+            sent_count = 0
+            failed_count = 0
+            skipped_count = 0
+
+            for row in rows:
+                if row["phone"] not in selected_set:
+                    continue
+
+                contact = _sync_transport_customer_to_sms_contact(
+                    row,
+                    created_by=request.user,
+                )
+
+                if not contact:
+                    skipped_count += 1
+                    continue
+
+                personalized_message = _render_transport_customer_message(
+                    message_template,
+                    row,
+                    contact=contact,
+                )
+
+                if not personalized_message:
+                    skipped_count += 1
+                    continue
+
+                result = send_quick_sms(
+                    message=personalized_message,
+                    contacts=[contact],
+                    manual_numbers=[],
+                    sender=sender,
+                    created_by=request.user,
+                )
+
+                if result.get("ok"):
+                    sent_count += int(result.get("count", 0) or 0)
+                else:
+                    failed_count += 1
+
+            if sent_count > 0:
+                messages.success(
+                    request,
+                    f"Transport SMS sent to {sent_count} customer(s). "
+                    f"Failed: {failed_count}. Skipped invalid: {skipped_count}."
+                )
+            else:
+                messages.error(
+                    request,
+                    f"No transport SMS was sent. Failed: {failed_count}. Skipped invalid: {skipped_count}."
+                )
+
+            return redirect(redirect_url)
+
+    else:
+        form = TransportCustomersSMSForm(request.GET or None)
+        form = _style_form_fields(form)
+
+    if form.is_valid():
+        start_date = form.cleaned_data["start_date"]
+        end_date = form.cleaned_data["end_date"]
+        source = form.cleaned_data.get("source") or "all"
+        status = form.cleaned_data.get("status") or ""
+    else:
+        today = timezone.localdate()
+        start_date = today
+        end_date = today
+        source = "all"
+        status = ""
+
+    rows = _transport_customer_rows(request, start_date, end_date, source=source, status=status)
+
+    total_booking_count = sum(int(r["booking_count"] or 0) for r in rows)
+    total_trip_count = sum(int(r["trip_count"] or 0) for r in rows)
+    total_amount = sum(int(r["total_amount"] or 0) for r in rows)
+
+    return render(request, "sms/transport_customers_sms.html", {
+        "form": form,
+        "rows": rows,
+        "start_date": start_date,
+        "end_date": end_date,
+        "source": source,
+        "status": status,
+        "total_customers": len(rows),
+        "total_booking_count": total_booking_count,
+        "total_trip_count": total_trip_count,
+        "total_amount": total_amount,
     })
