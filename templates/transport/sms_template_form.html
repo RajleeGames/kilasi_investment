@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Automatic SMS | Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+  {% include "transport/_portal_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="tr-shell-sm">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-pen-to-square text-primary me-1"></i>
+        {{ template.get_event_display }}
+      </h1>
+      <div class="tr-sub">This message will be used automatically for future matching trips.</div>
+    </div>
+
+    <a class="tr-btn tr-btn-muted" href="{% url 'transport:sms_template_list' %}">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div class="tr-card tr-card-pad mb-3">
+    <div class="tr-card-title">
+      <i class="fa-solid fa-code text-primary"></i>
+      Supported Placeholders
+    </div>
+    <div class="tr-code-list">
+      {% for token in placeholders %}<code class="tr-code">{{ token }}</code>{% endfor %}
+    </div>
+  </div>
+
+  <form method="post" class="tr-card" novalidate id="smsTemplateForm">
+    {% csrf_token %}
+
+    <div class="tr-card-head">
+      <h2 class="tr-card-title">
+        <i class="fa-solid fa-message text-primary"></i>
+        Message Settings
+      </h2>
+    </div>
+
+    <div class="tr-card-pad">
+      {% if form.non_field_errors %}
+        <div class="tr-alert">
+          {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+        </div>
+      {% endif %}
+
+      {% for field in form %}
+        {% if field.name == 'is_active' %}
+          <div class="tr-form-group mb-3">
+            <div class="tr-check">
+              {{ field }}
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            </div>
+            {% if field.help_text %}<div class="tr-help">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% else %}
+          <div class="tr-form-group mb-3">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="tr-help">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="tr-note">
+        Keep the message clear and not too long. Customer name, route, vehicle plate and driver details are inserted from the trip automatically.
+      </div>
+
+      <div class="tr-actions justify-content-end mt-3">
+        <a class="tr-btn tr-btn-muted" href="{% url 'transport:sms_template_list' %}">Cancel</a>
+        <button class="tr-btn tr-btn-primary" type="submit" id="saveSmsTemplateBtn">
+          <i class="fa-solid fa-floppy-disk"></i> Save Message
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('smsTemplateForm');
+  if (!form) return;
+
+  const message = form.querySelector('textarea');
+  if (message) {
+    message.setAttribute('rows', '8');
+    message.classList.add('form-control');
+  }
+
+  form.addEventListener('submit', function () {
+    const button = document.getElementById('saveSmsTemplateBtn');
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+  });
+});
+</script>
+{% endblock %}

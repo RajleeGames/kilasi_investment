@@ -1,793 +1,305 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Trips{% endblock %}
+{% block title %}{% if is_driver %}My Trips{% else %}Trips{% endif %} | Kilasi Investment{% endblock %}
 
 {% block extra_css %}
-<style>
-  .trips-page{
-    max-width: 1120px;
-    margin: 0 auto;
-  }
-
-  .trips-hero{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    padding:1rem 1rem .95rem;
-    background:
-      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
-      #fff;
-    box-shadow:0 10px 30px rgba(15,23,42,.05);
-    margin-bottom:1rem;
-  }
-
-  .trips-title{
-    margin:0;
-    font-size:1.04rem;
-    font-weight:800;
-    letter-spacing:-.02em;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-  }
-
-  .trips-subtitle{
-    font-size:.75rem;
-    color:#64748b;
-    margin-top:.2rem;
-  }
-
-  .trips-hero-actions{
-    display:flex;
-    gap:.7rem;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-
-  .trips-add-btn{
-    border-radius:12px;
-    font-size:.78rem;
-    font-weight:700;
-    padding:.65rem .95rem;
-    box-shadow:0 10px 22px rgba(37,99,235,.14);
-  }
-
-  .trips-chip{
-    display:inline-flex;
-    align-items:center;
-    gap:.4rem;
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:999px;
-    padding:.45rem .72rem;
-    font-weight:700;
-    white-space:nowrap;
-  }
-
-  .trips-chip strong{
-    color:#0f172a;
-    font-weight:800;
-  }
-
-  .trips-filter-card,
-  .trips-table-card{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    background:#fff;
-    box-shadow:0 10px 28px rgba(15,23,42,.05);
-    overflow:hidden;
-  }
-
-  .trips-filter-card{
-    margin-bottom:1rem;
-  }
-
-  .trips-filter-body{
-    padding:1rem;
-  }
-
-  .trips-filter-card .form-control,
-  .trips-filter-card .form-select,
-  .trips-filter-card .btn{
-    min-height:42px;
-    border-radius:12px;
-    font-size:.79rem;
-  }
-
-  .trips-filter-card .btn{
-    font-weight:700;
-  }
-
-  .trips-search-wrap{
-    position:relative;
-  }
-
-  .trips-search-icon{
-    position:absolute;
-    left:.85rem;
-    top:50%;
-    transform:translateY(-50%);
-    color:#94a3b8;
-    font-size:.78rem;
-    pointer-events:none;
-  }
-
-  .trips-search{
-    padding-left:2.25rem;
-  }
-
-  .trips-current-filter{
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:12px;
-    padding:.7rem .8rem;
-    font-weight:700;
-  }
-
-  .trips-current-filter strong{
-    color:#0f172a;
-  }
-
-  .trips-table-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:.8rem;
-    padding:.9rem 1rem;
-    border-bottom:1px solid rgba(15,23,42,.06);
-    background:linear-gradient(180deg, #ffffff, #fbfdff);
-    flex-wrap:wrap;
-  }
-
-  .trips-table-title{
-    margin:0;
-    font-size:.84rem;
-    font-weight:800;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.45rem;
-  }
-
-  .trips-table-note{
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:999px;
-    padding:.35rem .65rem;
-    font-weight:700;
-  }
-
-  .trips-table{
-    margin:0;
-    width:100%;
-  }
-
-  .trips-table thead th{
-    font-size:.70rem;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.05em;
-    color:#64748b;
-    background:#f8fafc;
-    border-bottom:1px solid #e2e8f0;
-    white-space:nowrap;
-    padding:.85rem .9rem;
-  }
-
-  .trips-table tbody td{
-    font-size:.79rem;
-    color:#0f172a;
-    vertical-align:middle;
-    padding:.82rem .9rem;
-    border-top:1px solid #eef2f7;
-  }
-
-  .trips-table tbody tr{
-    transition:background .16s ease;
-  }
-
-  .trips-table tbody tr:hover{
-    background:#fbfdff;
-  }
-
-  .trip-row-link{
-    cursor:pointer;
-  }
-
-  .trip-row-link:focus,
-  .trip-row-link:focus-within{
-    outline:3px solid rgba(37,99,235,.14);
-    outline-offset:-3px;
-  }
-
-  .trip-date{
-    font-size:.76rem;
-    font-weight:700;
-    color:#334155;
-  }
-
-  .trip-customer{
-    font-size:.78rem;
-    font-weight:800;
-    color:#0f172a;
-  }
-
-  .trip-phone{
-    color:#0369a1;
-    font-weight:700;
-    font-size:.77rem;
-  }
-
-  .trip-muted{
-    color:#64748b;
-    font-size:.77rem;
-  }
-
-  .trip-amount{
-    text-align:right;
-  }
-
-  .amount-pill{
-    display:inline-flex;
-    align-items:center;
-    gap:.38rem;
-    padding:.35rem .6rem;
-    border-radius:999px;
-    border:1px solid rgba(14,165,233,.20);
-    background:rgba(14,165,233,.10);
-    color:#075985;
-    font-size:.71rem;
-    font-weight:800;
-    font-variant-numeric:tabular-nums;
-    white-space:nowrap;
-  }
-
-  .amount-pill .tzs{
-    font-size:.68rem;
-    opacity:.9;
-  }
-
-  .trip-empty{
-    text-align:center;
-    padding:2rem 1rem;
-    color:#64748b;
-    font-size:.8rem;
-    background:#fff;
-  }
-
-  .trip-empty i{
-    display:block;
-    font-size:1.15rem;
-    margin-bottom:.45rem;
-    color:#94a3b8;
-  }
-
-  .trips-pagination-wrap{
-    padding:1rem;
-    border-top:1px solid #eef2f7;
-    background:#fff;
-  }
-
-  .trips-pagination{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:.45rem;
-    margin:0;
-    padding:0;
-    list-style:none;
-  }
-
-  .trips-pagination .page-link{
-    min-width:40px;
-    height:40px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:0 .85rem;
-    border-radius:12px;
-    border:1px solid #e2e8f0;
-    background:#fff;
-    color:#334155;
-    text-decoration:none;
-    font-size:.76rem;
-    font-weight:800;
-    transition:.18s ease;
-  }
-
-  .trips-pagination .page-link:hover{
-    background:#eff6ff;
-    border-color:#bfdbfe;
-    color:#1d4ed8;
-  }
-
-  .trips-pagination .active .page-link{
-    background:linear-gradient(135deg,#2563eb,#3b82f6);
-    border-color:#2563eb;
-    color:#fff;
-    box-shadow:0 10px 22px rgba(37,99,235,.16);
-  }
-
-  .trips-pagination .disabled .page-link{
-    background:#f8fafc;
-    color:#94a3b8;
-    border-color:#e2e8f0;
-    pointer-events:none;
-  }
-
-  .trips-page-summary{
-    text-align:center;
-    font-size:.74rem;
-    color:#64748b;
-    font-weight:700;
-    margin-top:.75rem;
-  }
-
-  @media (max-width: 991.98px){
-    .trips-hero{
-      padding:.9rem;
-    }
-
-    .trips-title{
-      font-size:.98rem;
-    }
-
-    .trips-subtitle{
-      font-size:.73rem;
-    }
-
-    .trips-filter-body{
-      padding:.85rem;
-    }
-
-    .trips-hero-actions{
-      width:100%;
-    }
-
-    .trips-search{
-      width:100%;
-    }
-
-    .trips-chip{
-      width:100%;
-      justify-content:center;
-    }
-
-    .trips-add-btn{
-      width:100%;
-      justify-content:center;
-    }
-
-    .trips-table thead{
-      display:none;
-    }
-
-    .trips-table,
-    .trips-table tbody,
-    .trips-table tr,
-    .trips-table td{
-      display:block;
-      width:100%;
-    }
-
-    .trips-table tbody tr{
-      border-top:1px solid #eef2f7;
-      padding:.3rem 0;
-    }
-
-    .trips-table tbody td{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      padding:.72rem .85rem;
-      white-space:normal;
-    }
-
-    .trips-table tbody td::before{
-      content:attr(data-label);
-      min-width:92px;
-      font-size:.67rem;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.05em;
-      color:#64748b;
-    }
-
-    .trip-amount{
-      text-align:left;
-    }
-  }
-</style>
+  {% include "transport/_portal_styles.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="trips-page">
-
-  <div class="trips-hero">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-      <div>
-        <h3 class="trips-title">
-          <i class="fa-solid fa-road text-primary"></i>
-          Trips
-        </h3>
-
-        <div class="trips-subtitle">
-          Filter by date and vehicle, then search trips quickly.
-        </div>
+<div class="tr-shell">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-road text-primary me-1"></i>
+        {% if is_driver %}My Trips{% else %}Transport Trips{% endif %}
+      </h1>
+      <div class="tr-sub">
+        {% if is_driver %}
+          Search, filter and update only the trips assigned to your driver account.
+        {% else %}
+          Search all accessible transport trips and filter by date, status, driver or vehicle.
+        {% endif %}
       </div>
+    </div>
 
-      <div class="trips-hero-actions">
-        <span class="trips-chip" title="Visible rows on this page">
-          Showing <strong id="visibleTrips">0</strong> / <strong id="pageTrips">{{ trips|length }}</strong> on this page
-        </span>
+    {% if role == 'admin' or role == 'transport' or role == 'driver' %}
+      <a class="tr-btn tr-btn-primary" href="{% url 'transport:trip_create' %}">
+        <i class="fa-solid fa-plus"></i> Record Trip
+      </a>
+    {% endif %}
+  </div>
 
-        <span class="trips-chip" title="Total rows in database after filter">
-          Total <strong>{{ total_trips_count|intcomma }}</strong>
-        </span>
+  <div class="tr-grid mb-3">
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Filtered Trips</div>
+      <div class="tr-kpi-value">{{ total_trips_count|intcomma }}</div>
+      <div class="tr-kpi-note">After all active filters</div>
+    </div>
 
-        <a href="{% url 'transport:trip_create' %}" class="btn btn-primary trips-add-btn">
-          <i class="fa-solid fa-plus me-1"></i> Record Trip
-        </a>
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Current Page</div>
+      <div class="tr-kpi-value">{{ page_obj.number|default:1 }}</div>
+      <div class="tr-kpi-note">Of {{ page_obj.paginator.num_pages|default:1 }} page{{ page_obj.paginator.num_pages|default:1|pluralize }}</div>
+    </div>
+
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Selected Status</div>
+      <div class="tr-kpi-value" style="font-size:1rem">
+        {% if selected_status %}
+          {% for value,label in status_choices %}{% if value == selected_status %}{{ label }}{% endif %}{% endfor %}
+        {% else %}
+          All
+        {% endif %}
       </div>
+      <div class="tr-kpi-note">Journey state</div>
+    </div>
+
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Date Range</div>
+      <div class="tr-kpi-value" style="font-size:.92rem">
+        {% if start_date or end_date %}
+          {{ start_date|default:"Start" }} → {{ end_date|default:"Today" }}
+        {% else %}
+          All Dates
+        {% endif %}
+      </div>
+      <div class="tr-kpi-note">Trip date filter</div>
     </div>
   </div>
 
-  <div class="trips-filter-card">
-    <div class="trips-filter-body">
-      <form method="get" aria-label="Filter trips">
-        <div class="row g-2">
-          <div class="col-12">
-            <div class="trips-search-wrap">
-              <i class="fa-solid fa-magnifying-glass trips-search-icon"></i>
-              <input id="tripSearch"
-                     type="search"
-                     class="form-control trips-search"
-                     placeholder="Search customer, phone, vehicle, driver, from, to..."
-                     aria-label="Search trips">
-            </div>
-          </div>
+  <div class="tr-card tr-card-pad mb-3">
+    <form method="get" id="tripFilterForm">
+      <div class="tr-filter">
+        <div class="tr-field">
+          <label for="tripQ">Search</label>
+          <input id="tripQ" name="q" type="search" class="form-control" value="{{ q }}"
+                 placeholder="Customer, phone, route, driver or plate">
+        </div>
 
-          <div class="col-md-4">
-            <input id="tripDate"
-                   type="date"
-                   name="date"
-                   value="{{ selected_date }}"
-                   class="form-control"
-                   aria-label="Select date">
-          </div>
+        <div class="tr-field">
+          <label for="tripStartDate">Start Date</label>
+          <input id="tripStartDate" name="start_date" type="date" class="form-control" value="{{ start_date }}">
+        </div>
 
-          <div class="col-md-4">
-            <select id="tripVehicle"
-                    name="vehicle"
-                    class="form-select"
-                    aria-label="Select vehicle">
+        <div class="tr-field">
+          <label for="tripEndDate">End Date</label>
+          <input id="tripEndDate" name="end_date" type="date" class="form-control" value="{{ end_date }}">
+        </div>
+
+        <div class="tr-field">
+          <label for="tripStatus">Status</label>
+          <select id="tripStatus" name="status" class="form-select">
+            <option value="">All Statuses</option>
+            {% for value,label in status_choices %}
+              <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% if not is_driver %}
+          <div class="tr-field">
+            <label for="tripVehicle">Vehicle</label>
+            <select id="tripVehicle" name="vehicle" class="form-select">
               <option value="">All Vehicles</option>
-              {% for v in vehicles %}
-                <option value="{{ v.pk }}" {% if selected_vehicle_id == v.pk %}selected{% endif %}>
-                  {{ v.plate_number }}{% if v.model %} - {{ v.model }}{% endif %}
+              {% for vehicle in vehicles %}
+                <option value="{{ vehicle.pk }}" {% if selected_vehicle_id == vehicle.pk %}selected{% endif %}>
+                  {{ vehicle.plate_number }}{% if vehicle.model %} · {{ vehicle.model }}{% endif %}
                 </option>
               {% endfor %}
             </select>
           </div>
 
-          <div class="col-md-4 d-flex gap-2">
-            <button class="btn btn-outline-primary flex-fill" type="submit">
-              <i class="fa-solid fa-filter me-1"></i> Apply
-            </button>
-
-            <a class="btn btn-light flex-fill" href="{% url 'transport:trip_list' %}">
-              <i class="fa-solid fa-rotate-left me-1"></i> Clear
-            </a>
+          <div class="tr-field">
+            <label for="tripDriver">Driver</label>
+            <select id="tripDriver" name="driver" class="form-select">
+              <option value="">All Drivers</option>
+              {% for driver in drivers %}
+                <option value="{{ driver.pk }}" {% if selected_driver_id == driver.pk %}selected{% endif %}>
+                  {{ driver.full_name }}
+                </option>
+              {% endfor %}
+            </select>
           </div>
-
-          <div class="col-12">
-            <div class="trips-current-filter">
-              Date:
-              <strong>
-                {% if selected_date %}
-                  {{ selected_date }}
-                {% else %}
-                  All
-                {% endif %}
-              </strong>
-              &nbsp;•&nbsp;
-              Vehicle:
-              <strong>
-                {% if selected_vehicle_id %}
-                  Selected
-                {% else %}
-                  All
-                {% endif %}
-              </strong>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="trips-table-card">
-    <div class="trips-table-head">
-      <h4 class="trips-table-title">
-        <i class="fa-solid fa-list-ul text-primary"></i>
-        Trip List
-      </h4>
-
-      <div class="trips-table-note">
-        {% if page_obj %}
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        {% else %}
-          Transport trip overview
         {% endif %}
       </div>
+
+      <div class="tr-actions justify-content-end mt-3">
+        <a class="tr-btn tr-btn-muted" href="{% url 'transport:trip_list' %}">
+          <i class="fa-solid fa-rotate-left"></i> Clear
+        </a>
+        <button class="tr-btn tr-btn-primary" type="submit">
+          <i class="fa-solid fa-filter"></i> Apply Filters
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="tr-card">
+    <div class="tr-card-head">
+      <div>
+        <h2 class="tr-card-title">
+          <i class="fa-solid fa-list-ul text-primary"></i>
+          {% if is_driver %}Your Trip History{% else %}Trip List{% endif %}
+        </h2>
+        <div class="tr-sub">
+          {% if page_obj %}Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count|intcomma }}{% endif %}
+        </div>
+      </div>
+      {% if page_obj %}<span class="tr-badge tr-in_transit">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% endif %}
     </div>
 
-    {% if trips %}
-      <div class="table-responsive" role="region" aria-label="Trips list">
-        <table class="table trips-table align-middle mb-0" id="tripsTable">
-          <thead>
+    <div class="tr-table-wrap">
+      <table class="tr-table tr-responsive-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Route</th>
+            {% if not is_driver %}<th>Driver</th>{% endif %}
+            <th>Vehicle</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>SMS</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trip in trips %}
             <tr>
-              <th>Date</th>
-              <th>Vehicle</th>
-              <th>Driver</th>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>From</th>
-              <th>To</th>
-              <th class="text-end">Amount</th>
-              <th>Branch</th>
-            </tr>
-          </thead>
+              <td data-label="Date">
+                <strong>{{ trip.trip_date|date:"d M Y" }}</strong><br>
+                <span class="tr-muted">{{ trip.trip_date|date:"H:i" }}</span>
+              </td>
 
-          <tbody>
-            {% for t in trips %}
-              <tr class="trip-row-link trip-row-js"
-                  {% if t.get_absolute_url %}data-href="{{ t.get_absolute_url }}"{% endif %}
-                  tabindex="0"
-                  aria-label="Trip row">
+              <td data-label="Customer">
+                <strong>{{ trip.customer_name }}</strong><br>
+                <span class="tr-mono tr-muted">{{ trip.customer_phone }}</span>
+              </td>
 
-                <td data-label="Date">
-                  <span class="trip-date">{{ t.trip_date|date:"d M Y" }}</span>
-                </td>
+              <td data-label="Route">
+                <strong>{{ trip.origin }}</strong><br>
+                <span class="tr-muted">to {{ trip.destination }}</span>
+              </td>
 
-                <td data-label="Vehicle">
-                  <span>{{ t.vehicle|default:"—" }}</span>
-                </td>
-
-                <td data-label="Driver">
-                  <span class="trip-muted">{{ t.driver|default:"—" }}</span>
-                </td>
-
-                <td data-label="Customer">
-                  <span class="trip-customer">{{ t.customer_name|default:"—" }}</span>
-                </td>
-
-                <td data-label="Phone">
-                  <span class="trip-phone">{{ t.customer_phone|default:"—" }}</span>
-                </td>
-
-                <td data-label="From">
-                  <span class="trip-muted">{{ t.origin|default:"—" }}</span>
-                </td>
-
-                <td data-label="To">
-                  <span class="trip-muted">{{ t.destination|default:"—" }}</span>
-                </td>
-
-                <td data-label="Amount" class="trip-amount">
-                  <span class="amount-pill amount-badge" data-raw="{{ t.amount_charged }}">
-                    <span class="tzs">TZS</span>
-                    <span class="amt">{{ t.amount_charged|floatformat:2|intcomma }}</span>
-                  </span>
-                </td>
-
-                <td data-label="Branch">
-                  <span class="trip-muted">{{ t.branch|default:"—" }}</span>
-                </td>
-
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      {% if page_obj and page_obj.paginator.num_pages > 1 %}
-        <div class="trips-pagination-wrap">
-          <ul class="trips-pagination">
-
-            {% if page_obj.has_previous %}
-              <li>
-                <a class="page-link" href="?page=1{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                  <i class="fa-solid fa-angles-left"></i>
-                </a>
-              </li>
-
-              <li>
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                  <i class="fa-solid fa-angle-left"></i>
-                </a>
-              </li>
-            {% else %}
-              <li class="disabled">
-                <span class="page-link"><i class="fa-solid fa-angles-left"></i></span>
-              </li>
-
-              <li class="disabled">
-                <span class="page-link"><i class="fa-solid fa-angle-left"></i></span>
-              </li>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-              {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
-                {% if page_obj.number == num %}
-                  <li class="active">
-                    <span class="page-link">{{ num }}</span>
-                  </li>
-                {% else %}
-                  <li>
-                    <a class="page-link" href="?page={{ num }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                      {{ num }}
-                    </a>
-                  </li>
-                {% endif %}
+              {% if not is_driver %}
+                <td data-label="Driver">{{ trip.driver.full_name }}</td>
               {% endif %}
-            {% endfor %}
 
-            {% if page_obj.has_next %}
-              <li>
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                  <i class="fa-solid fa-angle-right"></i>
-                </a>
-              </li>
+              <td data-label="Vehicle">
+                <span class="tr-mono">{{ trip.vehicle.plate_number }}</span>
+              </td>
 
-              <li>
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_vehicle_id %}&vehicle={{ selected_vehicle_id }}{% endif %}">
-                  <i class="fa-solid fa-angles-right"></i>
-                </a>
-              </li>
-            {% else %}
-              <li class="disabled">
-                <span class="page-link"><i class="fa-solid fa-angle-right"></i></span>
-              </li>
+              <td data-label="Amount">TZS {{ trip.amount_charged|floatformat:0|intcomma }}</td>
 
-              <li class="disabled">
-                <span class="page-link"><i class="fa-solid fa-angles-right"></i></span>
-              </li>
-            {% endif %}
+              <td data-label="Status">
+                <span class="tr-badge tr-{{ trip.status }}">{{ trip.get_status_display }}</span>
+              </td>
 
-          </ul>
+              <td data-label="SMS">
+                {% if trip.status == 'completed' %}
+                  {% if trip.completed_sms_sent %}
+                    <span class="tr-sms-ok"><i class="fa-solid fa-check"></i> Arrival sent</span>
+                  {% elif trip.completed_sms_error %}
+                    <span class="tr-sms-fail"><i class="fa-solid fa-triangle-exclamation"></i> Arrival failed</span>
+                  {% else %}
+                    <span class="tr-sms-wait">Arrival waiting</span>
+                  {% endif %}
+                {% else %}
+                  {% if trip.pending_sms_sent %}
+                    <span class="tr-sms-ok"><i class="fa-solid fa-check"></i> Departure sent</span>
+                  {% elif trip.pending_sms_error %}
+                    <span class="tr-sms-fail"><i class="fa-solid fa-triangle-exclamation"></i> Departure failed</span>
+                  {% else %}
+                    <span class="tr-sms-wait">Departure waiting</span>
+                  {% endif %}
+                {% endif %}
+              </td>
 
-          <div class="trips-page-summary">
-            Showing page <strong>{{ page_obj.number }}</strong> of <strong>{{ page_obj.paginator.num_pages }}</strong>
-            • Total trips: <strong>{{ total_trips_count|intcomma }}</strong>
-          </div>
+              <td data-label="Action" class="tr-mobile-full">
+                <div class="tr-actions">
+                  <a class="tr-btn tr-btn-soft tr-btn-sm" href="{% url 'transport:trip_detail' trip.pk %}">
+                    <i class="fa-solid fa-eye"></i> Open
+                  </a>
+
+                  {% if can_change_status and trip.status == 'pending' %}
+                    <form method="post" action="{% url 'transport:trip_status_update' trip.pk %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="start">
+                      <button class="tr-btn tr-btn-warning tr-btn-sm" type="submit">
+                        <i class="fa-solid fa-road"></i> Start
+                      </button>
+                    </form>
+                  {% elif can_change_status and trip.status == 'in_transit' %}
+                    <form method="post" action="{% url 'transport:trip_status_update' trip.pk %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="complete">
+                      <button class="tr-btn tr-btn-success tr-btn-sm" type="submit">
+                        <i class="fa-solid fa-circle-check"></i> Complete
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9">
+                <div class="tr-empty">
+                  <i class="fa-solid fa-road-circle-xmark"></i>
+                  No trips match the selected filters.
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+      <div class="tr-pagination">
+        <div class="tr-sub">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count|intcomma }} trip{{ page_obj.paginator.count|pluralize }}
         </div>
-      {% endif %}
 
-    {% else %}
-      <div class="trip-empty">
-        <i class="fa-solid fa-road-circle-xmark"></i>
-        No trips found for this filter.
+        <div class="tr-page-links">
+          {% if page_obj.has_previous %}
+            <a class="tr-page-link" href="?page=1&q={{ q|urlencode }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ selected_status }}&vehicle={{ selected_vehicle_id }}&driver={{ selected_driver_id }}" title="First page">
+              <i class="fa-solid fa-angles-left"></i>
+            </a>
+            <a class="tr-page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ selected_status }}&vehicle={{ selected_vehicle_id }}&driver={{ selected_driver_id }}" title="Previous page">
+              <i class="fa-solid fa-angle-left"></i>
+            </a>
+          {% else %}
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angles-left"></i></span>
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angle-left"></i></span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              {% if num == page_obj.number %}
+                <span class="tr-page-link active">{{ num }}</span>
+              {% else %}
+                <a class="tr-page-link" href="?page={{ num }}&q={{ q|urlencode }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ selected_status }}&vehicle={{ selected_vehicle_id }}&driver={{ selected_driver_id }}">{{ num }}</a>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a class="tr-page-link" href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ selected_status }}&vehicle={{ selected_vehicle_id }}&driver={{ selected_driver_id }}" title="Next page">
+              <i class="fa-solid fa-angle-right"></i>
+            </a>
+            <a class="tr-page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ q|urlencode }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ selected_status }}&vehicle={{ selected_vehicle_id }}&driver={{ selected_driver_id }}" title="Last page">
+              <i class="fa-solid fa-angles-right"></i>
+            </a>
+          {% else %}
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angle-right"></i></span>
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angles-right"></i></span>
+          {% endif %}
+        </div>
       </div>
     {% endif %}
   </div>
-
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const table = document.getElementById('tripsTable');
-  const visibleEl = document.getElementById('visibleTrips');
-  const pageTripsEl = document.getElementById('pageTrips');
-
-  function updateCounts(){
-    if (!table) return;
-
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    const visible = rows.filter(r => r.style.display !== 'none');
-
-    if (pageTripsEl) {
-      pageTripsEl.textContent = rows.length;
-    }
-
-    if (visibleEl) {
-      visibleEl.textContent = visible.length;
-    }
-  }
-
-  document.querySelectorAll('.trip-row-js').forEach(function (row) {
-    const href = row.dataset.href;
-
-    if (!href) return;
-
-    row.addEventListener('click', function (e) {
-      const interactive = e.target.closest('a, button, input, select, textarea');
-
-      if (interactive) return;
-
-      window.location.assign(href);
-    });
-
-    row.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        window.location.assign(href);
-      }
-    });
-  });
-
-  const search = document.getElementById('tripSearch');
-
-  function applyFilter(){
-    if (!table) return;
-
-    const q = (search?.value || '').trim().toLowerCase();
-
-    table.querySelectorAll('tbody tr').forEach(function (row) {
-      const text = row.textContent.trim().toLowerCase();
-      row.style.display = (!q || text.includes(q)) ? '' : 'none';
-    });
-
-    updateCounts();
-  }
-
-  if (search) {
-    search.addEventListener('input', applyFilter);
-  }
-
-  document.querySelectorAll('.amount-badge').forEach(function (pill) {
-    const raw = pill.dataset.raw;
-
-    if (!raw) return;
-
-    const n = Number(raw);
-
-    if (Number.isFinite(n)) {
-      const amt = pill.querySelector('.amt');
-
-      if (amt) {
-        amt.textContent = n.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
-    }
-  });
-
-  updateCounts();
-
-  const dateInput = document.getElementById('tripDate');
-  const vehicleInput = document.getElementById('tripVehicle');
-
-  if (dateInput) {
-    dateInput.addEventListener('change', function () {
-      const form = this.closest('form');
-
-      if (form) {
-        form.submit();
-      }
-    });
-  }
-
-  if (vehicleInput) {
-    vehicleInput.addEventListener('change', function () {
-      const form = this.closest('form');
-
-      if (form) {
-        form.submit();
-      }
-    });
-  }
-});
-</script>
 {% endblock %}

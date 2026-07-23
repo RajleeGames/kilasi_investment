@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Automatic Transport SMS | Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+  {% include "transport/_portal_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="tr-shell-md">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-message text-primary me-1"></i>
+        Automatic Transport SMS
+      </h1>
+      <div class="tr-sub">Edit the customer messages sent when a trip is created and completed.</div>
+    </div>
+
+    <a class="tr-btn tr-btn-muted" href="{% url 'transport:index' %}">
+      <i class="fa-solid fa-arrow-left"></i> Transport
+    </a>
+  </div>
+
+  <div class="tr-card tr-card-pad mb-3">
+    <div class="tr-card-title">
+      <i class="fa-solid fa-code text-primary"></i>
+      Available Placeholders
+    </div>
+    <div class="tr-sub">These values are replaced automatically using the saved trip details.</div>
+    <div class="tr-code-list">
+      {% for token in placeholders %}<code class="tr-code">{{ token }}</code>{% endfor %}
+    </div>
+  </div>
+
+  <div class="tr-card">
+    <div class="tr-card-head">
+      <div>
+        <h2 class="tr-card-title">
+          <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
+          Message Templates
+        </h2>
+        <div class="tr-sub">Only active templates are sent automatically.</div>
+      </div>
+    </div>
+
+    <div class="tr-table-wrap">
+      <table class="tr-table tr-responsive-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Sender</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th>Updated</th>
+            <th>Updated By</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in templates %}
+            <tr>
+              <td data-label="Event"><strong>{{ item.get_event_display }}</strong></td>
+              <td data-label="Sender">
+                {% if item.sender_id %}{{ item.sender_id.name }}{% else %}<span class="tr-muted">Default Sender ID</span>{% endif %}
+              </td>
+              <td data-label="Message" style="max-width:520px">{{ item.message|truncatechars:220 }}</td>
+              <td data-label="Status">
+                {% if item.is_active %}
+                  <span class="tr-badge tr-active">Active</span>
+                {% else %}
+                  <span class="tr-badge tr-inactive">Disabled</span>
+                {% endif %}
+              </td>
+              <td data-label="Updated">{{ item.updated_at|date:"d M Y H:i" }}</td>
+              <td data-label="Updated By">
+                {% if item.updated_by %}{{ item.updated_by.get_full_name|default:item.updated_by.username }}{% else %}—{% endif %}
+              </td>
+              <td data-label="Action">
+                <a class="tr-btn tr-btn-soft tr-btn-sm" href="{% url 'transport:sms_template_edit' item.pk %}">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7"><div class="tr-empty">No automatic SMS templates are available.</div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,535 +1,195 @@
-{# templates/transport/driver_list.html #}
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Drivers{% endblock %}
+{% block title %}Drivers | Kilasi Investment{% endblock %}
 
 {% block extra_css %}
-<style>
-  .driver-page{
-    max-width: 1120px;
-    margin: 0 auto;
-  }
-
-  .driver-hero{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    padding:1rem 1rem .95rem;
-    background:
-      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
-      #fff;
-    box-shadow:0 10px 30px rgba(15,23,42,.05);
-    margin-bottom:1rem;
-  }
-
-  .driver-title{
-    margin:0;
-    font-size:1.04rem;
-    font-weight:800;
-    letter-spacing:-.02em;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-  }
-
-  .driver-subtitle{
-    font-size:.75rem;
-    color:#64748b;
-    margin-top:.2rem;
-  }
-
-  .driver-hero-actions{
-    display:flex;
-    gap:.7rem;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-
-  .driver-add-btn{
-    border-radius:12px;
-    font-size:.78rem;
-    font-weight:700;
-    padding:.65rem .95rem;
-    box-shadow:0 10px 22px rgba(37,99,235,.14);
-  }
-
-  .driver-count{
-    display:inline-flex;
-    align-items:center;
-    gap:.4rem;
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:999px;
-    padding:.45rem .72rem;
-    font-weight:700;
-    white-space:nowrap;
-  }
-
-  .driver-count strong{
-    color:#0f172a;
-    font-weight:800;
-  }
-
-  .driver-filter-card,
-  .driver-grid-card{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    background:#fff;
-    box-shadow:0 10px 28px rgba(15,23,42,.05);
-    overflow:hidden;
-  }
-
-  .driver-filter-card{
-    margin-bottom:1rem;
-  }
-
-  .driver-filter-body{
-    padding:1rem;
-  }
-
-  .driver-search-wrap{
-    position:relative;
-  }
-
-  .driver-search-icon{
-    position:absolute;
-    left:.85rem;
-    top:50%;
-    transform:translateY(-50%);
-    color:#94a3b8;
-    font-size:.78rem;
-    pointer-events:none;
-  }
-
-  .driver-search{
-    min-height:42px;
-    border-radius:12px;
-    font-size:.79rem;
-    padding-left:2.25rem;
-  }
-
-  .driver-grid-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:.8rem;
-    padding:.9rem 1rem;
-    border-bottom:1px solid rgba(15,23,42,.06);
-    background:linear-gradient(180deg, #ffffff, #fbfdff);
-    flex-wrap:wrap;
-  }
-
-  .driver-grid-title{
-    margin:0;
-    font-size:.84rem;
-    font-weight:800;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.45rem;
-  }
-
-  .driver-grid-note{
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:999px;
-    padding:.35rem .65rem;
-    font-weight:700;
-  }
-
-  .driver-grid-wrap{
-    padding:1rem;
-  }
-
-  .driver-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(270px, 1fr));
-    gap:14px;
-  }
-
-  .driver-card{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:16px;
-    background:linear-gradient(180deg, #ffffff, #fbfdff);
-    box-shadow:0 8px 22px rgba(2,6,23,.06);
-    padding:.85rem;
-    transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;
-    display:flex;
-    flex-direction:column;
-    gap:.75rem;
-  }
-
-  .driver-card.clickable{
-    cursor:pointer;
-  }
-
-  .driver-card:hover{
-    transform:translateY(-2px);
-    box-shadow:0 14px 26px rgba(2,6,23,.10);
-    border-color:rgba(37,99,235,.14);
-  }
-
-  .driver-card:focus,
-  .driver-card:focus-within{
-    outline:3px solid rgba(37,99,235,.14);
-    outline-offset:2px;
-  }
-
-  .driver-vehicle-pill{
-    width:100%;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:.72rem .82rem;
-    border-radius:999px;
-    background:rgba(37,99,235,.08);
-    border:1px solid rgba(37,99,235,.16);
-    color:#1d4ed8;
-    box-sizing:border-box;
-  }
-
-  .driver-vehicle-pill.off{
-    background:rgba(100,116,139,.08);
-    border-color:rgba(100,116,139,.15);
-    color:#475569;
-  }
-
-  .driver-vehicle-pill i{
-    flex:0 0 auto;
-  }
-
-  .driver-vehicle-info{
-    min-width:0;
-    display:flex;
-    flex-direction:column;
-    line-height:1.1;
-  }
-
-  .driver-vehicle-plate{
-    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-weight:800;
-    font-size:.8rem;
-    letter-spacing:.03em;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-
-  .driver-vehicle-model{
-    font-size:.72rem;
-    font-weight:700;
-    opacity:.9;
-    margin-top:.12rem;
-    display:-webkit-box;
-    -webkit-box-orient:vertical;
-    -webkit-line-clamp:2;
-    overflow:hidden;
-    word-break:break-word;
-  }
-
-  .driver-main{
-    display:flex;
-    align-items:center;
-    gap:.75rem;
-  }
-
-  .driver-avatar{
-    width:56px;
-    height:56px;
-    border-radius:14px;
-    background:#eef2f7;
-    border:1px solid rgba(15,23,42,.06);
-    overflow:hidden;
-    display:grid;
-    place-items:center;
-    flex:0 0 auto;
-    font-weight:800;
-    font-size:1rem;
-    color:#334155;
-  }
-
-  .driver-avatar img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
-
-  .driver-body{
-    flex:1;
-    min-width:0;
-  }
-
-  .driver-name{
-    font-size:.83rem;
-    font-weight:800;
-    color:#0f172a;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-
-  .driver-meta{
-    margin-top:.35rem;
-    display:flex;
-    flex-direction:column;
-    gap:.28rem;
-    color:#64748b;
-    font-size:.74rem;
-    line-height:1.35;
-  }
-
-  .driver-meta i{
-    width:14px;
-    text-align:center;
-    margin-right:.25rem;
-    color:#94a3b8;
-  }
-
-  .driver-mono{
-    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-variant-numeric:tabular-nums;
-    color:#334155;
-  }
-
-  .driver-empty{
-    text-align:center;
-    padding:2rem 1rem;
-    color:#64748b;
-    font-size:.8rem;
-  }
-
-  .driver-empty i{
-    display:block;
-    font-size:1.15rem;
-    margin-bottom:.45rem;
-    color:#94a3b8;
-  }
-
-  .driver-empty a{
-    text-decoration:none;
-    font-weight:700;
-  }
-
-  @media (max-width: 767.98px){
-    .driver-hero{
-      padding:.9rem;
-    }
-
-    .driver-title{
-      font-size:.98rem;
-    }
-
-    .driver-subtitle{
-      font-size:.73rem;
-    }
-
-    .driver-filter-body,
-    .driver-grid-wrap{
-      padding:.85rem;
-    }
-
-    .driver-hero-actions{
-      width:100%;
-    }
-
-    .driver-count{
-      width:100%;
-      justify-content:center;
-    }
-
-    .driver-add-btn{
-      width:100%;
-      justify-content:center;
-    }
-
-    .driver-grid{
-      grid-template-columns:1fr;
-    }
-  }
-</style>
+  {% include "transport/_portal_styles.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="driver-page">
+<div class="tr-shell-md">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-id-card-clip text-primary me-1"></i>
+        Drivers
+      </h1>
+      <div class="tr-sub">Manage driver login accounts, branches and assigned vehicles.</div>
+    </div>
 
-  <div class="driver-hero">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-      <div>
-        <h3 class="driver-title">
-          <i class="fa-solid fa-id-card-clip text-primary"></i>
-          Drivers
-        </h3>
-        <div class="driver-subtitle">
-          Manage drivers and their assigned vehicles in one clean view.
+    {% if is_admin %}
+      <a class="tr-btn tr-btn-primary" href="{% url 'transport:driver_create' %}">
+        <i class="fa-solid fa-plus"></i> Add Driver
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="tr-card tr-card-pad mb-3">
+    <form method="get">
+      <div class="tr-filter {% if not is_admin %}tr-filter-4{% endif %}">
+        <div class="tr-field">
+          <label for="driverQ">Search</label>
+          <input id="driverQ" name="q" type="search" class="form-control"
+                 value="{{ q }}" placeholder="Name, username, phone, licence or vehicle">
+        </div>
+
+        {% if is_admin %}
+          <div class="tr-field">
+            <label for="driverBranch">Branch</label>
+            <select id="driverBranch" name="branch" class="form-select">
+              <option value="">All Branches</option>
+              {% for branch in branches %}
+                <option value="{{ branch.pk }}" {% if selected_branch_id == branch.pk %}selected{% endif %}>
+                  {{ branch.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        <div class="tr-field">
+          <label>&nbsp;</label>
+          <button class="tr-btn tr-btn-primary w-100" type="submit">
+            <i class="fa-solid fa-filter"></i> Apply
+          </button>
+        </div>
+
+        <div class="tr-field">
+          <label>&nbsp;</label>
+          <a class="tr-btn tr-btn-muted w-100" href="{% url 'transport:driver_list' %}">
+            <i class="fa-solid fa-rotate-left"></i> Clear
+          </a>
         </div>
       </div>
-
-      <div class="driver-hero-actions">
-        <span class="driver-count" title="Visible cards">
-          Showing <strong id="visibleDrivers">0</strong> / <strong id="totalDrivers">0</strong>
-        </span>
-
-        <a href="{% url 'transport:driver_create' %}" class="btn btn-primary driver-add-btn" aria-label="Add driver">
-          <i class="fa-solid fa-plus me-1"></i> Add Driver
-        </a>
-      </div>
-    </div>
+    </form>
   </div>
 
-  <div class="driver-filter-card">
-    <div class="driver-filter-body">
-      <div class="driver-search-wrap">
-        <i class="fa-solid fa-magnifying-glass driver-search-icon"></i>
-        <input id="driverSearch"
-               type="search"
-               class="form-control driver-search"
-               placeholder="Search name, phone, license, vehicle..."
-               aria-label="Search drivers">
+  <div class="tr-card">
+    <div class="tr-card-head">
+      <div>
+        <h2 class="tr-card-title">
+          <i class="fa-solid fa-users text-primary"></i>
+          Driver List
+        </h2>
+        <div class="tr-sub">
+          {% if page_obj %}
+            {{ page_obj.paginator.count|intcomma }} driver{{ page_obj.paginator.count|pluralize }} found
+          {% else %}
+            Driver accounts
+          {% endif %}
+        </div>
       </div>
-    </div>
-  </div>
-
-  <div class="driver-grid-card">
-    <div class="driver-grid-head">
-      <h4 class="driver-grid-title">
-        <i class="fa-solid fa-users text-primary"></i>
-        Driver List
-      </h4>
-      <div class="driver-grid-note">Assigned drivers overview</div>
+      {% if page_obj %}
+        <span class="tr-badge tr-in_transit">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% endif %}
     </div>
 
     {% if drivers %}
-      <div class="driver-grid-wrap">
-        <div class="driver-grid" id="driverGrid" role="list">
+      <div class="tr-card-pad">
+        <div class="tr-driver-grid">
           {% for d in drivers %}
-            {% with name=d.user.get_full_name|default:d.user.username %}
-            <div class="driver-card{% if d.get_absolute_url %} clickable{% endif %}"
-                 role="listitem"
-                 tabindex="0"
-                 {% if d.get_absolute_url %}data-href="{{ d.get_absolute_url }}"{% endif %}
-                 aria-label="Driver {{ name }}">
-
+            <article class="tr-driver-card">
               {% if d.vehicle %}
-                <div class="driver-vehicle-pill" title="{{ d.vehicle.plate_number }} {{ d.vehicle.model }}">
+                <div class="tr-vehicle-pill">
                   <i class="fa-solid fa-truck"></i>
-                  <div class="driver-vehicle-info">
-                    <div class="driver-vehicle-plate">
-                      {{ d.vehicle.plate_number|default:"—" }}
-                    </div>
-                    <div class="driver-vehicle-model">
-                      {{ d.vehicle.model|default:"" }}
-                    </div>
-                  </div>
+                  <span>{{ d.vehicle.plate_number }}{% if d.vehicle.model %} · {{ d.vehicle.model }}{% endif %}</span>
                 </div>
               {% else %}
-                <div class="driver-vehicle-pill off" title="No vehicle assigned">
+                <div class="tr-vehicle-pill off">
                   <i class="fa-solid fa-truck"></i>
-                  <div class="driver-vehicle-info">
-                    <div class="driver-vehicle-plate">No vehicle</div>
-                    <div class="driver-vehicle-model">Not assigned</div>
-                  </div>
+                  <span>No vehicle assigned</span>
                 </div>
               {% endif %}
 
-              <div class="driver-main">
-                <div class="driver-avatar" aria-hidden="true">
+              <div class="tr-driver-main">
+                <div class="tr-avatar">
                   {% if d.photo %}
-                    <img src="{{ d.photo.url }}" alt="Photo of {{ name }}">
+                    <img src="{{ d.photo.url }}" alt="{{ d.full_name }}">
                   {% else %}
-                    {{ name|slice:":1"|upper }}
+                    {{ d.full_name|slice:":1"|upper }}
                   {% endif %}
                 </div>
 
-                <div class="driver-body">
-                  <div class="driver-name" title="{{ name }}">{{ name }}</div>
-
-                  <div class="driver-meta">
-                    <div>
-                      <i class="fa-solid fa-phone"></i>
-                      <span class="driver-mono">{{ d.phone|default:"No phone" }}</span>
-                    </div>
-                    <div>
-                      <i class="fa-solid fa-id-card"></i>
-                      License:
-                      <span class="driver-mono">{{ d.license_number|default:"—" }}</span>
-                    </div>
+                <div class="flex-grow-1 min-width-0">
+                  <div class="tr-driver-name">{{ d.full_name }}</div>
+                  <div class="tr-driver-meta">
+                    <div><i class="fa-solid fa-user me-1"></i> Username: <span class="tr-mono">{{ d.user.username }}</span></div>
+                    <div><i class="fa-solid fa-phone me-1"></i> <span class="tr-mono">{{ d.phone|default:"No phone" }}</span></div>
+                    <div><i class="fa-solid fa-id-card me-1"></i> Licence: <span class="tr-mono">{{ d.license_number|default:"—" }}</span></div>
+                    <div><i class="fa-solid fa-building me-1"></i> {% if d.branch %}{{ d.branch.name }}{% else %}No branch{% endif %}</div>
                   </div>
                 </div>
               </div>
 
-            </div>
-            {% endwith %}
+              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <span class="tr-badge {% if d.is_active %}tr-active{% else %}tr-inactive{% endif %}">
+                  {% if d.is_active %}Active Login{% else %}Inactive Login{% endif %}
+                </span>
+
+                {% if is_admin %}
+                  <a class="tr-btn tr-btn-soft tr-btn-sm" href="{% url 'transport:driver_edit' d.pk %}">
+                    <i class="fa-solid fa-pen"></i> Edit
+                  </a>
+                {% endif %}
+              </div>
+            </article>
           {% endfor %}
         </div>
       </div>
     {% else %}
-      <div class="driver-empty">
+      <div class="tr-empty">
         <i class="fa-solid fa-user-group"></i>
-        No drivers yet.
-        <a href="{% url 'transport:driver_create' %}">Add your first driver</a>.
+        No drivers match the selected filter.
+        {% if is_admin %}
+          <div class="mt-2"><a href="{% url 'transport:driver_create' %}">Add the first driver</a></div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+      <div class="tr-pagination">
+        <div class="tr-sub">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count|intcomma }}
+        </div>
+
+        <div class="tr-page-links">
+          {% if page_obj.has_previous %}
+            <a class="tr-page-link" href="?page=1&q={{ q|urlencode }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" title="First page">
+              <i class="fa-solid fa-angles-left"></i>
+            </a>
+            <a class="tr-page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" title="Previous page">
+              <i class="fa-solid fa-angle-left"></i>
+            </a>
+          {% else %}
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angles-left"></i></span>
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angle-left"></i></span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              {% if num == page_obj.number %}
+                <span class="tr-page-link active">{{ num }}</span>
+              {% else %}
+                <a class="tr-page-link" href="?page={{ num }}&q={{ q|urlencode }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}">{{ num }}</a>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a class="tr-page-link" href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" title="Next page">
+              <i class="fa-solid fa-angle-right"></i>
+            </a>
+            <a class="tr-page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ q|urlencode }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" title="Last page">
+              <i class="fa-solid fa-angles-right"></i>
+            </a>
+          {% else %}
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angle-right"></i></span>
+            <span class="tr-page-link disabled"><i class="fa-solid fa-angles-right"></i></span>
+          {% endif %}
+        </div>
       </div>
     {% endif %}
   </div>
-
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const grid = document.getElementById('driverGrid');
-  const totalEl = document.getElementById('totalDrivers');
-  const visibleEl = document.getElementById('visibleDrivers');
-
-  function updateCounts(){
-    if (!grid) return;
-    const cards = Array.from(grid.querySelectorAll('.driver-card'));
-    const visible = cards.filter(c => c.style.display !== 'none');
-    if (totalEl) totalEl.textContent = cards.length;
-    if (visibleEl) visibleEl.textContent = visible.length;
-  }
-
-  document.querySelectorAll('.driver-card.clickable').forEach(function (card) {
-    const href = card.dataset.href;
-    if (!href) return;
-
-    card.addEventListener('click', function (e) {
-      const interactive = e.target.closest('a, button, input, select, textarea');
-      if (interactive) return;
-      window.location.assign(href);
-    });
-
-    card.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        window.location.assign(href);
-      }
-    });
-  });
-
-  const search = document.getElementById('driverSearch');
-
-  function applyFilter(){
-    if (!grid) return;
-    const q = (search?.value || '').trim().toLowerCase();
-
-    grid.querySelectorAll('.driver-card').forEach(function (c) {
-      const text = c.textContent.trim().toLowerCase();
-      c.style.display = (!q || text.includes(q)) ? '' : 'none';
-    });
-
-    updateCounts();
-  }
-
-  if (search) search.addEventListener('input', applyFilter);
-
-  updateCounts();
-});
-</script>
 {% endblock %}

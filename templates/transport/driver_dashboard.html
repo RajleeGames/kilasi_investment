@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Driver Dashboard | Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+  {% include "transport/_portal_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="tr-shell">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-gauge-high text-primary me-1"></i>
+        Driver Dashboard
+      </h1>
+      <div class="tr-sub">
+        Welcome {{ driver.full_name }}. Record and manage only your assigned trips.
+      </div>
+    </div>
+
+    <div class="tr-actions">
+      <a class="tr-btn tr-btn-primary" href="{% url 'transport:trip_create' %}">
+        <i class="fa-solid fa-plus"></i> New Trip
+      </a>
+      <a class="tr-btn tr-btn-muted" href="{% url 'transport:trip_list' %}">
+        <i class="fa-solid fa-route"></i> My Trips
+      </a>
+    </div>
+  </div>
+
+  <div class="tr-grid mb-3">
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Pending</div>
+      <div class="tr-kpi-value">{{ pending_count|intcomma }}</div>
+      <div class="tr-kpi-note">Waiting to start</div>
+    </div>
+
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">In Transit</div>
+      <div class="tr-kpi-value">{{ in_transit_count|intcomma }}</div>
+      <div class="tr-kpi-note">Currently on the road</div>
+    </div>
+
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Completed Today</div>
+      <div class="tr-kpi-value">{{ completed_today_count|intcomma }}</div>
+      <div class="tr-kpi-note">Safely completed today</div>
+    </div>
+
+    <div class="tr-card tr-kpi">
+      <div class="tr-kpi-label">Trips Today</div>
+      <div class="tr-kpi-value">{{ today_count|intcomma }}</div>
+      <div class="tr-kpi-note">All of today's trips</div>
+    </div>
+  </div>
+
+  <div class="tr-card tr-card-pad mb-3">
+    <div class="tr-card-title mb-3">
+      <i class="fa-solid fa-id-card text-primary"></i>
+      Your Assignment
+    </div>
+
+    <div class="tr-detail-grid">
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Driver</div>
+        <div class="tr-detail-value">{{ driver.full_name }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Assigned Vehicle</div>
+        <div class="tr-detail-value">
+          {% if driver.vehicle %}
+            {{ driver.vehicle.plate_number }}
+            {% if driver.vehicle.model %}<br><span class="tr-muted">{{ driver.vehicle.model }}</span>{% endif %}
+          {% else %}
+            <span class="tr-sms-fail">Not assigned</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Branch</div>
+        <div class="tr-detail-value">
+          {% if driver.branch %}{{ driver.branch.name }}{% else %}<span class="tr-sms-fail">Not assigned</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if not driver.vehicle or not driver.branch %}
+      <div class="tr-alert mt-3 mb-0">
+        Your account is missing an assigned branch or vehicle. Contact the administrator before recording a trip.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="tr-card">
+    <div class="tr-card-head">
+      <div>
+        <h2 class="tr-card-title">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+          Recent Trips
+        </h2>
+        <div class="tr-sub">Your latest eight trips</div>
+      </div>
+      <a class="tr-btn tr-btn-soft tr-btn-sm" href="{% url 'transport:trip_list' %}">View All</a>
+    </div>
+
+    <div class="tr-table-wrap">
+      <table class="tr-table tr-responsive-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Route</th>
+            <th>Vehicle</th>
+            <th>Status</th>
+            <th>SMS</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trip in recent_trips %}
+            <tr>
+              <td data-label="Date">{{ trip.trip_date|date:"d M Y H:i" }}</td>
+              <td data-label="Customer">
+                <strong>{{ trip.customer_name|default:"—" }}</strong><br>
+                <span class="tr-muted tr-mono">{{ trip.customer_phone|default:"—" }}</span>
+              </td>
+              <td data-label="Route">{{ trip.origin }} → {{ trip.destination }}</td>
+              <td data-label="Vehicle">{{ trip.vehicle.plate_number }}</td>
+              <td data-label="Status">
+                <span class="tr-badge tr-{{ trip.status }}">{{ trip.get_status_display }}</span>
+              </td>
+              <td data-label="SMS">
+                {% if trip.status == 'completed' %}
+                  {% if trip.completed_sms_sent %}
+                    <span class="tr-sms-ok"><i class="fa-solid fa-check"></i> Sent</span>
+                  {% elif trip.completed_sms_error %}
+                    <span class="tr-sms-fail"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+                  {% else %}
+                    <span class="tr-sms-wait">Waiting</span>
+                  {% endif %}
+                {% else %}
+                  {% if trip.pending_sms_sent %}
+                    <span class="tr-sms-ok"><i class="fa-solid fa-check"></i> Sent</span>
+                  {% elif trip.pending_sms_error %}
+                    <span class="tr-sms-fail"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+                  {% else %}
+                    <span class="tr-sms-wait">Waiting</span>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td data-label="Action">
+                <a class="tr-btn tr-btn-soft tr-btn-sm" href="{% url 'transport:trip_detail' trip.pk %}">
+                  Open
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7">
+                <div class="tr-empty">
+                  <i class="fa-solid fa-road-circle-xmark"></i>
+                  No trips recorded yet.
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

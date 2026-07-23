@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Trip #{{ trip.pk }} | Kilasi Investment{% endblock %}
+
+{% block extra_css %}
+  {% include "transport/_portal_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="tr-shell-md">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-location-dot text-primary me-1"></i>
+        Trip #{{ trip.pk }}
+      </h1>
+      <div class="tr-sub">{{ trip.customer_name }} · {{ trip.origin }} to {{ trip.destination }}</div>
+    </div>
+
+    <div class="tr-actions">
+      <span class="tr-badge tr-{{ trip.status }}">{{ trip.get_status_display }}</span>
+      <a class="tr-btn tr-btn-muted" href="{% url 'transport:trip_list' %}">
+        <i class="fa-solid fa-arrow-left"></i> Trips
+      </a>
+    </div>
+  </div>
+
+  <div class="tr-card tr-card-pad mb-3">
+    <div class="tr-card-title mb-3">
+      <i class="fa-solid fa-circle-info text-primary"></i>
+      Trip Information
+    </div>
+
+    <div class="tr-detail-grid">
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Customer</div>
+        <div class="tr-detail-value">{{ trip.customer_name }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Customer Phone</div>
+        <div class="tr-detail-value tr-mono">{{ trip.customer_phone }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Trip Date</div>
+        <div class="tr-detail-value">{{ trip.trip_date|date:"d M Y H:i" }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Origin</div>
+        <div class="tr-detail-value">{{ trip.origin }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Destination</div>
+        <div class="tr-detail-value">{{ trip.destination }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Amount Charged</div>
+        <div class="tr-detail-value">TZS {{ trip.amount_charged|floatformat:0|intcomma }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Driver</div>
+        <div class="tr-detail-value">{{ trip.driver.full_name }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Vehicle</div>
+        <div class="tr-detail-value tr-mono">{{ trip.vehicle.plate_number }}</div>
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Branch</div>
+        <div class="tr-detail-value">{{ trip.branch.name }}</div>
+      </div>
+    </div>
+
+    {% if trip.notes %}
+      <div class="tr-detail-item mt-3">
+        <div class="tr-detail-label">Notes</div>
+        <div class="tr-detail-value">{{ trip.notes|linebreaksbr }}</div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if can_change_status %}
+    <div class="tr-card tr-card-pad mb-3">
+      <div class="tr-card-title">
+        <i class="fa-solid fa-route text-primary"></i>
+        Journey Status
+      </div>
+      <div class="tr-sub">Use the correct action as the journey progresses.</div>
+
+      <div class="tr-actions mt-3">
+        {% if trip.status == 'pending' %}
+          <form method="post" action="{% url 'transport:trip_status_update' trip.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="start">
+            <button class="tr-btn tr-btn-warning" type="submit">
+              <i class="fa-solid fa-road"></i> Start Journey
+            </button>
+          </form>
+        {% elif trip.status == 'in_transit' %}
+          <form method="post" action="{% url 'transport:trip_status_update' trip.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="complete">
+            <button class="tr-btn tr-btn-success" type="submit">
+              <i class="fa-solid fa-circle-check"></i> Complete Trip
+            </button>
+          </form>
+        {% endif %}
+
+        {% if trip.status == 'pending' or trip.status == 'in_transit' %}
+          <form method="post" action="{% url 'transport:trip_status_update' trip.pk %}"
+                onsubmit="return confirm('Are you sure you want to cancel this trip?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancel">
+            <button class="tr-btn tr-btn-danger" type="submit">
+              <i class="fa-solid fa-ban"></i> Cancel Trip
+            </button>
+          </form>
+        {% endif %}
+
+        {% if trip.status == 'completed' %}
+          <span class="tr-badge tr-completed">Journey completed successfully</span>
+        {% elif trip.status == 'cancelled' %}
+          <span class="tr-badge tr-cancelled">Journey cancelled</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="tr-card tr-card-pad mb-3">
+    <div class="tr-card-title">
+      <i class="fa-solid fa-message text-primary"></i>
+      Automatic SMS Status
+    </div>
+    <div class="tr-sub">SMS failure does not remove the trip. Admin or transport manager can retry failed messages.</div>
+
+    <div class="tr-detail-grid mt-3">
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Pending / Departure SMS</div>
+        <div class="tr-detail-value">
+          {% if trip.pending_sms_sent %}
+            <span class="tr-sms-ok"><i class="fa-solid fa-circle-check"></i> Sent</span>
+            {% if trip.pending_sms_sent_at %}<div class="tr-help">{{ trip.pending_sms_sent_at|date:"d M Y H:i" }}</div>{% endif %}
+          {% elif trip.pending_sms_error %}
+            <span class="tr-sms-fail"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+            <div class="tr-help">{{ trip.pending_sms_error }}</div>
+          {% else %}
+            <span class="tr-sms-wait"><i class="fa-regular fa-clock"></i> Not sent</span>
+          {% endif %}
+        </div>
+
+        {% if can_retry_sms and not trip.pending_sms_sent %}
+          <form class="mt-2" method="post" action="{% url 'transport:trip_retry_sms' trip.pk 'trip_pending' %}">
+            {% csrf_token %}
+            <button class="tr-btn tr-btn-soft tr-btn-sm" type="submit">
+              <i class="fa-solid fa-rotate"></i> Retry Departure SMS
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Completed / Arrival SMS</div>
+        <div class="tr-detail-value">
+          {% if trip.completed_sms_sent %}
+            <span class="tr-sms-ok"><i class="fa-solid fa-circle-check"></i> Sent</span>
+            {% if trip.completed_sms_sent_at %}<div class="tr-help">{{ trip.completed_sms_sent_at|date:"d M Y H:i" }}</div>{% endif %}
+          {% elif trip.completed_sms_error %}
+            <span class="tr-sms-fail"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+            <div class="tr-help">{{ trip.completed_sms_error }}</div>
+          {% else %}
+            <span class="tr-sms-wait"><i class="fa-regular fa-clock"></i> Not sent</span>
+          {% endif %}
+        </div>
+
+        {% if can_retry_sms and trip.status == 'completed' and not trip.completed_sms_sent %}
+          <form class="mt-2" method="post" action="{% url 'transport:trip_retry_sms' trip.pk 'trip_completed' %}">
+            {% csrf_token %}
+            <button class="tr-btn tr-btn-soft tr-btn-sm" type="submit">
+              <i class="fa-solid fa-rotate"></i> Retry Arrival SMS
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Journey Timeline</div>
+        <div class="tr-detail-value">
+          Created: {{ trip.created_at|date:"d M Y H:i" }}
+          {% if trip.started_at %}<br>Started: {{ trip.started_at|date:"d M Y H:i" }}{% endif %}
+          {% if trip.completed_at %}<br>Completed: {{ trip.completed_at|date:"d M Y H:i" }}{% endif %}
+          {% if trip.cancelled_at %}<br>Cancelled: {{ trip.cancelled_at|date:"d M Y H:i" }}{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tr-card tr-card-pad">
+    <div class="tr-card-title">
+      <i class="fa-solid fa-user-shield text-primary"></i>
+      Record Information
+    </div>
+    <div class="tr-detail-grid mt-3">
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Created By</div>
+        <div class="tr-detail-value">{{ trip.created_by.get_full_name|default:trip.created_by.username }}</div>
+      </div>
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Created At</div>
+        <div class="tr-detail-value">{{ trip.created_at|date:"d M Y H:i" }}</div>
+      </div>
+      <div class="tr-detail-item">
+        <div class="tr-detail-label">Last Updated</div>
+        <div class="tr-detail-value">{{ trip.updated_at|date:"d M Y H:i" }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,360 +1,109 @@
-{# templates/transport/trip_form.html #}
 {% extends "base.html" %}
-{% load humanize %}
 
-{% block title %}Add Transport Trip{% endblock %}
+{% block title %}Add Transport Trip | Kilasi Investment{% endblock %}
 
 {% block extra_css %}
-<style>
-  .trip-form-page{
-    max-width: 980px;
-    margin: 0 auto;
-  }
-
-  .trip-form-hero{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    padding:1rem 1rem .95rem;
-    background:
-      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
-      #fff;
-    box-shadow:0 10px 30px rgba(15,23,42,.05);
-    margin-bottom:1rem;
-  }
-
-  .trip-form-title{
-    margin:0;
-    font-size:1.04rem;
-    font-weight:800;
-    letter-spacing:-.02em;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-  }
-
-  .trip-form-subtitle{
-    font-size:.75rem;
-    color:#64748b;
-    margin-top:.2rem;
-  }
-
-  .trip-back-btn{
-    border-radius:12px;
-    font-size:.77rem;
-    font-weight:700;
-    padding:.62rem .9rem;
-  }
-
-  .trip-form-card{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    background:#fff;
-    box-shadow:0 10px 28px rgba(15,23,42,.05);
-    overflow:hidden;
-  }
-
-  .trip-form-head{
-    padding:.95rem 1rem;
-    border-bottom:1px solid rgba(15,23,42,.06);
-    background:linear-gradient(180deg, #ffffff, #fbfdff);
-  }
-
-  .trip-form-head h4{
-    margin:0;
-    font-size:.84rem;
-    font-weight:800;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.45rem;
-  }
-
-  .trip-form-body{
-    padding:1rem;
-  }
-
-  .trip-alert{
-    border:1px solid rgba(239,68,68,.18);
-    background:rgba(239,68,68,.07);
-    color:#b91c1c;
-    padding:.78rem .9rem;
-    border-radius:12px;
-    font-size:.75rem;
-    font-weight:700;
-    margin-bottom:1rem;
-  }
-
-  .trip-grid{
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0,1fr));
-    gap:.95rem;
-  }
-
-  .trip-field{
-    min-width:0;
-  }
-
-  .trip-field.full{
-    grid-column:1 / -1;
-  }
-
-  .trip-label{
-    display:block;
-    margin:0 0 .42rem 0;
-    font-size:.69rem;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    color:#64748b;
-  }
-
-  .trip-form-body input,
-  .trip-form-body select,
-  .trip-form-body textarea{
-    display:block !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    width:100% !important;
-    box-sizing:border-box !important;
-    min-height:42px;
-    border-radius:12px;
-    border:1px solid #dbe4f0;
-    background:#fff;
-    padding:.7rem .85rem;
-    font-size:.79rem;
-    color:#0f172a;
-    transition:.18s ease;
-    box-shadow:none;
-  }
-
-  .trip-form-body textarea{
-    min-height:115px;
-    resize:vertical;
-  }
-
-  .trip-form-body input:focus,
-  .trip-form-body select:focus,
-  .trip-form-body textarea:focus{
-    outline:none;
-    border-color:rgba(37,99,235,.40);
-    box-shadow:0 0 0 .18rem rgba(37,99,235,.10);
-  }
-
-  .trip-form-body select{
-    -webkit-appearance:none;
-    -moz-appearance:none;
-    appearance:none;
-    padding-right:44px;
-    background-image:
-      linear-gradient(45deg, transparent 50%, #64748b 50%),
-      linear-gradient(135deg, #64748b 50%, transparent 50%),
-      linear-gradient(to right, rgba(15,23,42,.10), rgba(15,23,42,.10));
-    background-position:
-      calc(100% - 18px) 50%,
-      calc(100% - 13px) 50%,
-      calc(100% - 2.65rem) 50%;
-    background-size:6px 6px, 6px 6px, 1px 22px;
-    background-repeat:no-repeat;
-  }
-
-  .trip-form-body input[type="search"]::-webkit-search-cancel-button{
-    -webkit-appearance:none;
-  }
-
-  .trip-form-body input::-ms-clear{
-    display:none;
-  }
-
-  .trip-help{
-    font-size:.68rem;
-    color:#94a3b8;
-    margin-top:.35rem;
-  }
-
-  .trip-error{
-    font-size:.72rem;
-    color:#dc2626;
-    margin-top:.35rem;
-    font-weight:700;
-  }
-
-  .trip-actions{
-    display:flex;
-    gap:.65rem;
-    justify-content:flex-end;
-    align-items:center;
-    margin-top:1rem;
-    flex-wrap:wrap;
-  }
-
-  .trip-actions .btn{
-    border-radius:12px;
-    min-height:42px;
-    padding:.62rem 1rem;
-    font-size:.78rem;
-    font-weight:700;
-  }
-
-  .trip-save-btn{
-    box-shadow:0 10px 22px rgba(37,99,235,.14);
-  }
-
-  .trip-note{
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:12px;
-    padding:.7rem .8rem;
-    margin-top:.95rem;
-  }
-
-  .trip-sticky{
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-    background:rgba(255,255,255,.88);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    border-top:1px solid rgba(15,23,42,.08);
-    z-index:1600;
-    box-shadow:0 -8px 24px rgba(2,6,23,.08);
-  }
-
-  .trip-sticky-inner{
-    max-width:980px;
-    margin:0 auto;
-    display:flex;
-    gap:10px;
-  }
-
-  .trip-sticky-inner .btn{
-    flex:1 1 0;
-    border-radius:12px;
-    min-height:44px;
-    font-size:.78rem;
-    font-weight:700;
-  }
-
-  @media (max-width: 767.98px){
-    .trip-grid{
-      grid-template-columns:1fr;
-    }
-
-    .trip-form-hero{
-      padding:.9rem;
-    }
-
-    .trip-form-title{
-      font-size:.98rem;
-    }
-
-    .trip-form-subtitle{
-      font-size:.73rem;
-    }
-
-    .trip-form-body{
-      padding:.9rem;
-    }
-
-    body{
-      padding-bottom:90px;
-    }
-
-    .trip-actions{
-      display:none !important;
-    }
-  }
-
-  @media (min-width: 768px){
-    .trip-sticky{
-      display:none;
-    }
-  }
-</style>
+  {% include "transport/_portal_styles.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="trip-form-page">
+<div class="tr-shell-sm">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-route text-primary me-1"></i>
+        Record New Trip
+      </h1>
+      <div class="tr-sub">
+        The trip starts as Pending and the customer departure SMS is processed automatically after saving.
+      </div>
+    </div>
 
-  <div class="trip-form-hero">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-      <div>
-        <h3 class="trip-form-title">
-          <i class="fa-solid fa-route text-primary"></i>
-          Add Transport Trip
-        </h3>
-        <div class="trip-form-subtitle">
-          Record a new trip with clean and accurate transport details.
+    <a class="tr-btn tr-btn-muted" href="{% url 'transport:trip_list' %}">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  {% if role == 'driver' and driver %}
+    <div class="tr-card tr-card-pad mb-3">
+      <div class="tr-card-title mb-3">
+        <i class="fa-solid fa-id-card text-primary"></i>
+        Your Assigned Transport Details
+      </div>
+      <div class="tr-detail-grid">
+        <div class="tr-detail-item">
+          <div class="tr-detail-label">Driver</div>
+          <div class="tr-detail-value">{{ driver.full_name }}</div>
+        </div>
+        <div class="tr-detail-item">
+          <div class="tr-detail-label">Vehicle</div>
+          <div class="tr-detail-value">
+            {% if driver.vehicle %}{{ driver.vehicle.plate_number }}{% else %}<span class="tr-sms-fail">Not assigned</span>{% endif %}
+          </div>
+        </div>
+        <div class="tr-detail-item">
+          <div class="tr-detail-label">Branch</div>
+          <div class="tr-detail-value">
+            {% if driver.branch %}{{ driver.branch.name }}{% else %}<span class="tr-sms-fail">Not assigned</span>{% endif %}
+          </div>
         </div>
       </div>
-
-      <a href="{% url 'transport:trip_list' %}" class="btn btn-outline-secondary trip-back-btn">
-        <i class="fa-solid fa-arrow-left me-1"></i> Back
-      </a>
     </div>
-  </div>
+  {% endif %}
 
-  <div class="trip-form-card">
-    <div class="trip-form-head">
-      <h4>
+  <form method="post" class="tr-card" novalidate id="tripForm" autocomplete="on">
+    {% csrf_token %}
+
+    <div class="tr-card-head">
+      <h2 class="tr-card-title">
         <i class="fa-solid fa-pen-to-square text-primary"></i>
-        Trip Details
-      </h4>
+        Trip and Customer Details
+      </h2>
+      <span class="tr-badge tr-pending">New Trip · Pending</span>
     </div>
 
-    <div class="trip-form-body">
-      <form method="post" novalidate id="tripForm" autocomplete="on">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-          <div class="trip-alert">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <div class="trip-grid">
-          {% for field in form %}
-            <div class="trip-field {% if field.name == 'notes' or field.name == 'description' or field.name == 'comment' or field.name == 'remarks' %}full{% endif %}">
-              <label class="trip-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-
-              {{ field }}
-
-              {% if field.help_text %}
-                <div class="trip-help">{{ field.help_text }}</div>
-              {% endif %}
-
-              {% if field.errors %}
-                <div class="trip-error">{{ field.errors|striptags }}</div>
-              {% endif %}
-            </div>
-          {% endfor %}
+    <div class="tr-card-pad">
+      {% if form.non_field_errors %}
+        <div class="tr-alert">
+          {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
         </div>
+      {% endif %}
 
-        <div class="trip-actions" role="group" aria-label="Form actions">
-          <a href="{% url 'transport:trip_list' %}" class="btn btn-outline-secondary">Cancel</a>
+      <div class="tr-form-grid">
+        {% for field in form %}
+          <div class="tr-form-group {% if field.name == 'notes' %}full{% endif %}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="tr-help">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
 
-          <button class="btn btn-primary trip-save-btn" type="submit" id="saveTripBtn">
-            <i class="fa-solid fa-floppy-disk me-1"></i> Save Trip
-          </button>
-        </div>
+      <div class="tr-info mt-3">
+        <i class="fa-solid fa-message me-1"></i>
+        Saving this trip sends the active Pending / Departure template to the customer phone number. The message uses the customer's name, route, driver and vehicle plate automatically.
+      </div>
 
-        <div class="trip-note">
-          Keep trip details correct so reporting, driver follow-up, and customer records stay organized.
-        </div>
+      <div class="tr-note mt-3">
+        Confirm the customer phone, origin, destination and vehicle details before saving. SMS failure will not delete the trip; administrators can retry it from the trip details page.
+      </div>
 
-        <button type="submit" class="d-none" aria-hidden="true" style="display:none;">submit</button>
-      </form>
+      <div class="tr-actions tr-desktop-actions justify-content-end mt-3">
+        <a class="tr-btn tr-btn-muted" href="{% url 'transport:trip_list' %}">Cancel</a>
+        <button class="tr-btn tr-btn-primary" type="submit" id="saveTripBtn">
+          <i class="fa-solid fa-floppy-disk"></i> Save Pending Trip
+        </button>
+      </div>
     </div>
-  </div>
+  </form>
 </div>
 
-<div class="trip-sticky d-md-none" role="region" aria-label="Form actions">
-  <div class="trip-sticky-inner">
-    <a href="{% url 'transport:trip_list' %}" class="btn btn-outline-secondary">Cancel</a>
-    <button type="button" id="mobileSaveTripBtn" class="btn btn-primary">
-      <i class="fa-solid fa-check me-1"></i> Save
+<div class="tr-mobile-actions">
+  <div class="tr-mobile-actions-inner">
+    <a class="tr-btn tr-btn-muted" href="{% url 'transport:trip_list' %}">Cancel</a>
+    <button class="tr-btn tr-btn-primary" type="button" id="mobileSaveTripBtn">
+      <i class="fa-solid fa-check"></i> Save Trip
     </button>
   </div>
 </div>
@@ -363,73 +112,45 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  document.body.classList.add('tr-has-mobile-actions');
+
   const form = document.getElementById('tripForm');
+  if (!form) return;
 
-  (function normalizeFields(){
-    if (!form) return;
-    const els = form.querySelectorAll('input, select, textarea');
+  form.querySelectorAll('input, select, textarea').forEach(function (el) {
+    if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
 
-    els.forEach(el => {
-      if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
+    const label = form.querySelector('label[for="' + el.id + '"]');
+    if (!el.placeholder && label && el.tagName.toLowerCase() !== 'select') {
+      el.placeholder = label.textContent.trim();
+    }
 
-      const id = el.id || el.name;
-      if (id) {
-        const label = form.querySelector('label[for="' + id + '"]');
-        if (label && !el.placeholder && el.tagName.toLowerCase() !== 'select') {
-          el.placeholder = label.textContent.trim();
-        }
-      }
+    const name = (el.name || '').toLowerCase();
+    if (/phone|mobile|tel/.test(name)) {
+      el.setAttribute('inputmode', 'tel');
+      el.setAttribute('autocomplete', 'tel');
+    }
+    if (/amount|charge|price|fare/.test(name)) {
+      el.setAttribute('inputmode', 'decimal');
+    }
+  });
 
-      const name = (el.name || '').toLowerCase();
-      if (/amount|fare|distance|km|mileage|fuel|litre|liter|charge/i.test(name)) {
-        el.setAttribute('inputmode', 'decimal');
-        el.setAttribute('pattern', '[0-9.,]*');
-      }
-
-      if ((el.type === 'date' || el.type === 'datetime-local') && !el.getAttribute('placeholder')) {
-        el.setAttribute('placeholder', 'YYYY-MM-DD');
-      }
-    });
-  })();
-
-  (function ensureFocusVisible(){
-    if (!form) return;
-    const focusables = form.querySelectorAll('input, select, textarea');
-    focusables.forEach(el => {
-      el.addEventListener('focus', () => {
-        setTimeout(() => {
-          try { el.scrollIntoView({ behavior:'smooth', block:'center' }); } catch(e) {}
-        }, 220);
-      });
-    });
-  })();
-
-  const mobileBtn = document.getElementById('mobileSaveTripBtn');
-  if (mobileBtn && form) {
-    mobileBtn.addEventListener('click', function () {
-      const dateEl = form.querySelector('input[name$="trip_date"], input[id$="trip_date"], input[type="date"], input[type="datetime-local"]');
-      if (dateEl && !String(dateEl.value || '').trim()) {
-        dateEl.focus();
-        alert('Please enter trip date.');
-        return;
-      }
-      form.requestSubmit ? form.requestSubmit() : form.submit();
+  const mobileButton = document.getElementById('mobileSaveTripBtn');
+  if (mobileButton) {
+    mobileButton.addEventListener('click', function () {
+      if (form.requestSubmit) form.requestSubmit();
+      else form.submit();
     });
   }
 
-  if (form) {
-    form.querySelectorAll('input, select').forEach(el => {
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          const tag = e.target.tagName.toLowerCase();
-          if (tag !== 'textarea') {
-            e.preventDefault();
-            form.requestSubmit ? form.requestSubmit() : form.submit();
-          }
-        }
-      });
+  form.addEventListener('submit', function () {
+    const buttons = [document.getElementById('saveTripBtn'), mobileButton];
+    buttons.forEach(function (button) {
+      if (!button) return;
+      button.disabled = true;
+      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     });
-  }
+  });
 });
 </script>
 {% endblock %}

@@ -539,6 +539,21 @@
 
     <nav>
       {% if request.user.is_authenticated and request.user.profile %}
+        {% if request.user.driver_profile %}
+          <div class="sb-section-title">Driver Portal</div>
+          <a class="sb-link {% if request.resolver_match.url_name == 'driver_dashboard' %}active{% endif %}"
+             href="{% url 'transport:driver_dashboard' %}" title="Driver Dashboard">
+            <i class="fa-solid fa-gauge-high"></i> <span class="label">Driver Dashboard</span>
+          </a>
+          <a class="sb-link {% if request.resolver_match.url_name == 'trip_create' %}active{% endif %}"
+             href="{% url 'transport:trip_create' %}" title="New Trip">
+            <i class="fa-solid fa-plus"></i> <span class="label">New Trip</span>
+          </a>
+          <a class="sb-link {% if request.resolver_match.url_name == 'trip_list' or request.resolver_match.url_name == 'trip_detail' %}active{% endif %}"
+             href="{% url 'transport:trip_list' %}" title="My Trips">
+            <i class="fa-solid fa-route"></i> <span class="label">My Trips</span>
+          </a>
+        {% else %}
         {% with role=request.user.profile.role %}
 
           <div class="sb-section-title">Main</div>
@@ -781,6 +796,13 @@
                    href="{% url 'transport:expense_list' %}">
                   <i class="fa-solid fa-gas-pump"></i> <span class="label">Expenses</span>
                 </a>
+
+                {% if role == 'admin' %}
+                  <a class="sb-link {% if request.resolver_match.url_name == 'sms_template_list' or request.resolver_match.url_name == 'sms_template_edit' %}active{% endif %}"
+                     href="{% url 'transport:sms_template_list' %}">
+                    <i class="fa-solid fa-comment-sms"></i> <span class="label">Automatic SMS</span>
+                  </a>
+                {% endif %}
               </div>
             </div>
           {% endif %}
@@ -900,6 +922,7 @@
           {% endif %}
 
         {% endwith %}
+        {% endif %}
       {% else %}
         <div class="sb-section-title">Account</div>
         <a class="sb-link" href="{% url 'login' %}">
@@ -923,8 +946,10 @@
             </div>
             <div class="role-pill">
               <i class="fa-solid fa-id-badge"></i>
-              <span>{{ request.user.profile.get_role_display }}</span>
-              {% if request.user.profile.branch %}
+              <span>{% if request.user.driver_profile %}Driver{% else %}{{ request.user.profile.get_role_display }}{% endif %}</span>
+              {% if request.user.driver_profile and request.user.driver_profile.branch %}
+                <small>• {{ request.user.driver_profile.branch.name }}</small>
+              {% elif request.user.profile.branch %}
                 <small>• {{ request.user.profile.branch.name }}</small>
               {% endif %}
             </div>
@@ -1081,6 +1106,28 @@
     <nav>
 
       {% if request.user.is_authenticated and request.user.profile %}
+        {% if request.user.driver_profile %}
+          <div class="sb-section-title">Driver Portal</div>
+          <a class="sb-link {% if request.resolver_match.url_name == 'driver_dashboard' %}active{% endif %}" href="{% url 'transport:driver_dashboard' %}">
+            <i class="fa-solid fa-gauge-high"></i> Driver Dashboard
+          </a>
+          <a class="sb-link {% if request.resolver_match.url_name == 'trip_create' %}active{% endif %}" href="{% url 'transport:trip_create' %}">
+            <i class="fa-solid fa-plus"></i> New Trip
+          </a>
+          <a class="sb-link {% if request.resolver_match.url_name == 'trip_list' or request.resolver_match.url_name == 'trip_detail' %}active{% endif %}" href="{% url 'transport:trip_list' %}">
+            <i class="fa-solid fa-route"></i> My Trips
+          </a>
+          <hr style="border-color: rgba(255,255,255,.10);">
+          <a class="sb-link" href="{% url 'users:profile_update' %}">
+            <i class="fa-solid fa-user-pen"></i> Profile
+          </a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sb-link w-100 text-start" style="background:transparent;border:0;">
+              <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+          </form>
+        {% else %}
         {% with role=request.user.profile.role %}
 
           {% if role == 'admin' or role == 'cashier' %}
@@ -1275,6 +1322,11 @@
                 <a class="sb-link" href="{% url 'transport:expense_list' %}">
                   <i class="fa-solid fa-gas-pump"></i> Expenses
                 </a>
+                {% if role == 'admin' %}
+                  <a class="sb-link {% if request.resolver_match.url_name == 'sms_template_list' or request.resolver_match.url_name == 'sms_template_edit' %}active{% endif %}" href="{% url 'transport:sms_template_list' %}">
+                    <i class="fa-solid fa-comment-sms"></i> Automatic SMS
+                  </a>
+                {% endif %}
               </div>
             </div>
           {% endif %}
@@ -1387,6 +1439,7 @@
           </form>
 
         {% endwith %}
+        {% endif %}
       {% else %}
         <a class="sb-link" href="{% url 'login' %}">
           <i class="fa-solid fa-right-to-bracket"></i> Login

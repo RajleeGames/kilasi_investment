@@ -1,391 +1,177 @@
-{# templates/transport/driver_form.html #}
 {% extends "base.html" %}
-{% load humanize %}
 
-{% block title %}Add Driver{% endblock %}
+{% block title %}{% if is_edit %}Edit Driver{% else %}Add Driver{% endif %} | Kilasi Investment{% endblock %}
 
 {% block extra_css %}
-<style>
-  .driver-form-page{
-    max-width: 980px;
-    margin: 0 auto;
-  }
-
-  .driver-form-hero{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    padding:1rem 1rem .95rem;
-    background:
-      linear-gradient(135deg, rgba(37,99,235,.06), rgba(59,130,246,.02)),
-      #fff;
-    box-shadow:0 10px 30px rgba(15,23,42,.05);
-    margin-bottom:1rem;
-  }
-
-  .driver-form-title{
-    margin:0;
-    font-size:1.04rem;
-    font-weight:800;
-    letter-spacing:-.02em;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-  }
-
-  .driver-form-subtitle{
-    font-size:.75rem;
-    color:#64748b;
-    margin-top:.2rem;
-  }
-
-  .driver-back-btn{
-    border-radius:12px;
-    font-size:.77rem;
-    font-weight:700;
-    padding:.62rem .9rem;
-  }
-
-  .driver-form-card{
-    border:1px solid rgba(15,23,42,.06);
-    border-radius:18px;
-    background:#fff;
-    box-shadow:0 10px 28px rgba(15,23,42,.05);
-    overflow:hidden;
-  }
-
-  .driver-form-head{
-    padding:.95rem 1rem;
-    border-bottom:1px solid rgba(15,23,42,.06);
-    background:linear-gradient(180deg, #ffffff, #fbfdff);
-  }
-
-  .driver-form-head h4{
-    margin:0;
-    font-size:.84rem;
-    font-weight:800;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    gap:.45rem;
-  }
-
-  .driver-form-body{
-    padding:1rem;
-  }
-
-  .driver-alert{
-    border:1px solid rgba(239,68,68,.18);
-    background:rgba(239,68,68,.07);
-    color:#b91c1c;
-    padding:.78rem .9rem;
-    border-radius:12px;
-    font-size:.75rem;
-    font-weight:700;
-    margin-bottom:1rem;
-  }
-
-  .driver-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:.95rem;
-  }
-
-  @media (min-width: 720px){
-    .driver-grid{
-      grid-template-columns:repeat(2, minmax(0,1fr));
-    }
-  }
-
-  .driver-field{
-    min-width:0;
-  }
-
-  .driver-field.full{
-    grid-column:1 / -1;
-  }
-
-  .driver-label{
-    display:block;
-    margin:0 0 .42rem 0;
-    font-size:.69rem;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    color:#64748b;
-  }
-
-  .driver-form-body input,
-  .driver-form-body select,
-  .driver-form-body textarea{
-    display:block !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    width:100% !important;
-    box-sizing:border-box !important;
-    min-height:42px;
-    border-radius:12px;
-    border:1px solid #dbe4f0;
-    background:#fff;
-    padding:.7rem .85rem;
-    font-size:.79rem;
-    color:#0f172a;
-    transition:.18s ease;
-    box-shadow:none;
-  }
-
-  .driver-form-body textarea{
-    min-height:115px;
-    resize:vertical;
-  }
-
-  .driver-form-body input:focus,
-  .driver-form-body select:focus,
-  .driver-form-body textarea:focus{
-    outline:none;
-    border-color:rgba(37,99,235,.40);
-    box-shadow:0 0 0 .18rem rgba(37,99,235,.10);
-  }
-
-  .driver-form-body select{
-    -webkit-appearance:none;
-    -moz-appearance:none;
-    appearance:none;
-    padding-right:44px;
-    background-image:
-      linear-gradient(45deg, transparent 50%, #64748b 50%),
-      linear-gradient(135deg, #64748b 50%, transparent 50%),
-      linear-gradient(to right, rgba(15,23,42,.10), rgba(15,23,42,.10));
-    background-position:
-      calc(100% - 18px) 50%,
-      calc(100% - 13px) 50%,
-      calc(100% - 2.65rem) 50%;
-    background-size:6px 6px, 6px 6px, 1px 22px;
-    background-repeat:no-repeat;
-  }
-
-  .driver-form-body input[type="file"]{
-    padding:.55rem .7rem;
-    min-height:44px;
-    font-size:.78rem;
-  }
-
-  .driver-help{
-    font-size:.68rem;
-    color:#94a3b8;
-    margin-top:.35rem;
-  }
-
-  .driver-error{
-    font-size:.72rem;
-    color:#dc2626;
-    margin-top:.35rem;
-    font-weight:700;
-  }
-
-  .driver-photo-wrap{
-    display:flex;
-    gap:.8rem;
-    align-items:flex-start;
-  }
-
-  .driver-photo-preview{
-    width:88px;
-    height:88px;
-    border-radius:14px;
-    background:#f3f6f9;
-    border:1px dashed rgba(15,23,42,.14);
-    display:grid;
-    place-items:center;
-    overflow:hidden;
-    flex:0 0 auto;
-    cursor:pointer;
-    box-shadow:0 6px 16px rgba(2,6,23,.05);
-  }
-
-  .driver-photo-preview i{
-    color:#9ca3af;
-    font-size:1rem;
-  }
-
-  .driver-photo-preview img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
-
-  .driver-photo-side{
-    flex:1 1 auto;
-    min-width:0;
-  }
-
-  .driver-actions{
-    display:flex;
-    gap:.65rem;
-    justify-content:flex-end;
-    align-items:center;
-    margin-top:1rem;
-    flex-wrap:wrap;
-  }
-
-  .driver-actions .btn{
-    border-radius:12px;
-    min-height:42px;
-    padding:.62rem 1rem;
-    font-size:.78rem;
-    font-weight:700;
-  }
-
-  .driver-save-btn{
-    box-shadow:0 10px 22px rgba(37,99,235,.14);
-  }
-
-  .driver-note{
-    font-size:.72rem;
-    color:#64748b;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:12px;
-    padding:.7rem .8rem;
-    margin-top:.95rem;
-  }
-
-  @media (max-width: 767.98px){
-    .driver-form-hero{
-      padding:.9rem;
-    }
-
-    .driver-form-title{
-      font-size:.98rem;
-    }
-
-    .driver-form-subtitle{
-      font-size:.73rem;
-    }
-
-    .driver-form-body{
-      padding:.9rem;
-    }
-
-    .driver-photo-wrap{
-      flex-direction:column;
-    }
-
-    .driver-actions .btn{
-      width:100%;
-      justify-content:center;
-    }
-  }
-</style>
+  {% include "transport/_portal_styles.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="driver-form-page">
-
-  <div class="driver-form-hero">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-      <div>
-        <h3 class="driver-form-title">
-          <i class="fa-solid fa-user-tie text-primary"></i>
-          Add Driver
-        </h3>
-        <div class="driver-form-subtitle">
-          Save driver details and assign a vehicle in one clean form.
-        </div>
+<div class="tr-shell-sm">
+  <div class="tr-head">
+    <div>
+      <h1 class="tr-title">
+        <i class="fa-solid fa-user-tie text-primary me-1"></i>
+        {% if is_edit %}Edit Driver{% else %}Create Driver Login{% endif %}
+      </h1>
+      <div class="tr-sub">
+        {% if is_edit %}
+          Update the driver account, branch, vehicle and login details.
+        {% else %}
+          Create a private login account and assign the driver to a branch and vehicle.
+        {% endif %}
       </div>
-
-      <a href="{% url 'transport:driver_list' %}" class="btn btn-outline-secondary driver-back-btn">
-        <i class="fa-solid fa-arrow-left me-1"></i> Back
-      </a>
     </div>
+
+    <a class="tr-btn tr-btn-muted" href="{% url 'transport:driver_list' %}">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
   </div>
 
-  <div class="driver-form-card">
-    <div class="driver-form-head">
-      <h4>
+  <form method="post" enctype="multipart/form-data" class="tr-card" novalidate id="driverForm" autocomplete="on">
+    {% csrf_token %}
+
+    <div class="tr-card-head">
+      <h2 class="tr-card-title">
         <i class="fa-solid fa-pen-to-square text-primary"></i>
-        Driver Details
-      </h4>
+        Driver and Login Details
+      </h2>
+      {% if is_edit and driver %}
+        <span class="tr-badge {% if driver.is_active %}tr-active{% else %}tr-inactive{% endif %}">
+          {% if driver.is_active %}Active{% else %}Inactive{% endif %}
+        </span>
+      {% endif %}
     </div>
 
-    <div class="driver-form-body">
-      <form method="post" enctype="multipart/form-data" novalidate id="driverForm" autocomplete="on">
-        {% csrf_token %}
+    <div class="tr-card-pad">
+      {% if form.non_field_errors %}
+        <div class="tr-alert">
+          {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+        </div>
+      {% endif %}
 
-        {% if form.non_field_errors %}
-          <div class="driver-alert">{{ form.non_field_errors }}</div>
-        {% endif %}
+      <div class="tr-info mb-3">
+        <i class="fa-solid fa-shield-halved me-1"></i>
+        The driver will use the username and password below to access only the private driver portal, New Trip and My Trips pages.
+      </div>
 
-        <div class="driver-grid">
-          <div class="driver-field">
-            <label class="driver-label" for="{{ form.first_name.id_for_label }}">First Name</label>
-            {{ form.first_name }}
-            {% if form.first_name.help_text %}<div class="driver-help">{{ form.first_name.help_text }}</div>{% endif %}
-            {% if form.first_name.errors %}<div class="driver-error">{{ form.first_name.errors|striptags }}</div>{% endif %}
+      <div class="tr-form-grid">
+        <div class="tr-form-group">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% if form.username.help_text %}<div class="tr-help">{{ form.username.help_text }}</div>{% endif %}
+          {% for error in form.username.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="tr-form-group">
+          <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+          {{ form.phone }}
+          <div class="tr-help">Example: 0712345678 or +255712345678</div>
+          {% for error in form.phone.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="tr-form-group">
+          <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+          <div class="position-relative">
+            {{ form.password1 }}
+            <button class="btn btn-sm btn-light position-absolute top-50 end-0 translate-middle-y me-1 password-toggle"
+                    type="button" data-target="{{ form.password1.id_for_label }}" aria-label="Show or hide password">
+              <i class="fa-solid fa-eye"></i>
+            </button>
           </div>
+          {% if form.password1.help_text %}<div class="tr-help">{{ form.password1.help_text }}</div>{% endif %}
+          {% for error in form.password1.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
 
-          <div class="driver-field">
-            <label class="driver-label" for="{{ form.last_name.id_for_label }}">Last Name</label>
-            {{ form.last_name }}
-            {% if form.last_name.help_text %}<div class="driver-help">{{ form.last_name.help_text }}</div>{% endif %}
-            {% if form.last_name.errors %}<div class="driver-error">{{ form.last_name.errors|striptags }}</div>{% endif %}
+        <div class="tr-form-group">
+          <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+          <div class="position-relative">
+            {{ form.password2 }}
+            <button class="btn btn-sm btn-light position-absolute top-50 end-0 translate-middle-y me-1 password-toggle"
+                    type="button" data-target="{{ form.password2.id_for_label }}" aria-label="Show or hide password">
+              <i class="fa-solid fa-eye"></i>
+            </button>
           </div>
+          {% for error in form.password2.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
 
-          <div class="driver-field">
-            <label class="driver-label" for="{{ form.phone.id_for_label }}">Phone</label>
-            {{ form.phone }}
-            <div class="driver-help">Example: +2557XXXXXXXX</div>
-            {% if form.phone.errors %}<div class="driver-error">{{ form.phone.errors|striptags }}</div>{% endif %}
-          </div>
+        <div class="tr-form-group">
+          <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          {% for error in form.first_name.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
 
-          <div class="driver-field">
-            <label class="driver-label" for="{{ form.license_number.id_for_label }}">License Number</label>
-            {{ form.license_number }}
-            {% if form.license_number.errors %}<div class="driver-error">{{ form.license_number.errors|striptags }}</div>{% endif %}
-          </div>
+        <div class="tr-form-group">
+          <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+          {% for error in form.last_name.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
 
-          <div class="driver-field full">
-            <label class="driver-label" for="{{ form.vehicle.id_for_label }}">Assign Vehicle</label>
-            {{ form.vehicle }}
-            <div class="driver-help">Optional — you can change this later.</div>
-            {% if form.vehicle.errors %}<div class="driver-error">{{ form.vehicle.errors|striptags }}</div>{% endif %}
-          </div>
+        <div class="tr-form-group">
+          <label for="{{ form.license_number.id_for_label }}">{{ form.license_number.label }}</label>
+          {{ form.license_number }}
+          {% for error in form.license_number.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
 
-          <div class="driver-field full">
-            <div class="driver-photo-wrap">
-              <div class="driver-photo-preview" id="photoPreview" role="button" aria-label="Driver photo preview"
-                   {% if form.photo.value %}data-src="{{ form.photo.value.url|default:'' }}"{% endif %}>
+        <div class="tr-form-group">
+          <label for="{{ form.branch.id_for_label }}">{{ form.branch.label }}</label>
+          {{ form.branch }}
+          <div class="tr-help">Required. This controls the driver's transport branch.</div>
+          {% for error in form.branch.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="tr-form-group full">
+          <label for="{{ form.vehicle.id_for_label }}">{{ form.vehicle.label }}</label>
+          {{ form.vehicle }}
+          <div class="tr-help">Assign the vehicle the driver normally uses. A driver cannot record a trip without an assigned vehicle.</div>
+          {% for error in form.vehicle.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="tr-form-group full">
+          <label for="{{ form.photo.id_for_label }}">{{ form.photo.label }}</label>
+          <div class="tr-photo-wrap">
+            <div class="tr-photo-preview" id="photoPreview" role="button" tabindex="0" aria-label="Choose driver photo">
+              {% if is_edit and driver.photo %}
+                <img src="{{ driver.photo.url }}" alt="{{ driver.full_name }}">
+              {% else %}
                 <i class="fa-solid fa-camera"></i>
-              </div>
-
-              <div class="driver-photo-side">
-                <label class="driver-label" for="{{ form.photo.id_for_label }}">Driver Photo</label>
-                {{ form.photo }}
-                <div class="driver-help">Tap the preview to choose or change image.</div>
-                {% if form.photo.errors %}<div class="driver-error">{{ form.photo.errors|striptags }}</div>{% endif %}
-              </div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 w-100">
+              {{ form.photo }}
+              <div class="tr-help">Tap the preview or file input to select a driver image.</div>
+              {% for error in form.photo.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
             </div>
           </div>
         </div>
 
-        <div class="driver-actions" role="group" aria-label="Form actions">
-          <a href="{% url 'transport:driver_list' %}" class="btn btn-outline-secondary">Cancel</a>
-
-          <button type="submit" class="btn btn-primary driver-save-btn" id="saveDriverBtn">
-            <i class="fa-solid fa-floppy-disk me-1"></i> Save Driver
-          </button>
+        <div class="tr-form-group full">
+          <div class="tr-check">
+            {{ form.is_active }}
+            <label for="{{ form.is_active.id_for_label }}">Driver account is active</label>
+          </div>
+          <div class="tr-help">Inactive drivers cannot log in or create new trips.</div>
+          {% for error in form.is_active.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
         </div>
+      </div>
 
-        <div class="driver-note">
-          Keep driver information clear and accurate for easier transport management.
-        </div>
+      <div class="tr-note mt-3">
+        {% if is_edit %}
+          Leave both password fields blank to keep the current password.
+        {% else %}
+          Use a temporary password of at least 8 characters and give it privately to the driver.
+        {% endif %}
+      </div>
 
-        <button type="submit" class="d-none" aria-hidden="true" style="display:none;">submit</button>
-      </form>
+      <div class="tr-actions justify-content-end mt-3">
+        <a class="tr-btn tr-btn-muted" href="{% url 'transport:driver_list' %}">Cancel</a>
+        <button class="tr-btn tr-btn-primary" type="submit" id="saveDriverBtn">
+          <i class="fa-solid fa-floppy-disk"></i>
+          {% if is_edit %}Save Changes{% else %}Create Driver{% endif %}
+        </button>
+      </div>
     </div>
-  </div>
-
+  </form>
 </div>
 {% endblock %}
 
@@ -395,111 +181,61 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('driverForm');
   if (!form) return;
 
-  (function normalize(){
-    const els = form.querySelectorAll('input, select, textarea');
-
-    els.forEach(el => {
-      if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
-
-      const tag = el.tagName.toLowerCase();
-      const isFile = el.type === 'file';
-
-      if (!isFile && tag !== 'select' && !el.placeholder) {
-        const id = el.id || el.name;
-        if (id) {
-          const label = form.querySelector('label[for="' + id + '"]');
-          if (label) el.placeholder = label.textContent.trim();
-        }
-      }
-
-      const name = (el.name || '').toLowerCase();
-      if (/phone|tel|mobile/i.test(name)) {
-        el.setAttribute('inputmode', 'tel');
-        el.setAttribute('autocomplete', 'tel');
-      }
-
-      if (/license/i.test(name)) {
-        el.setAttribute('autocomplete', 'off');
-      }
-    });
-  })();
-
-  (function photoPreview(){
-    const preview = document.getElementById('photoPreview');
-    const fileInput = form.querySelector('input[type="file"][name$="photo"], input[type="file"][id$="photo"]');
-    if (!preview || !fileInput) return;
-
-    preview.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', (e) => {
-      const f = e.target.files && e.target.files[0];
-      if (!f) return;
-
-      if (!f.type || !f.type.startsWith('image/')) {
-        preview.innerHTML = '<i class="fa-solid fa-file"></i>';
-        return;
-      }
-
-      const url = URL.createObjectURL(f);
-      const img = document.createElement('img');
-      img.src = url;
-      img.onload = () => URL.revokeObjectURL(url);
-      preview.innerHTML = '';
-      preview.appendChild(img);
-    });
-
-    const existing = preview.dataset ? preview.dataset.src : '';
-    if (existing) {
-      const img = document.createElement('img');
-      img.src = existing;
-      preview.innerHTML = '';
-      preview.appendChild(img);
+  form.querySelectorAll('input, select, textarea').forEach(function (el) {
+    if (el.type === 'hidden' || el.type === 'checkbox' || el.type === 'file') return;
+    if (!el.placeholder && el.tagName.toLowerCase() !== 'select') {
+      const label = form.querySelector('label[for="' + el.id + '"]');
+      if (label) el.placeholder = label.textContent.trim();
     }
-  })();
+    if (/phone/i.test(el.name || '')) {
+      el.setAttribute('inputmode', 'tel');
+      el.setAttribute('autocomplete', 'tel');
+    }
+  });
 
-  (function ensureFocusVisible(){
-    const focusables = form.querySelectorAll('input, select, textarea');
-    focusables.forEach(el => {
-      el.addEventListener('focus', () => {
-        setTimeout(() => {
-          try { el.scrollIntoView({ behavior:'smooth', block:'center' }); } catch(e) {}
-        }, 220);
-      });
+  document.querySelectorAll('.password-toggle').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const input = document.getElementById(button.dataset.target);
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      const icon = button.querySelector('i');
+      if (icon) icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
     });
-  })();
+  });
 
-  (function smallValidation(){
-    form.addEventListener('submit', function(e){
-      const first = form.querySelector('input[name$="first_name"], input[id$="first_name"]');
-      if (first && !String(first.value || '').trim()){
-        e.preventDefault();
-        first.focus();
-        let err = first.closest('.driver-field')?.querySelector('.driver-error');
-        if (!err) {
-          err = document.createElement('div');
-          err.className = 'driver-error';
-          first.closest('.driver-field').appendChild(err);
-        }
-        err.textContent = 'Please enter first name.';
-        return false;
+  const preview = document.getElementById('photoPreview');
+  const fileInput = form.querySelector('input[type="file"]');
+  if (preview && fileInput) {
+    const choose = function () { fileInput.click(); };
+    preview.addEventListener('click', choose);
+    preview.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        choose();
       }
-
-      const phone = form.querySelector('input[name$="phone"], input[id$="phone"]');
-      if (phone && phone.value.trim() && phone.value.trim().length < 8){
-        e.preventDefault();
-        phone.focus();
-        let err = phone.closest('.driver-field')?.querySelector('.driver-error');
-        if (!err) {
-          err = document.createElement('div');
-          err.className = 'driver-error';
-          phone.closest('.driver-field').appendChild(err);
-        }
-        err.textContent = 'Please enter a valid phone number.';
-        return false;
-      }
-      return true;
     });
-  })();
+
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = '';
+      const image = document.createElement('img');
+      image.src = url;
+      image.alt = 'Driver photo preview';
+      image.onload = function () { URL.revokeObjectURL(url); };
+      preview.appendChild(image);
+    });
+  }
+
+  form.addEventListener('submit', function () {
+    const button = document.getElementById('saveDriverBtn');
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+  });
 });
 </script>
 {% endblock %}

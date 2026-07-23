@@ -1,13 +1,11 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
+
 from inventory.models import Branch
 
 
-# -------------------------
-# Vehicle
-# -------------------------
 class Vehicle(models.Model):
     plate_number = models.CharField(max_length=50, unique=True)
     model = models.CharField(max_length=100, blank=True)
@@ -28,119 +26,199 @@ class Vehicle(models.Model):
         return reverse("transport:vehicle_list")
 
 
-# -------------------------
-# Driver
-# -------------------------
 class Driver(models.Model):
     user = models.OneToOneField(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="driver_profile"
+        related_name="driver_profile",
+    )
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="transport_drivers",
+        help_text="The branch this driver belongs to.",
     )
     first_name = models.CharField(max_length=100, blank=True, default="")
     last_name = models.CharField(max_length=100, blank=True, default="")
     phone = models.CharField(max_length=20, blank=True)
     license_number = models.CharField(max_length=50, blank=True)
-
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="drivers"
+        related_name="drivers",
     )
-
     photo = models.ImageField(upload_to="drivers/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["first_name", "last_name", "user__username"]
         indexes = [
             models.Index(fields=["is_active"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["phone"]),
+            models.Index(fields=["branch", "is_active"]),
         ]
 
     @property
     def full_name(self):
         name = f"{self.first_name} {self.last_name}".strip()
-        if name and self.phone:
-            return f"{name} ({self.phone})"
-        if name:
-            return name
-        return self.user.username
+        return name or self.user.get_full_name() or self.user.username
+
+    @property
+    def display_name(self):
+        if self.phone:
+            return f"{self.full_name} ({self.phone})"
+        return self.full_name
 
     def __str__(self):
-        return self.full_name
+        return self.display_name
 
     def get_absolute_url(self):
         return reverse("transport:driver_list")
 
 
-# -------------------------
-# Trip
-# -------------------------
-# Trip
-# -------------------------
 class Trip(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_IN_TRANSIT = "in_transit"
+    STATUS_COMPLETED = "completed"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_IN_TRANSIT, "In Transit"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
-        related_name="transport_trips"
+        related_name="transport_trips",
     )
-
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.PROTECT,
-        related_name="trips"
+        related_name="trips",
     )
-
     driver = models.ForeignKey(
         Driver,
         on_delete=models.PROTECT,
-        related_name="trips"
+        related_name="trips",
     )
-
     origin = models.CharField(max_length=255)
     destination = models.CharField(max_length=255)
-
-    # Customer details
-    customer_name = models.CharField(max_length=150, blank=True, default="")
-    customer_phone = models.CharField(max_length=20, blank=True, default="")
-
+    customer_name = models.CharField(max_length=150)
+    customer_phone = models.CharField(max_length=20)
     amount_charged = models.DecimalField(max_digits=12, decimal_places=2)
     notes = models.TextField(blank=True)
-
     trip_date = models.DateTimeField(default=timezone.now)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        db_index=True,
+    )
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    pending_sms_sent = models.BooleanField(default=False)
+    pending_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    pending_sms_error = models.TextField(blank=True)
+
+    completed_sms_sent = models.BooleanField(default=False)
+    completed_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    completed_sms_error = models.TextField(blank=True)
 
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name="created_trips"
+        related_name="created_trips",
     )
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        ordering = ["-trip_date"]
+        ordering = ["-trip_date", "-id"]
         indexes = [
             models.Index(fields=["trip_date"]),
             models.Index(fields=["branch", "trip_date"]),
             models.Index(fields=["vehicle"]),
             models.Index(fields=["driver"]),
+            models.Index(fields=["driver", "status", "trip_date"]),
+            models.Index(fields=["status", "trip_date"]),
             models.Index(fields=["customer_name"]),
             models.Index(fields=["customer_phone"]),
         ]
 
+    def save(self, *args, **kwargs):
+        self.updated_at = timezone.now()
+        return super().save(*args, **kwargs)
+
     def __str__(self):
-        customer = self.customer_name or self.customer_phone or "Customer"
-        return f"{customer} | {self.vehicle} | {self.origin} → {self.destination}"
+        return (
+            f"{self.customer_name or self.customer_phone} | "
+            f"{self.vehicle} | {self.origin} to {self.destination}"
+        )
 
     def get_absolute_url(self):
-        return reverse("transport:trip_list")
+        return reverse("transport:trip_detail", kwargs={"pk": self.pk})
 
-# -------------------------
-# Transport Expenses
-# -------------------------
+    @property
+    def can_start(self):
+        return self.status == self.STATUS_PENDING
+
+    @property
+    def can_complete(self):
+        return self.status == self.STATUS_IN_TRANSIT
+
+    @property
+    def is_closed(self):
+        return self.status in {self.STATUS_COMPLETED, self.STATUS_CANCELLED}
+
+
+class TransportSMSTemplate(models.Model):
+    EVENT_PENDING = "trip_pending"
+    EVENT_COMPLETED = "trip_completed"
+
+    EVENT_CHOICES = [
+        (EVENT_PENDING, "Trip Created / Pending"),
+        (EVENT_COMPLETED, "Trip Completed"),
+    ]
+
+    event = models.CharField(max_length=30, choices=EVENT_CHOICES, unique=True)
+    message = models.TextField()
+    sender_id = models.ForeignKey(
+        "sms.SenderID",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="transport_auto_templates",
+    )
+    is_active = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="transport_sms_templates_updated",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["event"]
+        verbose_name = "Transport automatic SMS template"
+        verbose_name_plural = "Transport automatic SMS templates"
+
+    def __str__(self):
+        return self.get_event_display()
+
+
 class TransportExpense(models.Model):
     EXPENSE_CHOICES = [
         ("fuel", "Fuel"),
@@ -157,32 +235,23 @@ class TransportExpense(models.Model):
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
-        related_name="transport_expenses"
+        related_name="transport_expenses",
     )
-
-    # ✅ NOW OPTIONAL
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.PROTECT,
         related_name="expenses",
         null=True,
-        blank=True
+        blank=True,
     )
-
-    expense_type = models.CharField(
-        max_length=30,
-        choices=EXPENSE_CHOICES
-    )
-
+    expense_type = models.CharField(max_length=30, choices=EXPENSE_CHOICES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.CharField(max_length=255, blank=True)
-
     expense_date = models.DateTimeField(default=timezone.now)
-
     recorded_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name="transport_expenses"
+        related_name="transport_expenses",
     )
 
     class Meta:
@@ -207,9 +276,6 @@ class TransportExpense(models.Model):
         return self.vehicle is None
 
 
-# -------------------------
-# Booking / Order
-# -------------------------
 class Booking(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -220,27 +286,21 @@ class Booking(models.Model):
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
-        related_name="transport_bookings"
+        related_name="transport_bookings",
     )
-
     customer_name = models.CharField(max_length=150)
     customer_phone = models.CharField(max_length=30)
-
     pickup_area = models.CharField(max_length=255)
     destination = models.CharField(max_length=255, blank=True)
-
     booking_datetime = models.DateTimeField()
     notes = models.TextField(blank=True)
-
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     reminder_sent = models.BooleanField(default=False)
-
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name="transport_bookings_created"
+        related_name="transport_bookings_created",
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
