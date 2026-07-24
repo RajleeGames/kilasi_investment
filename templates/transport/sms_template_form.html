@@ -1,24 +1,169 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Automatic SMS | Kilasi Investment{% endblock %}
+{% block title %}
+  Edit Automatic SMS | Kilasi Investment
+{% endblock %}
 
 {% block extra_css %}
   {% include "transport/_portal_styles.html" %}
+
+  <style>
+    .sms-editor-layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);
+      gap:12px;
+      align-items:start;
+    }
+
+    .sms-preview-card{
+      position:sticky;
+      top:12px;
+    }
+
+    .sms-preview-phone{
+      max-width:330px;
+      margin:0 auto;
+      padding:10px;
+      border:1px solid #dbe3ec;
+      border-radius:18px;
+      background:#f8fafc;
+    }
+
+    .sms-preview-screen{
+      min-height:210px;
+      padding:11px;
+      border-radius:12px;
+      background:#fff;
+      border:1px solid #eef2f7;
+    }
+
+    .sms-preview-label{
+      margin-bottom:7px;
+      color:#64748b;
+      font-size:.6rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .sms-preview-message{
+      color:#0f172a;
+      font-size:.72rem;
+      line-height:1.55;
+
+      /* Preserve Enter and blank lines */
+      white-space:pre-wrap;
+
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .sms-editor-tools{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+
+    .sms-editor-stats{
+      display:flex;
+      gap:5px;
+      flex-wrap:wrap;
+    }
+
+    .sms-stat{
+      display:inline-flex;
+      align-items:center;
+      min-height:24px;
+      padding:3px 7px;
+      border:1px solid #e2e8f0;
+      border-radius:999px;
+      background:#f8fafc;
+      color:#64748b;
+      font-size:.59rem;
+      font-weight:750;
+    }
+
+    .sms-line-button{
+      min-height:27px;
+      padding:4px 7px;
+      border:1px solid #dbeafe;
+      border-radius:7px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      font-size:.61rem;
+      font-weight:750;
+      cursor:pointer;
+    }
+
+    .sms-line-button:hover{
+      background:#dbeafe;
+    }
+
+    .sms-format-note{
+      display:flex;
+      align-items:flex-start;
+      gap:7px;
+      margin-top:8px;
+      padding:8px 9px;
+      border:1px solid #dbeafe;
+      border-radius:8px;
+      background:#eff6ff;
+      color:#1e40af;
+      font-size:.63rem;
+      line-height:1.45;
+    }
+
+    .sms-format-note i{
+      margin-top:2px;
+    }
+
+    #smsTemplateForm textarea{
+      min-height:220px;
+      resize:vertical;
+      line-height:1.55;
+      white-space:pre-wrap;
+    }
+
+    @media(max-width:850px){
+      .sms-editor-layout{
+        grid-template-columns:1fr;
+      }
+
+      .sms-preview-card{
+        position:static;
+      }
+
+      .sms-preview-phone{
+        max-width:100%;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-<div class="tr-shell-sm">
+<div class="tr-shell-md">
+
   <div class="tr-head">
     <div>
       <h1 class="tr-title">
         <i class="fa-solid fa-pen-to-square text-primary me-1"></i>
         {{ template.get_event_display }}
       </h1>
-      <div class="tr-sub">This message will be used automatically for future matching trips.</div>
+
+      <div class="tr-sub">
+        This message will be used automatically for future matching trips.
+      </div>
     </div>
 
-    <a class="tr-btn tr-btn-muted" href="{% url 'transport:sms_template_list' %}">
-      <i class="fa-solid fa-arrow-left"></i> Back
+    <a
+      class="tr-btn tr-btn-muted"
+      href="{% url 'transport:sms_template_list' %}"
+    >
+      <i class="fa-solid fa-arrow-left"></i>
+      Back
     </a>
   </div>
 
@@ -27,60 +172,191 @@
       <i class="fa-solid fa-code text-primary"></i>
       Supported Placeholders
     </div>
+
     <div class="tr-code-list">
-      {% for token in placeholders %}<code class="tr-code">{{ token }}</code>{% endfor %}
+      {% for token in placeholders %}
+        <code class="tr-code">{{ token }}</code>
+      {% endfor %}
+    </div>
+
+    <div class="sms-format-note">
+      <i class="fa-solid fa-circle-info"></i>
+
+      <div>
+        Press <strong>Enter once</strong> for a new line.
+        Press <strong>Enter twice</strong> to leave one blank line
+        between paragraphs. The SMS will follow the same formatting.
+      </div>
     </div>
   </div>
 
-  <form method="post" class="tr-card" novalidate id="smsTemplateForm">
-    {% csrf_token %}
+  <div class="sms-editor-layout">
 
-    <div class="tr-card-head">
-      <h2 class="tr-card-title">
-        <i class="fa-solid fa-message text-primary"></i>
-        Message Settings
-      </h2>
-    </div>
+    <!-- EDIT FORM -->
+    <form
+      method="post"
+      class="tr-card"
+      novalidate
+      id="smsTemplateForm"
+    >
+      {% csrf_token %}
 
-    <div class="tr-card-pad">
-      {% if form.non_field_errors %}
-        <div class="tr-alert">
-          {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
-        </div>
-      {% endif %}
+      <div class="tr-card-head">
+        <h2 class="tr-card-title">
+          <i class="fa-solid fa-message text-primary"></i>
+          Message Settings
+        </h2>
+      </div>
 
-      {% for field in form %}
-        {% if field.name == 'is_active' %}
-          <div class="tr-form-group mb-3">
-            <div class="tr-check">
-              {{ field }}
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            </div>
-            {% if field.help_text %}<div class="tr-help">{{ field.help_text }}</div>{% endif %}
-            {% for error in field.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
-          </div>
-        {% else %}
-          <div class="tr-form-group mb-3">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}<div class="tr-help">{{ field.help_text }}</div>{% endif %}
-            {% for error in field.errors %}<div class="tr-error">{{ error }}</div>{% endfor %}
+      <div class="tr-card-pad">
+
+        {% if form.non_field_errors %}
+          <div class="tr-alert">
+            {% for error in form.non_field_errors %}
+              {{ error }}
+
+              {% if not forloop.last %}
+                <br>
+              {% endif %}
+            {% endfor %}
           </div>
         {% endif %}
-      {% endfor %}
 
-      <div class="tr-note">
-        Keep the message clear and not too long. Customer name, route, vehicle plate and driver details are inserted from the trip automatically.
+        {% for field in form %}
+
+          {% if field.name == "is_active" %}
+
+            <div class="tr-form-group mb-3">
+              <div class="tr-check">
+                {{ field }}
+
+                <label for="{{ field.id_for_label }}">
+                  {{ field.label }}
+                </label>
+              </div>
+
+              {% if field.help_text %}
+                <div class="tr-help">
+                  {{ field.help_text }}
+                </div>
+              {% endif %}
+
+              {% for error in field.errors %}
+                <div class="tr-error">
+                  {{ error }}
+                </div>
+              {% endfor %}
+            </div>
+
+          {% else %}
+
+            <div class="tr-form-group mb-3">
+              <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+              </label>
+
+              {{ field }}
+
+              {% if field.name == "message" %}
+                <div class="sms-editor-tools">
+                  <button
+                    type="button"
+                    class="sms-line-button"
+                    id="insertBlankLineBtn"
+                  >
+                    <i class="fa-solid fa-turn-down"></i>
+                    Add blank line
+                  </button>
+
+                  <div class="sms-editor-stats">
+                    <span class="sms-stat">
+                      <span id="smsCharacterCount">0</span>
+                      &nbsp;characters
+                    </span>
+
+                    <span class="sms-stat">
+                      <span id="smsLineCount">1</span>
+                      &nbsp;lines
+                    </span>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if field.help_text %}
+                <div class="tr-help">
+                  {{ field.help_text }}
+                </div>
+              {% endif %}
+
+              {% for error in field.errors %}
+                <div class="tr-error">
+                  {{ error }}
+                </div>
+              {% endfor %}
+            </div>
+
+          {% endif %}
+
+        {% endfor %}
+
+        <div class="tr-note">
+          Customer name, route, vehicle plate and driver details
+          are inserted automatically. Line breaks and blank lines
+          entered in the message are preserved.
+        </div>
+
+        <div class="tr-actions justify-content-end mt-3">
+          <a
+            class="tr-btn tr-btn-muted"
+            href="{% url 'transport:sms_template_list' %}"
+          >
+            Cancel
+          </a>
+
+          <button
+            class="tr-btn tr-btn-primary"
+            type="submit"
+            id="saveSmsTemplateBtn"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Message
+          </button>
+        </div>
+
+      </div>
+    </form>
+
+    <!-- LIVE PREVIEW -->
+    <div class="tr-card sms-preview-card">
+      <div class="tr-card-head">
+        <h2 class="tr-card-title">
+          <i class="fa-solid fa-mobile-screen text-primary"></i>
+          Message Preview
+        </h2>
       </div>
 
-      <div class="tr-actions justify-content-end mt-3">
-        <a class="tr-btn tr-btn-muted" href="{% url 'transport:sms_template_list' %}">Cancel</a>
-        <button class="tr-btn tr-btn-primary" type="submit" id="saveSmsTemplateBtn">
-          <i class="fa-solid fa-floppy-disk"></i> Save Message
-        </button>
+      <div class="tr-card-pad">
+        <div class="sms-preview-phone">
+          <div class="sms-preview-screen">
+            <div class="sms-preview-label">
+              Customer will receive
+            </div>
+
+            <div
+              class="sms-preview-message"
+              id="smsMessagePreview"
+            ></div>
+          </div>
+        </div>
+
+        <div class="tr-help mt-2">
+          The preview keeps the same paragraphs and blank lines
+          saved in the message.
+        </div>
       </div>
     </div>
-  </form>
+
+  </div>
 </div>
 {% endblock %}
 
@@ -90,19 +366,113 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('smsTemplateForm');
   if (!form) return;
 
-  const message = form.querySelector('textarea');
+  const message = form.querySelector(
+    'textarea[name="message"]'
+  );
+
+  const preview = document.getElementById(
+    'smsMessagePreview'
+  );
+
+  const characterCount = document.getElementById(
+    'smsCharacterCount'
+  );
+
+  const lineCount = document.getElementById(
+    'smsLineCount'
+  );
+
+  const blankLineButton = document.getElementById(
+    'insertBlankLineBtn'
+  );
+
+  const saveButton = document.getElementById(
+    'saveSmsTemplateBtn'
+  );
+
+  function updatePreview() {
+    if (!message) return;
+
+    const value = message.value || '';
+
+    if (preview) {
+      /*
+       * textContent is important:
+       * it safely displays the message while CSS white-space:
+       * pre-wrap preserves Enter presses and blank lines.
+       */
+      preview.textContent = value || 'Your SMS preview will appear here.';
+    }
+
+    if (characterCount) {
+      characterCount.textContent = value.length;
+    }
+
+    if (lineCount) {
+      lineCount.textContent = value
+        ? value.split(/\r\n|\r|\n/).length
+        : 1;
+    }
+  }
+
+  function insertTextAtCursor(text) {
+    if (!message) return;
+
+    const start = message.selectionStart ?? message.value.length;
+    const end = message.selectionEnd ?? message.value.length;
+
+    const before = message.value.substring(0, start);
+    const after = message.value.substring(end);
+
+    message.value = before + text + after;
+
+    const newPosition = start + text.length;
+
+    message.focus();
+    message.setSelectionRange(
+      newPosition,
+      newPosition
+    );
+
+    message.dispatchEvent(
+      new Event('input', {
+        bubbles: true
+      })
+    );
+  }
+
   if (message) {
-    message.setAttribute('rows', '8');
+    message.setAttribute('rows', '10');
     message.classList.add('form-control');
+
+    message.addEventListener(
+      'input',
+      updatePreview
+    );
+  }
+
+  if (blankLineButton) {
+    blankLineButton.addEventListener(
+      'click',
+      function () {
+        /*
+         * Two newline characters create one empty line
+         * between paragraphs.
+         */
+        insertTextAtCursor('\n\n');
+      }
+    );
   }
 
   form.addEventListener('submit', function () {
-    const button = document.getElementById('saveSmsTemplateBtn');
-    if (button) {
-      button.disabled = true;
-      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    }
+    if (!saveButton) return;
+
+    saveButton.disabled = true;
+    saveButton.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
   });
+
+  updatePreview();
 });
 </script>
 {% endblock %}

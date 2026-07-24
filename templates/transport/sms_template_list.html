@@ -1,51 +1,199 @@
 {% extends "base.html" %}
 
-{% block title %}Automatic Transport SMS | Kilasi Investment{% endblock %}
+{% block title %}
+  Automatic Transport SMS | Kilasi Investment
+{% endblock %}
 
 {% block extra_css %}
   {% include "transport/_portal_styles.html" %}
+
+  <style>
+    .sms-info-box{
+      display:flex;
+      align-items:flex-start;
+      gap:7px;
+      margin-top:9px;
+      padding:8px 9px;
+      border:1px solid #dbeafe;
+      border-radius:8px;
+      background:#eff6ff;
+      color:#1e40af;
+      font-size:.63rem;
+      line-height:1.45;
+    }
+
+    .sms-info-box i{
+      flex:0 0 auto;
+      margin-top:2px;
+    }
+
+    .sms-template-message{
+      max-width:520px;
+      color:#334155;
+      font-size:.68rem;
+      line-height:1.5;
+
+      /*
+       * Preserve new lines and blank lines saved
+       * inside the SMS template.
+       */
+      white-space:pre-wrap;
+
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .sms-event-name{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:#0f172a;
+      font-weight:800;
+    }
+
+    .sms-event-icon{
+      display:inline-grid;
+      place-items:center;
+      width:25px;
+      height:25px;
+      flex:0 0 auto;
+      border-radius:7px;
+      background:#eff6ff;
+      color:#2563eb;
+      font-size:.64rem;
+    }
+
+    .sms-sender-name{
+      color:#334155;
+      font-size:.68rem;
+      font-weight:700;
+    }
+
+    .sms-updated{
+      color:#64748b;
+      font-size:.65rem;
+      white-space:nowrap;
+    }
+
+    .sms-mobile-message-label{
+      display:none;
+    }
+
+    @media(max-width:991.98px){
+      .sms-template-message{
+        max-width:none;
+        width:100%;
+        padding:8px;
+        border:1px solid #eef2f7;
+        border-radius:8px;
+        background:#f8fafc;
+        text-align:left;
+      }
+
+      .sms-event-name{
+        justify-content:flex-end;
+      }
+
+      .sms-mobile-message-label{
+        display:block;
+        margin-bottom:5px;
+        color:#64748b;
+        font-size:.57rem;
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+      }
+    }
+
+    @media(max-width:600px){
+      .sms-event-name{
+        justify-content:flex-start;
+      }
+
+      .sms-template-message{
+        font-size:.65rem;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
 <div class="tr-shell-md">
+
+  <!-- PAGE HEADER -->
   <div class="tr-head">
     <div>
       <h1 class="tr-title">
         <i class="fa-solid fa-message text-primary me-1"></i>
         Automatic Transport SMS
       </h1>
-      <div class="tr-sub">Edit the customer messages sent when a trip is created and completed.</div>
+
+      <div class="tr-sub">
+        Edit the customer messages sent when a trip is created and completed.
+      </div>
     </div>
 
-    <a class="tr-btn tr-btn-muted" href="{% url 'transport:index' %}">
-      <i class="fa-solid fa-arrow-left"></i> Transport
+    <a
+      class="tr-btn tr-btn-muted"
+      href="{% url 'transport:index' %}"
+    >
+      <i class="fa-solid fa-arrow-left"></i>
+      Transport
     </a>
   </div>
 
+  <!-- PLACEHOLDERS -->
   <div class="tr-card tr-card-pad mb-3">
     <div class="tr-card-title">
       <i class="fa-solid fa-code text-primary"></i>
       Available Placeholders
     </div>
-    <div class="tr-sub">These values are replaced automatically using the saved trip details.</div>
+
+    <div class="tr-sub">
+      These values are replaced automatically using the saved trip details.
+    </div>
+
     <div class="tr-code-list">
-      {% for token in placeholders %}<code class="tr-code">{{ token }}</code>{% endfor %}
+      {% for token in placeholders %}
+        <code class="tr-code">{{ token }}</code>
+      {% endfor %}
+    </div>
+
+    <div class="sms-info-box">
+      <i class="fa-solid fa-circle-info"></i>
+
+      <div>
+        Line breaks are supported. Press
+        <strong>Enter once</strong> for a new line or
+        <strong>Enter twice</strong> to leave a blank line
+        between paragraphs.
+      </div>
     </div>
   </div>
 
+  <!-- MESSAGE TEMPLATES -->
   <div class="tr-card">
+
     <div class="tr-card-head">
       <div>
         <h2 class="tr-card-title">
           <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
           Message Templates
         </h2>
-        <div class="tr-sub">Only active templates are sent automatically.</div>
+
+        <div class="tr-sub">
+          Only active templates are sent automatically.
+        </div>
       </div>
+
+      <span class="tr-badge tr-active">
+        {{ templates|length }} Template{{ templates|length|pluralize }}
+      </span>
     </div>
 
     <div class="tr-table-wrap">
       <table class="tr-table tr-responsive-table">
+
         <thead>
           <tr>
             <th>Event</th>
@@ -57,39 +205,120 @@
             <th>Action</th>
           </tr>
         </thead>
+
         <tbody>
           {% for item in templates %}
             <tr>
-              <td data-label="Event"><strong>{{ item.get_event_display }}</strong></td>
-              <td data-label="Sender">
-                {% if item.sender_id %}{{ item.sender_id.name }}{% else %}<span class="tr-muted">Default Sender ID</span>{% endif %}
+
+              <!-- EVENT -->
+              <td data-label="Event">
+                <div class="sms-event-name">
+                  <span class="sms-event-icon">
+                    {% if item.event == "trip_completed" %}
+                      <i class="fa-solid fa-circle-check"></i>
+                    {% else %}
+                      <i class="fa-solid fa-road"></i>
+                    {% endif %}
+                  </span>
+
+                  <span>
+                    {{ item.get_event_display }}
+                  </span>
+                </div>
               </td>
-              <td data-label="Message" style="max-width:520px">{{ item.message|truncatechars:220 }}</td>
-              <td data-label="Status">
-                {% if item.is_active %}
-                  <span class="tr-badge tr-active">Active</span>
+
+              <!-- SENDER -->
+              <td data-label="Sender">
+                {% if item.sender_id %}
+                  <span class="sms-sender-name">
+                    {{ item.sender_id.name }}
+                  </span>
                 {% else %}
-                  <span class="tr-badge tr-inactive">Disabled</span>
+                  <span class="tr-muted">
+                    Default Sender ID
+                  </span>
                 {% endif %}
               </td>
-              <td data-label="Updated">{{ item.updated_at|date:"d M Y H:i" }}</td>
-              <td data-label="Updated By">
-                {% if item.updated_by %}{{ item.updated_by.get_full_name|default:item.updated_by.username }}{% else %}—{% endif %}
+
+              <!-- MESSAGE -->
+              <td
+                data-label="Message"
+                class="tr-mobile-full"
+              >
+                <div class="sms-mobile-message-label">
+                  Message
+                </div>
+
+                <div
+                  class="sms-template-message"
+                  title="{{ item.message }}"
+                >{{ item.message|truncatechars:320 }}</div>
               </td>
-              <td data-label="Action">
-                <a class="tr-btn tr-btn-soft tr-btn-sm" href="{% url 'transport:sms_template_edit' item.pk %}">
-                  <i class="fa-solid fa-pen"></i> Edit
+
+              <!-- STATUS -->
+              <td data-label="Status">
+                {% if item.is_active %}
+                  <span class="tr-badge tr-active">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Active
+                  </span>
+                {% else %}
+                  <span class="tr-badge tr-inactive">
+                    <i class="fa-solid fa-circle-minus"></i>
+                    Disabled
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- UPDATED DATE -->
+              <td data-label="Updated">
+                <span class="sms-updated">
+                  {{ item.updated_at|date:"d M Y H:i" }}
+                </span>
+              </td>
+
+              <!-- UPDATED BY -->
+              <td data-label="Updated By">
+                {% if item.updated_by %}
+                  {{ item.updated_by.get_full_name|default:item.updated_by.username }}
+                {% else %}
+                  <span class="tr-muted">—</span>
+                {% endif %}
+              </td>
+
+              <!-- ACTION -->
+              <td
+                data-label="Action"
+                class="tr-mobile-full"
+              >
+                <a
+                  class="tr-btn tr-btn-soft tr-btn-sm"
+                  href="{% url 'transport:sms_template_edit' item.pk %}"
+                >
+                  <i class="fa-solid fa-pen"></i>
+                  Edit Message
                 </a>
               </td>
+
             </tr>
+
           {% empty %}
+
             <tr>
-              <td colspan="7"><div class="tr-empty">No automatic SMS templates are available.</div></td>
+              <td colspan="7">
+                <div class="tr-empty">
+                  <i class="fa-solid fa-message"></i>
+                  No automatic SMS templates are available.
+                </div>
+              </td>
             </tr>
+
           {% endfor %}
         </tbody>
+
       </table>
     </div>
   </div>
+
 </div>
 {% endblock %}
