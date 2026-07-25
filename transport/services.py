@@ -42,9 +42,23 @@ DEFAULT_COMPLETED_MESSAGE = (
 )
 
 
+DEFAULT_BOSS_PENDING_MESSAGE = (
+    "Ndugu {{ boss_name }},\n\n"
+    "Gari namba {{ plate_number }} limepangiwa safari "
+    "kutoka {{ origin }} kwenda {{ destination }}.\n\n"
+    "Gharama: TZS {{ amount }}\n"
+    "Dereva: {{ driver_name }}\n"
+    "Mteja: {{ name }}\n"
+    "Simu: {{ phone }}\n"
+    "Tawi: {{ branch }}\n\n"
+    "Safari ID: {{ trip_id }}"
+)
+
+
 DEFAULTS = {
     TransportSMSTemplate.EVENT_PENDING: DEFAULT_PENDING_MESSAGE,
     TransportSMSTemplate.EVENT_COMPLETED: DEFAULT_COMPLETED_MESSAGE,
+    TransportSMSTemplate.EVENT_BOSS_PENDING: DEFAULT_BOSS_PENDING_MESSAGE,
 }
 
 
@@ -59,6 +73,10 @@ SUPPORTED_PLACEHOLDERS = [
     "{{ driver_name }}",
     "{{ trip_date }}",
     "{{ company_phone }}",
+    "{{ boss_name }}",
+    "{{ amount }}",
+    "{{ trip_id }}",
+    "{{ branch }}",
 ]
 
 
@@ -68,7 +86,7 @@ SUPPORTED_PLACEHOLDERS = [
 
 def ensure_default_transport_templates():
     """
-    Make sure the two required automatic transport SMS templates exist.
+    Make sure the three required automatic transport SMS templates exist.
 
     Existing templates are never overwritten, so admin edits remain saved.
     """
@@ -208,6 +226,104 @@ def render_trip_sms(template_text: str, trip: Trip) -> str:
 
     # Normalize again after replacement, while keeping
     # all paragraphs and blank lines.
+    return _normalize_message_line_breaks(message)
+
+
+def render_boss_trip_sms(template_text: str, trip: Trip) -> str:
+    """
+    Replace placeholders in the editable boss notification template.
+
+    New lines and blank lines from the saved template are preserved.
+    """
+    local_trip_date = timezone.localtime(trip.trip_date)
+
+    customer_name = str(
+        trip.customer_name or "Mteja"
+    ).strip()
+
+    customer_phone = str(
+        trip.customer_phone or ""
+    ).strip()
+
+    vehicle = getattr(trip, "vehicle", None)
+    driver = getattr(trip, "driver", None)
+    branch = getattr(trip, "branch", None)
+
+    plate_number = (
+        str(getattr(vehicle, "plate_number", "") or "").strip()
+        if vehicle
+        else "Haijapangwa"
+    )
+
+    vehicle_name = (
+        str(vehicle).strip()
+        if vehicle
+        else "Haijapangwa"
+    )
+
+    driver_name = (
+        str(getattr(driver, "full_name", "") or driver).strip()
+        if driver
+        else "Haijapangwa"
+    )
+
+    branch_name = (
+        str(getattr(branch, "name", "") or branch).strip()
+        if branch
+        else "Haijatajwa"
+    )
+
+    try:
+        amount_text = f"{trip.amount_charged:,.0f}"
+    except (TypeError, ValueError):
+        amount_text = str(trip.amount_charged or "0")
+
+    boss_name = str(
+        getattr(settings, "TRANSPORT_BOSS_NAME", "Kilasi")
+        or "Kilasi"
+    ).strip()
+
+    company_phone = str(
+        getattr(
+            settings,
+            "TRANSPORT_SUPPORT_PHONE",
+            "0780850748",
+        )
+        or ""
+    ).strip()
+
+    values = {
+        "boss_name": boss_name,
+        "name": customer_name,
+        "first_name": _first_name(customer_name),
+        "phone": customer_phone,
+        "origin": str(trip.origin or "").strip(),
+        "destination": str(trip.destination or "").strip(),
+        "plate_number": plate_number,
+        "vehicle": vehicle_name,
+        "driver_name": driver_name,
+        "trip_date": local_trip_date.strftime("%d/%m/%Y %H:%M"),
+        "company_phone": company_phone,
+        "amount": amount_text,
+        "trip_id": trip.pk,
+        "branch": branch_name,
+    }
+
+    message = _normalize_message_line_breaks(template_text)
+
+    for key, value in values.items():
+        replacement = str(value or "")
+
+        supported_tokens = (
+            f"{{{{ {key} }}}}",
+            f"{{{{{key}}}}}",
+            f"{{{key}}}",
+            f"[{key}]",
+        )
+
+        for token in supported_tokens:
+            message = message.replace(token, replacement)
+
     return _normalize_message_line_breaks(message)
 
 
@@ -828,4 +944,232 @@ def send_trip_sms(
         return {
             "ok": False,
             "error": error,
+        }
+
+
+def send_boss_trip_sms(
+    trip_id: int,
+    created_by_id: int | None = None,
+    force: bool = False,
+):
+    """
+    Send the editable boss notification when a new pending trip is created.
+
+    The recipient number comes from TRANSPORT_BOSS_PHONE.
+    The message, Sender ID and active/disabled state come from the
+    New Trip Notification / Boss template on the transport SMS page.
+    """
+    try:
+        ensure_default_transport_templates()
+
+        trip = (
+            Trip.objects
+            .select_related(
+                "vehicle",
+                "driver__user",
+                "branch",
+            )
+            .get(pk=trip_id)
+        )
+
+        if trip.status != Trip.STATUS_PENDING:
+            return {
+                "ok": True,
+                "skipped": True,
+                "reason": "Boss SMS applies only to pending trips.",
+            }
+
+        boss_phone = normalize_phone(
+            getattr(
+                settings,
+                "TRANSPORT_BOSS_PHONE",
+                "",
+            )
+        )
+
+        if not boss_phone:
+            return {
+                "ok": False,
+                "skipped": True,
+                "error": (
+                    "TRANSPORT_BOSS_PHONE is not configured "
+                    "or the phone number is invalid."
+                ),
+            }
+
+        template = TransportSMSTemplate.objects.get(
+            event=TransportSMSTemplate.EVENT_BOSS_PENDING
+        )
+
+        if not template.is_active:
+            return {
+                "ok": True,
+                "skipped": True,
+                "reason": "Boss notification template is disabled.",
+            }
+
+        message = render_boss_trip_sms(
+            template.message,
+            trip,
+        )
+
+        if not message:
+            return {
+                "ok": False,
+                "error": "The boss notification message is empty.",
+            }
+
+        # Prevent accidental duplicate sends of the same rendered message.
+        if not force:
+            already_sent = SMSMessage.objects.filter(
+                dest_addr=boss_phone,
+                message=message,
+                status__in=["PENDING", "SENT"],
+            ).exists()
+
+            if already_sent:
+                return {
+                    "ok": True,
+                    "skipped": True,
+                    "reason": (
+                        "Boss notification for this trip "
+                        "was already created."
+                    ),
+                }
+
+        created_by = None
+
+        if created_by_id:
+            created_by = User.objects.filter(
+                pk=created_by_id
+            ).first()
+
+        sender = _get_sender(template)
+
+        source_addr = (
+            sender.name
+            if sender
+            else getattr(
+                settings,
+                "BEEM_SENDER_ID",
+                "",
+            )
+        )
+
+        sms_log = SMSMessage.objects.create(
+            contact=None,
+            sender_id=sender,
+            dest_addr=boss_phone,
+            message=message,
+            status="PENDING",
+            created_by=created_by,
+        )
+
+        result = send_sms_batch(
+            recipients=[
+                {
+                    "recipient_id": 1,
+                    "dest_addr": boss_phone,
+                }
+            ],
+            message=message,
+            source_addr=source_addr,
+        )
+
+        status_code = int(
+            result.get("status_code", 0) or 0
+        )
+
+        payload = result.get("json") or {}
+
+        request_succeeded = _response_is_success(
+            status_code,
+            payload,
+        )
+
+        sms_log.response_raw = payload
+        sms_log.request_id = (
+            _extract_request_id(payload)
+            or None
+        )
+        sms_log.recipient_id = (
+            _extract_recipient_id(payload)
+            or None
+        )
+
+        if request_succeeded:
+            sms_log.status = "SENT"
+            sms_log.sent_at = timezone.now()
+            sms_log.error_text = ""
+
+            sms_log.save(
+                update_fields=[
+                    "response_raw",
+                    "request_id",
+                    "recipient_id",
+                    "status",
+                    "sent_at",
+                    "error_text",
+                ]
+            )
+
+            return {
+                "ok": True,
+                "status_code": status_code,
+                "response": payload,
+                "message_id": sms_log.pk,
+            }
+
+        error = _extract_error_message(payload)
+
+        sms_log.status = "FAILED"
+        sms_log.error_text = error[:2000]
+
+        sms_log.save(
+            update_fields=[
+                "response_raw",
+                "request_id",
+                "recipient_id",
+                "status",
+                "error_text",
+            ]
+        )
+
+        return {
+            "ok": False,
+            "status_code": status_code,
+            "error": error,
+            "message_id": sms_log.pk,
+        }
+
+    except Trip.DoesNotExist:
+        return {
+            "ok": False,
+            "error": "The selected transport trip does not exist.",
+        }
+
+    except TransportSMSTemplate.DoesNotExist:
+        error = (
+            "The editable boss SMS template does not exist. "
+            "Open the Automatic Transport SMS page once to create it."
+        )
+
+        logger.exception(
+            "Boss transport SMS template is missing."
+        )
+
+        return {
+            "ok": False,
+            "error": error,
+        }
+
+    except Exception as exc:
+        logger.exception(
+            "Boss transport notification failed for trip=%s",
+            trip_id,
+        )
+
+        return {
+            "ok": False,
+            "error": str(exc),
         }

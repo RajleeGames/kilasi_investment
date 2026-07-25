@@ -25,7 +25,7 @@ from .forms import (
     VehicleForm,
 )
 from .models import Booking, Driver, TransportExpense, TransportSMSTemplate, Trip, Vehicle
-from .services import SUPPORTED_PLACEHOLDERS, ensure_default_transport_templates, send_trip_sms
+from .services import SUPPORTED_PLACEHOLDERS, ensure_default_transport_templates, send_trip_sms,send_boss_trip_sms
 
 
 def _profile_role(user):
@@ -437,6 +437,12 @@ def trip_create(request):
                         user_id,
                     )
                 )
+                transaction.on_commit(
+    lambda trip_id=trip.pk, user_id=request.user.pk: send_boss_trip_sms(
+        trip_id,
+        user_id,
+    )
+)
 
             messages.success(request, "Trip saved as pending. The customer SMS was processed automatically.")
             return redirect("transport:trip_detail", pk=trip.pk)

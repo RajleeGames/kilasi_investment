@@ -125,6 +125,18 @@ BEEM_API_URL_SEND = "https://apisms.beem.africa/v1/send"
 BEEM_BALANCE_URL  = "https://apisms.beem.africa/public/v1/vendors/balance"
 BEEM_DLR_URL      = "https://dlrapi.beem.africa/public/v1/delivery-reports"
 
+
+
+TRANSPORT_BOSS_PHONE = config(
+    "TRANSPORT_BOSS_PHONE",
+    default="",
+)
+
+TRANSPORT_BOSS_NAME = config(
+    "TRANSPORT_BOSS_NAME",
+    default="Kilasi",
+)
+
 # ─── Internationalization ───────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Dar_es_Salaam'
