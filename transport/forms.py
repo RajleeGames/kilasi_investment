@@ -2,9 +2,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
-
+from sms.services import clean_phone, is_valid_tz_phone
 from inventory.models import Branch
-
+from datetime import timedelta
 from .models import (
     Booking,
     Driver,
@@ -322,10 +322,10 @@ class TransportExpenseForm(forms.ModelForm):
             self.add_error("vehicle", "Vehicle is required for fuel, repair, or service expenses.")
         return cleaned
 
-
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
+
         fields = [
             "branch",
             "customer_name",
@@ -336,26 +336,154 @@ class BookingForm(forms.ModelForm):
             "notes",
             "status",
         ]
+
         widgets = {
-            "customer_name": forms.TextInput(attrs={"placeholder": "Customer full name"}),
-            "customer_phone": forms.TextInput(attrs={"placeholder": "Phone number"}),
-            "pickup_area": forms.TextInput(attrs={"placeholder": "Pickup area / street / place"}),
-            "destination": forms.TextInput(attrs={"placeholder": "Destination area"}),
-            "booking_datetime": forms.DateTimeInput(
-                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
+            "customer_name": forms.TextInput(
+                attrs={
+                    "placeholder": "Customer full name",
+                }
             ),
-            "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Extra details"}),
+            "customer_phone": forms.TextInput(
+                attrs={
+                    "placeholder": "Example: 0712345678",
+                }
+            ),
+            "pickup_area": forms.TextInput(
+                attrs={
+                    "placeholder": "Pickup area / street / place",
+                }
+            ),
+            "destination": forms.TextInput(
+                attrs={
+                    "placeholder": "Destination area",
+                }
+            ),
+            "booking_datetime": forms.DateTimeInput(
+                attrs={
+                    "type": "datetime-local",
+                },
+                format="%Y-%m-%dT%H:%M",
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": "Extra booking details",
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
+
         super().__init__(*args, **kwargs)
-        self.fields["booking_datetime"].input_formats = ["%Y-%m-%dT%H:%M"]
-        profile = getattr(user, "profile", None) if user else None
-        branch = getattr(profile, "branch", None)
-        role = (getattr(profile, "role", "") or "").lower()
+
+        self.fields["booking_datetime"].input_formats = [
+            "%Y-%m-%dT%H:%M",
+        ]
+
+        if not self.is_bound and not self.instance.pk:
+            default_time = timezone.localtime(
+                timezone.now() + timedelta(hours=2)
+            )
+
+            self.fields["booking_datetime"].initial = (
+                default_time.strftime("%Y-%m-%dT%H:%M")
+            )
+
+        profile = (
+            getattr(user, "profile", None)
+            if user
+            else None
+        )
+
+        branch = getattr(
+            profile,
+            "branch",
+            None,
+        )
+
+        role = (
+            getattr(profile, "role", "")
+            or ""
+        ).lower()
+
         if role == "transport" and branch:
             self.fields["branch"].initial = branch
-            self.fields["branch"].queryset = Branch.objects.filter(pk=branch.pk)
+            self.fields["branch"].queryset = Branch.objects.filter(
+                pk=branch.pk
+            )
             self.fields["branch"].disabled = True
+
         _add_bootstrap_classes(self)
+
+    def clean_customer_name(self):
+        name = (
+            self.cleaned_data.get("customer_name")
+            or ""
+        ).strip()
+
+        if not name:
+            raise forms.ValidationError(
+                "Customer name is required."
+            )
+
+        return name
+
+    def clean_customer_phone(self):
+        raw_phone = (
+            self.cleaned_data.get("customer_phone")
+            or ""
+        ).strip()
+
+        phone = clean_phone(raw_phone)
+
+        if not is_valid_tz_phone(phone):
+            raise forms.ValidationError(
+                "Enter a valid Tanzania phone number, "
+                "for example 0712345678."
+            )
+
+        return phone
+
+    def clean_pickup_area(self):
+        pickup_area = (
+            self.cleaned_data.get("pickup_area")
+            or ""
+        ).strip()
+
+        if not pickup_area:
+            raise forms.ValidationError(
+                "Pickup area is required."
+            )
+
+        return pickup_area
+
+    def clean_destination(self):
+        return (
+            self.cleaned_data.get("destination")
+            or ""
+        ).strip()
+
+    def clean(self):
+        cleaned = super().clean()
+
+        booking_datetime = cleaned.get(
+            "booking_datetime"
+        )
+
+        status = (
+            cleaned.get("status")
+            or Booking.STATUS_PENDING
+        )
+
+        if (
+            booking_datetime
+            and status == Booking.STATUS_PENDING
+            and booking_datetime <= timezone.now()
+        ):
+            self.add_error(
+                "booking_datetime",
+                "A pending booking must have a future date and time.",
+            )
+
+        return cleaned

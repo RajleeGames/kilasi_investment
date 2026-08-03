@@ -84,7 +84,6 @@ class TransportExpenseAdmin(admin.ModelAdmin):
     search_fields = ("description", "vehicle__plate_number")
     date_hierarchy = "expense_date"
 
-
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = (
@@ -94,8 +93,46 @@ class BookingAdmin(admin.ModelAdmin):
         "destination",
         "booking_datetime",
         "status",
+        "confirmation_sms_sent",
+        "boss_sms_sent",
+        "reminder_sent",
         "branch",
         "created_by",
     )
-    list_filter = ("status", "branch", "booking_datetime")
-    search_fields = ("customer_name", "customer_phone", "pickup_area", "destination")
+
+    list_filter = (
+        "status",
+        "confirmation_sms_sent",
+        "boss_sms_sent",
+        "reminder_sent",
+        "branch",
+        "booking_datetime",
+    )
+
+    search_fields = (
+        "customer_name",
+        "customer_phone",
+        "pickup_area",
+        "destination",
+    )
+
+    date_hierarchy = "booking_datetime"
+
+    list_select_related = (
+        "branch",
+        "created_by",
+    )
+
+    readonly_fields = (
+        "confirmation_sms_sent",
+        "confirmation_sms_sent_at",
+        "confirmation_sms_error",
+        "boss_sms_sent",
+        "boss_sms_sent_at",
+        "boss_sms_error",
+        "reminder_sent",
+        "reminder_sent_at",
+        "reminder_last_attempt_at",
+        "reminder_sms_error",
+        "created_at",
+    )

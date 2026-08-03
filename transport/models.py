@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -426,6 +428,15 @@ class TransportSMSTemplate(models.Model):
     # Boss receives this when a new pending trip is created.
     EVENT_BOSS_PENDING = "boss_trip_pending"
 
+    # Customer receives this immediately after a booking is created.
+    EVENT_BOOKING_CONFIRMED = "booking_confirmed"
+
+    # Boss receives this immediately after a booking is created.
+    EVENT_BOOKING_BOSS = "booking_boss"
+
+    # Customer receives this approximately one hour before departure.
+    EVENT_BOOKING_REMINDER = "booking_reminder"
+
     EVENT_CHOICES = [
         (
             EVENT_PENDING,
@@ -438,6 +449,18 @@ class TransportSMSTemplate(models.Model):
         (
             EVENT_BOSS_PENDING,
             "New Trip Notification / Boss",
+        ),
+        (
+            EVENT_BOOKING_CONFIRMED,
+            "Booking Confirmed / Customer",
+        ),
+        (
+            EVENT_BOOKING_BOSS,
+            "New Booking Notification / Boss",
+        ),
+        (
+            EVENT_BOOKING_REMINDER,
+            "One Hour Booking Reminder / Customer",
         ),
     ]
 
@@ -644,17 +667,21 @@ class TransportExpense(models.Model):
 # =========================================================
 
 class Booking(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_COMPLETED = "completed"
+    STATUS_CANCELLED = "cancelled"
+
     STATUS_CHOICES = [
         (
-            "pending",
+            STATUS_PENDING,
             "Pending",
         ),
         (
-            "completed",
+            STATUS_COMPLETED,
             "Completed",
         ),
         (
-            "cancelled",
+            STATUS_CANCELLED,
             "Cancelled",
         ),
     ]
@@ -693,11 +720,58 @@ class Booking(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="pending",
+        default=STATUS_PENDING,
+        db_index=True,
     )
 
+    # Customer booking confirmation SMS.
+    confirmation_sms_sent = models.BooleanField(
+        default=False,
+    )
+
+    confirmation_sms_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    confirmation_sms_error = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    # Boss notification for a newly created booking.
+    boss_sms_sent = models.BooleanField(
+        default=False,
+    )
+
+    boss_sms_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    boss_sms_error = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    # Customer reminder approximately one hour before departure.
     reminder_sent = models.BooleanField(
         default=False,
+    )
+
+    reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    reminder_last_attempt_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    reminder_sms_error = models.TextField(
+        blank=True,
+        default="",
     )
 
     created_by = models.ForeignKey(
@@ -738,21 +812,45 @@ class Booking(models.Model):
                     "customer_phone",
                 ],
             ),
+            models.Index(
+                fields=[
+                    "status",
+                    "reminder_sent",
+                    "booking_datetime",
+                ],
+            ),
         ]
 
     def __str__(self):
+        destination = (
+            self.destination
+            or "Not specified"
+        )
+
         return (
             f"{self.customer_name} - "
-            f"{self.pickup_area} - "
+            f"{self.pickup_area} to "
+            f"{destination} - "
             f"{self.booking_datetime:%d %b %Y %H:%M}"
         )
 
     @property
     def is_overdue(self):
         return (
-            self.status == "pending"
+            self.status == self.STATUS_PENDING
             and self.booking_datetime
             < timezone.now()
+        )
+
+    @property
+    def is_reminder_due(self):
+        now = timezone.now()
+
+        return (
+            self.status == self.STATUS_PENDING
+            and not self.reminder_sent
+            and now < self.booking_datetime
+            <= now + timedelta(hours=1)
         )
 
     def get_absolute_url(self):

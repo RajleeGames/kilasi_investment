@@ -1,16 +1,18 @@
 # transport/services.py
 
 import logging
+from datetime import timedelta
 from typing import Any
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.utils import timezone
 
 from sms.models import Contact, ContactGroup, SMSMessage, SenderID
 from sms.utils import normalize_phone, send_sms_batch
 
-from .models import TransportSMSTemplate, Trip
+from .models import Booking, TransportSMSTemplate, Trip
 
 
 logger = logging.getLogger(__name__)
@@ -55,10 +57,50 @@ DEFAULT_BOSS_PENDING_MESSAGE = (
 )
 
 
+DEFAULT_BOOKING_CONFIRMED_MESSAGE = (
+    "Ndugu {{ first_name }},\n\n"
+    "Booking yako ya usafiri imethibitishwa.\n\n"
+    "Kutoka: {{ origin }}\n"
+    "Kwenda: {{ destination }}\n"
+    "Tarehe na muda: {{ booking_datetime }}\n\n"
+    "Tafadhali jiandae na ufike eneo la kuchukuliwa kwa wakati.\n\n"
+    "Asante kwa kuchagua Kilasi Investment.\n"
+    "Kwa msaada piga {{ company_phone }}."
+)
+
+
+DEFAULT_BOOKING_BOSS_MESSAGE = (
+    "Ndugu {{ boss_name }},\n\n"
+    "Booking mpya ya usafiri imewekwa.\n\n"
+    "Mteja: {{ name }}\n"
+    "Simu: {{ phone }}\n"
+    "Kutoka: {{ origin }}\n"
+    "Kwenda: {{ destination }}\n"
+    "Tarehe na muda: {{ booking_datetime }}\n"
+    "Tawi: {{ branch }}\n\n"
+    "Booking ID: {{ booking_id }}"
+)
+
+
+DEFAULT_BOOKING_REMINDER_MESSAGE = (
+    "Ndugu {{ first_name }},\n\n"
+    "Imebaki takribani saa moja kabla ya booking yako ya usafiri.\n\n"
+    "Kutoka: {{ origin }}\n"
+    "Kwenda: {{ destination }}\n"
+    "Muda: {{ booking_datetime }}\n\n"
+    "Tafadhali jiandae na uwe eneo la kuchukuliwa kwa wakati.\n\n"
+    "Asante kwa kuchagua Kilasi Investment.\n"
+    "Kwa msaada piga {{ company_phone }}."
+)
+
+
 DEFAULTS = {
     TransportSMSTemplate.EVENT_PENDING: DEFAULT_PENDING_MESSAGE,
     TransportSMSTemplate.EVENT_COMPLETED: DEFAULT_COMPLETED_MESSAGE,
     TransportSMSTemplate.EVENT_BOSS_PENDING: DEFAULT_BOSS_PENDING_MESSAGE,
+    TransportSMSTemplate.EVENT_BOOKING_CONFIRMED: DEFAULT_BOOKING_CONFIRMED_MESSAGE,
+    TransportSMSTemplate.EVENT_BOOKING_BOSS: DEFAULT_BOOKING_BOSS_MESSAGE,
+    TransportSMSTemplate.EVENT_BOOKING_REMINDER: DEFAULT_BOOKING_REMINDER_MESSAGE,
 }
 
 
@@ -72,10 +114,12 @@ SUPPORTED_PLACEHOLDERS = [
     "{{ vehicle }}",
     "{{ driver_name }}",
     "{{ trip_date }}",
+    "{{ booking_datetime }}",
     "{{ company_phone }}",
     "{{ boss_name }}",
     "{{ amount }}",
     "{{ trip_id }}",
+    "{{ booking_id }}",
     "{{ branch }}",
 ]
 
@@ -86,7 +130,7 @@ SUPPORTED_PLACEHOLDERS = [
 
 def ensure_default_transport_templates():
     """
-    Make sure the three required automatic transport SMS templates exist.
+    Make sure all required automatic transport SMS templates exist.
 
     Existing templates are never overwritten, so admin edits remain saved.
     """
@@ -1173,3 +1217,679 @@ def send_boss_trip_sms(
             "ok": False,
             "error": str(exc),
         }
+
+# =========================================================
+# BOOKING SMS RENDERING
+# =========================================================
+
+def render_booking_sms(
+    template_text: str,
+    booking: Booking,
+) -> str:
+    """
+    Replace booking placeholders while preserving paragraphs and blank lines.
+    """
+    local_booking_datetime = timezone.localtime(
+        booking.booking_datetime
+    )
+
+    customer_name = str(
+        booking.customer_name
+        or "Mteja"
+    ).strip()
+
+    customer_phone = normalize_phone(
+        booking.customer_phone
+    )
+
+    branch = getattr(
+        booking,
+        "branch",
+        None,
+    )
+
+    branch_name = (
+        str(
+            getattr(branch, "name", "")
+            or branch
+        ).strip()
+        if branch
+        else "Haijatajwa"
+    )
+
+    destination = str(
+        booking.destination
+        or "Haijatajwa"
+    ).strip()
+
+    company_phone = str(
+        getattr(
+            settings,
+            "TRANSPORT_SUPPORT_PHONE",
+            "0780850748",
+        )
+        or ""
+    ).strip()
+
+    boss_name = str(
+        getattr(
+            settings,
+            "TRANSPORT_BOSS_NAME",
+            "Kilasi",
+        )
+        or "Kilasi"
+    ).strip()
+
+    booking_datetime_text = (
+        local_booking_datetime.strftime(
+            "%d/%m/%Y %H:%M"
+        )
+    )
+
+    values = {
+        "name": customer_name,
+        "first_name": _first_name(customer_name),
+        "phone": customer_phone,
+        "origin": str(
+            booking.pickup_area
+            or ""
+        ).strip(),
+        "destination": destination,
+        "booking_datetime": booking_datetime_text,
+        "trip_date": booking_datetime_text,
+        "company_phone": company_phone,
+        "boss_name": boss_name,
+        "booking_id": booking.pk,
+        "branch": branch_name,
+    }
+
+    message = _normalize_message_line_breaks(
+        template_text
+    )
+
+    for key, value in values.items():
+        replacement = str(value or "")
+
+        supported_tokens = (
+            f"{{{{ {key} }}}}",
+            f"{{{{{key}}}}}",
+            f"{{{key}}}",
+            f"[{key}]",
+        )
+
+        for token in supported_tokens:
+            message = message.replace(
+                token,
+                replacement,
+            )
+
+    return _normalize_message_line_breaks(
+        message
+    )
+
+
+# =========================================================
+# BOOKING CUSTOMER CONTACT SYNC
+# =========================================================
+
+def _sync_booking_contact(
+    booking: Booking,
+    created_by=None,
+):
+    """
+    Save or update the booking customer in the existing SMS contacts.
+    """
+    phone = normalize_phone(
+        booking.customer_phone
+    )
+
+    if not phone:
+        return None
+
+    customer_name = str(
+        booking.customer_name
+        or "Transport Customer"
+    ).strip()
+
+    group, _created = ContactGroup.objects.get_or_create(
+        name="Transport Customers",
+        defaults={
+            "description": (
+                "Customers collected automatically "
+                "from transport trips and bookings."
+            ),
+        },
+    )
+
+    contact = Contact.objects.filter(
+        phone=phone
+    ).first()
+
+    if contact:
+        changed_fields = []
+
+        weak_names = {
+            "",
+            "customer",
+            "mteja",
+            "transport customer",
+            "walk-in",
+            "unknown",
+            "n/a",
+            "-",
+            "—",
+        }
+
+        current_name = str(
+            contact.name
+            or ""
+        ).strip()
+
+        if (
+            customer_name
+            and current_name.lower() in weak_names
+            and current_name != customer_name
+        ):
+            contact.name = customer_name
+            changed_fields.append("name")
+
+        if not contact.is_active:
+            contact.is_active = True
+            changed_fields.append("is_active")
+
+        if changed_fields:
+            changed_fields.append("updated_at")
+            contact.save(
+                update_fields=changed_fields
+            )
+
+    else:
+        contact = Contact.objects.create(
+            name=customer_name,
+            phone=phone,
+            is_active=True,
+            notes="Auto-saved from a transport booking.",
+            created_by=created_by,
+        )
+
+    contact.groups.add(group)
+
+    return contact
+
+
+# =========================================================
+# UPDATE BOOKING SMS RESULT
+# =========================================================
+
+def _booking_sms_fields(event: str):
+    field_map = {
+        TransportSMSTemplate.EVENT_BOOKING_CONFIRMED: {
+            "sent": "confirmation_sms_sent",
+            "sent_at": "confirmation_sms_sent_at",
+            "error": "confirmation_sms_error",
+        },
+        TransportSMSTemplate.EVENT_BOOKING_BOSS: {
+            "sent": "boss_sms_sent",
+            "sent_at": "boss_sms_sent_at",
+            "error": "boss_sms_error",
+        },
+        TransportSMSTemplate.EVENT_BOOKING_REMINDER: {
+            "sent": "reminder_sent",
+            "sent_at": "reminder_sent_at",
+            "error": "reminder_sms_error",
+        },
+    }
+
+    return field_map.get(event)
+
+
+def _set_booking_sms_result(
+    booking_id: int,
+    event: str,
+    ok: bool,
+    error: str = "",
+):
+    """
+    Store the result of a booking confirmation, boss alert or reminder.
+    """
+    fields = _booking_sms_fields(event)
+
+    if not fields:
+        return
+
+    now = timezone.now()
+
+    updates = {
+        fields["error"]: (
+            ""
+            if ok
+            else str(error or "")[:2000]
+        ),
+    }
+
+    if ok:
+        updates[fields["sent"]] = True
+        updates[fields["sent_at"]] = now
+
+    if event == TransportSMSTemplate.EVENT_BOOKING_REMINDER:
+        updates["reminder_last_attempt_at"] = now
+
+    Booking.objects.filter(
+        pk=booking_id
+    ).update(**updates)
+
+
+# =========================================================
+# AUTOMATIC BOOKING SMS SENDER
+# =========================================================
+
+def send_booking_sms(
+    booking_id: int,
+    event: str,
+    created_by_id: int | None = None,
+    force: bool = False,
+):
+    """
+    Send one automatic booking SMS and record it in SMSMessage.
+
+    Supported events:
+    - booking_confirmed
+    - booking_boss
+    - booking_reminder
+    """
+    allowed_events = {
+        TransportSMSTemplate.EVENT_BOOKING_CONFIRMED,
+        TransportSMSTemplate.EVENT_BOOKING_BOSS,
+        TransportSMSTemplate.EVENT_BOOKING_REMINDER,
+    }
+
+    if event not in allowed_events:
+        return {
+            "ok": False,
+            "skipped": True,
+            "reason": "Unknown booking SMS event.",
+        }
+
+    try:
+        ensure_default_transport_templates()
+
+        booking = (
+            Booking.objects
+            .select_related(
+                "branch",
+                "created_by",
+            )
+            .get(pk=booking_id)
+        )
+
+        if booking.status == Booking.STATUS_CANCELLED:
+            return {
+                "ok": False,
+                "skipped": True,
+                "reason": (
+                    "SMS was not sent because "
+                    "the booking is cancelled."
+                ),
+            }
+
+        fields = _booking_sms_fields(event)
+
+        if (
+            fields
+            and getattr(
+                booking,
+                fields["sent"],
+                False,
+            )
+            and not force
+        ):
+            return {
+                "ok": True,
+                "skipped": True,
+                "reason": "This booking SMS was already sent.",
+            }
+
+        now = timezone.now()
+
+        if (
+            event
+            == TransportSMSTemplate.EVENT_BOOKING_REMINDER
+            and not force
+        ):
+            if booking.status != Booking.STATUS_PENDING:
+                return {
+                    "ok": False,
+                    "skipped": True,
+                    "reason": (
+                        "Only pending bookings receive reminders."
+                    ),
+                }
+
+            if booking.booking_datetime <= now:
+                return {
+                    "ok": False,
+                    "skipped": True,
+                    "reason": "The booking time has already passed.",
+                }
+
+            if booking.booking_datetime > now + timedelta(hours=1):
+                return {
+                    "ok": False,
+                    "skipped": True,
+                    "reason": "The booking reminder is not due yet.",
+                }
+
+        template = TransportSMSTemplate.objects.get(
+            event=event
+        )
+
+        if not template.is_active:
+            return {
+                "ok": True,
+                "skipped": True,
+                "reason": "This automatic SMS template is disabled.",
+            }
+
+        is_boss_message = (
+            event
+            == TransportSMSTemplate.EVENT_BOOKING_BOSS
+        )
+
+        if is_boss_message:
+            phone = normalize_phone(
+                getattr(
+                    settings,
+                    "TRANSPORT_BOSS_PHONE",
+                    "",
+                )
+            )
+        else:
+            phone = normalize_phone(
+                booking.customer_phone
+            )
+
+        if not phone:
+            error = (
+                "Boss phone is missing or invalid."
+                if is_boss_message
+                else "Customer phone is missing or invalid."
+            )
+
+            _set_booking_sms_result(
+                booking.pk,
+                event,
+                False,
+                error,
+            )
+
+            return {
+                "ok": False,
+                "error": error,
+            }
+
+        message = render_booking_sms(
+            template.message,
+            booking,
+        )
+
+        if not message:
+            error = "The automatic booking SMS message is empty."
+
+            _set_booking_sms_result(
+                booking.pk,
+                event,
+                False,
+                error,
+            )
+
+            return {
+                "ok": False,
+                "error": error,
+            }
+
+        created_by = None
+
+        if created_by_id:
+            created_by = User.objects.filter(
+                pk=created_by_id
+            ).first()
+
+        if not created_by:
+            created_by = booking.created_by
+
+        sender = _get_sender(template)
+
+        source_addr = (
+            sender.name
+            if sender
+            else getattr(
+                settings,
+                "BEEM_SENDER_ID",
+                "",
+            )
+        )
+
+        contact = None
+
+        if not is_boss_message:
+            contact = _sync_booking_contact(
+                booking,
+                created_by=created_by,
+            )
+
+        sms_log = SMSMessage.objects.create(
+            contact=contact,
+            sender_id=sender,
+            dest_addr=phone,
+            message=message,
+            status="PENDING",
+            created_by=created_by,
+        )
+
+        result = send_sms_batch(
+            recipients=[
+                {
+                    "recipient_id": 1,
+                    "dest_addr": phone,
+                }
+            ],
+            message=message,
+            source_addr=source_addr,
+        )
+
+        status_code = int(
+            result.get("status_code", 0)
+            or 0
+        )
+
+        payload = (
+            result.get("json")
+            or {}
+        )
+
+        request_succeeded = _response_is_success(
+            status_code,
+            payload,
+        )
+
+        sms_log.response_raw = payload
+        sms_log.request_id = (
+            _extract_request_id(payload)
+            or None
+        )
+        sms_log.recipient_id = (
+            _extract_recipient_id(payload)
+            or None
+        )
+
+        if request_succeeded:
+            sms_log.status = "SENT"
+            sms_log.sent_at = timezone.now()
+            sms_log.error_text = ""
+
+            sms_log.save(
+                update_fields=[
+                    "response_raw",
+                    "request_id",
+                    "recipient_id",
+                    "status",
+                    "sent_at",
+                    "error_text",
+                ]
+            )
+
+            _set_booking_sms_result(
+                booking.pk,
+                event,
+                True,
+            )
+
+            return {
+                "ok": True,
+                "status_code": status_code,
+                "response": payload,
+                "message_id": sms_log.pk,
+            }
+
+        error = _extract_error_message(
+            payload
+        )
+
+        sms_log.status = "FAILED"
+        sms_log.error_text = error[:2000]
+
+        sms_log.save(
+            update_fields=[
+                "response_raw",
+                "request_id",
+                "recipient_id",
+                "status",
+                "error_text",
+            ]
+        )
+
+        _set_booking_sms_result(
+            booking.pk,
+            event,
+            False,
+            error,
+        )
+
+        return {
+            "ok": False,
+            "status_code": status_code,
+            "error": error,
+            "message_id": sms_log.pk,
+        }
+
+    except Booking.DoesNotExist:
+        return {
+            "ok": False,
+            "error": "The selected booking does not exist.",
+        }
+
+    except TransportSMSTemplate.DoesNotExist:
+        error = (
+            "The booking SMS template does not exist. "
+            "Open Automatic Transport SMS once to create it."
+        )
+
+        logger.exception(
+            "Booking SMS template missing for event=%s.",
+            event,
+        )
+
+        return {
+            "ok": False,
+            "error": error,
+        }
+
+    except Exception as exc:
+        error = str(exc)
+
+        logger.exception(
+            "Automatic booking SMS failed "
+            "for booking=%s event=%s",
+            booking_id,
+            event,
+        )
+
+        try:
+            _set_booking_sms_result(
+                booking_id,
+                event,
+                False,
+                error,
+            )
+        except Exception:
+            pass
+
+        return {
+            "ok": False,
+            "error": error,
+        }
+
+
+# =========================================================
+# DUE BOOKING REMINDERS
+# =========================================================
+
+def process_due_booking_reminders(
+    limit: int = 200,
+):
+    """
+    Send reminders for pending bookings taking place within the next hour.
+
+    Failed reminders may be retried after five minutes.
+    """
+    now = timezone.now()
+    one_hour_from_now = now + timedelta(hours=1)
+    retry_before = now - timedelta(minutes=5)
+
+    booking_ids = list(
+        Booking.objects.filter(
+            status=Booking.STATUS_PENDING,
+            reminder_sent=False,
+            booking_datetime__gt=now,
+            booking_datetime__lte=one_hour_from_now,
+        )
+        .filter(
+            Q(reminder_last_attempt_at__isnull=True)
+            | Q(
+                reminder_last_attempt_at__lte=retry_before
+            )
+        )
+        .order_by("booking_datetime")
+        .values_list(
+            "pk",
+            flat=True,
+        )[:limit]
+    )
+
+    sent_count = 0
+    failed_count = 0
+    skipped_count = 0
+
+    for booking_id in booking_ids:
+        result = send_booking_sms(
+            booking_id=booking_id,
+            event=(
+                TransportSMSTemplate
+                .EVENT_BOOKING_REMINDER
+            ),
+        )
+
+        if result.get("ok") and not result.get("skipped"):
+            sent_count += 1
+        elif result.get("skipped"):
+            skipped_count += 1
+        else:
+            failed_count += 1
+
+    return {
+        "checked": len(booking_ids),
+        "sent": sent_count,
+        "failed": failed_count,
+        "skipped": skipped_count,
+    }
+

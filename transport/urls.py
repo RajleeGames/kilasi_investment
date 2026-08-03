@@ -38,5 +38,10 @@ urlpatterns = [
     path("bookings/", views.booking_list, name="booking_list"),
     path("bookings/add/", views.booking_create, name="booking_create"),
     path("bookings/<int:pk>/edit/", views.booking_edit, name="booking_edit"),
+    path(
+    "bookings/<int:pk>/sms/<str:event>/retry/",
+    views.booking_retry_sms,
+    name="booking_retry_sms",
+),
     path("bookings/<int:pk>/delete/", views.booking_delete, name="booking_delete"),
 ]

@@ -137,6 +137,11 @@ TRANSPORT_BOSS_NAME = config(
     default="Kilasi",
 )
 
+TRANSPORT_SUPPORT_PHONE = config(
+    "TRANSPORT_SUPPORT_PHONE",
+    default="0780850748",
+).strip()
+
 # ─── Internationalization ───────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Dar_es_Salaam'

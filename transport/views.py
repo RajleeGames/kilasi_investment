@@ -25,7 +25,13 @@ from .forms import (
     VehicleForm,
 )
 from .models import Booking, Driver, TransportExpense, TransportSMSTemplate, Trip, Vehicle
-from .services import SUPPORTED_PLACEHOLDERS, ensure_default_transport_templates, send_trip_sms,send_boss_trip_sms
+from .services import (
+    SUPPORTED_PLACEHOLDERS,
+    ensure_default_transport_templates,
+    send_booking_sms,
+    send_boss_trip_sms,
+    send_trip_sms,
+)
 
 
 def _profile_role(user):
@@ -438,11 +444,11 @@ def trip_create(request):
                     )
                 )
                 transaction.on_commit(
-    lambda trip_id=trip.pk, user_id=request.user.pk: send_boss_trip_sms(
-        trip_id,
-        user_id,
-    )
-)
+                    lambda trip_id=trip.pk, user_id=request.user.pk: send_boss_trip_sms(
+                        trip_id,
+                        user_id,
+                    )
+                )
 
             messages.success(request, "Trip saved as pending. The customer SMS was processed automatically.")
             return redirect("transport:trip_detail", pk=trip.pk)
@@ -635,78 +641,366 @@ def expense_create(request):
 # -----------------------------------------------------------------------------
 # Bookings
 # -----------------------------------------------------------------------------
-@transport_roles_required("admin", "cashier", "transport")
+
+def _get_accessible_booking(user, pk):
+    """
+    Return a booking the current user is allowed to manage.
+    """
+    role = _effective_role(user)
+
+    qs = Booking.objects.select_related(
+        "branch",
+        "created_by",
+    )
+
+    booking = get_object_or_404(
+        qs,
+        pk=pk,
+    )
+
+    if role == "transport":
+        branch = _profile_branch(user)
+
+        if (
+            not branch
+            or booking.branch_id != branch.pk
+        ):
+            raise PermissionDenied
+
+    return booking
+
+
+@transport_roles_required(
+    "admin",
+    "cashier",
+    "transport",
+)
 def booking_list(request):
     role = _effective_role(request.user)
     branch = _profile_branch(request.user)
-    qs = Booking.objects.select_related("branch", "created_by")
+
+    qs = Booking.objects.select_related(
+        "branch",
+        "created_by",
+    )
+
     if role == "transport":
-        qs = qs.filter(branch=branch) if branch else qs.none()
+        qs = (
+            qs.filter(branch=branch)
+            if branch
+            else qs.none()
+        )
 
-    filter_date = _parse_date((request.GET.get("date") or "").strip())
-    status = (request.GET.get("status") or "").strip()
+    filter_date = _parse_date(
+        (request.GET.get("date") or "").strip()
+    )
+
+    status = (
+        request.GET.get("status")
+        or ""
+    ).strip()
+
     if filter_date:
-        qs = qs.filter(booking_datetime__date=filter_date)
-    if status in dict(Booking.STATUS_CHOICES):
-        qs = qs.filter(status=status)
+        qs = qs.filter(
+            booking_datetime__date=filter_date
+        )
 
-    page_obj = Paginator(qs.order_by("booking_datetime", "-id"), 50).get_page(request.GET.get("page"))
+    if status in dict(Booking.STATUS_CHOICES):
+        qs = qs.filter(
+            status=status
+        )
+
+    page_obj = Paginator(
+        qs.order_by(
+            "booking_datetime",
+            "-id",
+        ),
+        50,
+    ).get_page(
+        request.GET.get("page")
+    )
+
     return render(
         request,
         "transport/booking_list.html",
         {
             "bookings": page_obj.object_list,
             "page_obj": page_obj,
-            "selected_date": filter_date.isoformat() if filter_date else "",
+            "selected_date": (
+                filter_date.isoformat()
+                if filter_date
+                else ""
+            ),
             "selected_status": status,
+            "can_retry_booking_sms": role in {
+                "admin",
+                "cashier",
+                "transport",
+            },
         },
     )
 
 
-@transport_roles_required("admin", "cashier", "transport")
+@transport_roles_required(
+    "admin",
+    "cashier",
+    "transport",
+)
 def booking_create(request):
-    form = BookingForm(request.POST or None, user=request.user)
-    if request.method == "POST" and form.is_valid():
-        booking = form.save(commit=False)
-        booking.created_by = request.user
-        if _effective_role(request.user) == "transport" and _profile_branch(request.user):
-            booking.branch = _profile_branch(request.user)
-        booking.status = booking.status or "pending"
-        booking.save()
-        messages.success(request, "Booking added successfully.")
-        return redirect("transport:booking_list")
-    return render(request, "transport/booking_form.html", {"form": form})
+    form = BookingForm(
+        request.POST or None,
+        user=request.user,
+    )
+
+    if (
+        request.method == "POST"
+        and form.is_valid()
+    ):
+        with transaction.atomic():
+            booking = form.save(
+                commit=False
+            )
+
+            booking.created_by = request.user
+
+            if (
+                _effective_role(request.user)
+                == "transport"
+                and _profile_branch(request.user)
+            ):
+                booking.branch = _profile_branch(
+                    request.user
+                )
+
+            booking.status = (
+                booking.status
+                or Booking.STATUS_PENDING
+            )
+
+            booking.save()
+
+            # Send the customer booking confirmation only after
+            # the database transaction is committed successfully.
+            transaction.on_commit(
+                lambda booking_id=booking.pk,
+                user_id=request.user.pk: send_booking_sms(
+                    booking_id=booking_id,
+                    event=(
+                        TransportSMSTemplate
+                        .EVENT_BOOKING_CONFIRMED
+                    ),
+                    created_by_id=user_id,
+                )
+            )
+
+            # Notify the boss using TRANSPORT_BOSS_PHONE from settings/.env.
+            transaction.on_commit(
+                lambda booking_id=booking.pk,
+                user_id=request.user.pk: send_booking_sms(
+                    booking_id=booking_id,
+                    event=(
+                        TransportSMSTemplate
+                        .EVENT_BOOKING_BOSS
+                    ),
+                    created_by_id=user_id,
+                )
+            )
+
+        messages.success(
+            request,
+            (
+                "Booking added successfully. "
+                "Customer confirmation and boss notification "
+                "were processed automatically."
+            ),
+        )
+
+        return redirect(
+            "transport:booking_list"
+        )
+
+    return render(
+        request,
+        "transport/booking_form.html",
+        {
+            "form": form,
+        },
+    )
 
 
-@transport_roles_required("admin", "cashier", "transport")
+@transport_roles_required(
+    "admin",
+    "cashier",
+    "transport",
+)
 def booking_edit(request, pk):
-    booking = get_object_or_404(Booking, pk=pk)
-    if _effective_role(request.user) == "transport":
-        branch = _profile_branch(request.user)
-        if not branch or booking.branch_id != branch.pk:
-            raise PermissionDenied
+    booking = _get_accessible_booking(
+        request.user,
+        pk,
+    )
 
-    form = BookingForm(request.POST or None, instance=booking, user=request.user)
-    if request.method == "POST" and form.is_valid():
-        obj = form.save(commit=False)
-        if _effective_role(request.user) == "transport" and _profile_branch(request.user):
-            obj.branch = _profile_branch(request.user)
+    old_reminder_signature = (
+        booking.customer_phone,
+        booking.pickup_area,
+        booking.destination,
+        booking.booking_datetime,
+        booking.status,
+    )
+
+    form = BookingForm(
+        request.POST or None,
+        instance=booking,
+        user=request.user,
+    )
+
+    if (
+        request.method == "POST"
+        and form.is_valid()
+    ):
+        obj = form.save(
+            commit=False
+        )
+
+        if (
+            _effective_role(request.user)
+            == "transport"
+            and _profile_branch(request.user)
+        ):
+            obj.branch = _profile_branch(
+                request.user
+            )
+
+        new_reminder_signature = (
+            obj.customer_phone,
+            obj.pickup_area,
+            obj.destination,
+            obj.booking_datetime,
+            obj.status,
+        )
+
+        # If the time, route, phone or status changed, allow the
+        # scheduler to send the correct reminder for the new details.
+        if (
+            new_reminder_signature
+            != old_reminder_signature
+        ):
+            obj.reminder_sent = False
+            obj.reminder_sent_at = None
+            obj.reminder_last_attempt_at = None
+            obj.reminder_sms_error = ""
+
         obj.save()
-        messages.success(request, "Booking updated successfully.")
-        return redirect("transport:booking_list")
-    return render(request, "transport/booking_form.html", {"form": form, "is_edit": True, "booking": booking})
+
+        messages.success(
+            request,
+            (
+                "Booking updated successfully. "
+                "The reminder schedule was updated."
+            ),
+        )
+
+        return redirect(
+            "transport:booking_list"
+        )
+
+    return render(
+        request,
+        "transport/booking_form.html",
+        {
+            "form": form,
+            "is_edit": True,
+            "booking": booking,
+        },
+    )
 
 
-@transport_roles_required("admin", "cashier", "transport")
+@require_POST
+@transport_roles_required(
+    "admin",
+    "cashier",
+    "transport",
+)
+def booking_retry_sms(
+    request,
+    pk,
+    event,
+):
+    booking = _get_accessible_booking(
+        request.user,
+        pk,
+    )
+
+    allowed_events = {
+        TransportSMSTemplate.EVENT_BOOKING_CONFIRMED,
+        TransportSMSTemplate.EVENT_BOOKING_BOSS,
+        TransportSMSTemplate.EVENT_BOOKING_REMINDER,
+    }
+
+    if event not in allowed_events:
+        messages.error(
+            request,
+            "Unknown booking SMS type.",
+        )
+
+        return redirect(
+            "transport:booking_list"
+        )
+
+    result = send_booking_sms(
+        booking_id=booking.pk,
+        event=event,
+        created_by_id=request.user.pk,
+        force=True,
+    )
+
+    if result.get("ok"):
+        messages.success(
+            request,
+            result.get("reason")
+            or "Booking SMS sent successfully.",
+        )
+    else:
+        messages.error(
+            request,
+            (
+                "Booking SMS failed: "
+                f"{result.get('error') or result.get('reason') or 'Unknown error'}"
+            ),
+        )
+
+    return redirect(
+        "transport:booking_list"
+    )
+
+
+@transport_roles_required(
+    "admin",
+    "cashier",
+    "transport",
+)
 def booking_delete(request, pk):
-    booking = get_object_or_404(Booking, pk=pk)
-    if _effective_role(request.user) == "transport":
-        branch = _profile_branch(request.user)
-        if not branch or booking.branch_id != branch.pk:
-            raise PermissionDenied
+    booking = _get_accessible_booking(
+        request.user,
+        pk,
+    )
 
     if request.method == "POST":
         booking.delete()
-        messages.success(request, "Booking deleted successfully.")
-        return redirect("transport:booking_list")
-    return render(request, "transport/booking_confirm_delete.html", {"booking": booking})
+
+        messages.success(
+            request,
+            "Booking deleted successfully.",
+        )
+
+        return redirect(
+            "transport:booking_list"
+        )
+
+    return render(
+        request,
+        "transport/booking_confirm_delete.html",
+        {
+            "booking": booking,
+        },
+    )
+
