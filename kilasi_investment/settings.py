@@ -139,7 +139,7 @@ TRANSPORT_BOSS_NAME = config(
 
 TRANSPORT_SUPPORT_PHONE = config(
     "TRANSPORT_SUPPORT_PHONE",
-    default="0780850748",
+    default="0713288162",
 ).strip()
 
 # ─── Internationalization ───────────────────────────────────────
